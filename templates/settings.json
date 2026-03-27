@@ -4,11 +4,15 @@
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
   },
   "hooks": {
-    "postToolExecution": [
+    "PostToolUse": [
       {
-        "type": "command",
-        "command": "bash $HOME/.tdc/hooks/context-guard.sh",
-        "description": "TDC context monitor — tracks tool call count for session management"
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash $HOME/.tdc/hooks/context-guard.sh"
+          }
+        ]
       }
     ]
   },
