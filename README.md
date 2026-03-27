@@ -52,9 +52,11 @@ cd techdog-claude && bash install.sh
 
 설치하면 자동으로:
 - `tdc` 명령어가 터미널에 등록됩니다
-- Claude Code에 `/tdc` 슬래시 커맨드가 추가됩니다
+- Claude Code에 `/tdc` 슬래시 커맨드가 추가됩니다 (`~/.claude/skills/` 에 설치)
 - [rtk](https://github.com/rtk-ai/rtk) (토큰 60-90% 절감 도구)가 함께 설치됩니다
 - Claude Code Team 모드가 활성화됩니다
+
+> 설치 후 `source ~/.bashrc` (또는 `source ~/.zshrc`) 실행하거나 새 터미널을 열어주세요.
 
 ---
 
@@ -88,8 +90,11 @@ claude
 ```bash
 mkdir my-project
 cd my-project
-tdc init         # .tdc/ 폴더가 생깁니다
+tdc init         # .tdc/ + .claude/ 폴더가 생깁니다
 ```
+
+> `tdc init`은 이 프로젝트 폴더에 tdc 스킬과 에이전트를 설치합니다.
+> 글로벌 설치(`install.sh`)를 먼저 해야 `tdc init`이 동작합니다.
 
 ### 2. 스펙 파일 작성
 
@@ -252,11 +257,12 @@ Claude Code를 다시 열고:
 Claude Code를 실행하지 않고 터미널에서 직접 쓸 수도 있습니다:
 
 ```bash
-tdc init              # 프로젝트 초기화
+tdc init              # 프로젝트 초기화 (.tdc/ + .claude/ 생성)
 tdc spec.md           # Claude Code를 열면서 스펙 파일 전달
 tdc status            # 현재 세션 상태 확인
 tdc session list      # 저장된 세션 목록
 tdc session resume    # 이전 세션 재개
+tdc doctor            # 설치 상태 진단 (문제 생기면 이거 먼저)
 tdc --help            # 도움말
 ```
 
@@ -337,18 +343,30 @@ tdc는 이걸 자동으로 관리합니다:
 ## 디렉토리 구조
 
 ```
-~/.tdc/                         # 글로벌 설치 (한 번 설치하면 어디서든 사용)
-  agents/                       # 에이전트 정의 파일들
-  skills/                       # 슬래시 커맨드 정의 파일들
-  hooks/                        # 자동화 스크립트
-  scripts/tdc                   # tdc CLI
+~/.tdc/                             # 글로벌 설치 (install.sh로 생성)
+  agents/                           # 에이전트 정의
+  skills/                           # 스킬 백업
+  hooks/                            # 자동화 스크립트
+  scripts/tdc                       # tdc CLI
 
-your-project/                   # 사용자의 프로젝트 폴더
-├── .tdc/                       # tdc init 시 생성 (gitignore 권장)
-│   ├── sessions/               # 저장된 세션
-│   ├── context/                # 컨텍스트 모니터링
-│   └── plans/                  # 생성된 플랜
-├── spec.md                     # 사용자가 작성하는 스펙
+~/.claude/                          # Claude Code가 읽는 경로 (install.sh로 생성)
+  skills/                           # /tdc 슬래시 커맨드 (여기에 있어야 인식됨)
+    tdc/SKILL.md
+    tdc-plan/SKILL.md
+    tdc-dev/SKILL.md
+    ...
+  agents/                           # 에이전트 정의
+    master.md, planner.md, ...
+
+your-project/                       # 사용자의 프로젝트 폴더
+├── .claude/                        # tdc init 시 생성 (프로젝트별 스킬/에이전트)
+│   ├── skills/tdc/SKILL.md ...
+│   └── agents/master.md ...
+├── .tdc/                           # tdc init 시 생성 (gitignore 권장)
+│   ├── sessions/                   # 저장된 세션
+│   ├── context/                    # 컨텍스트 모니터링
+│   └── plans/                      # 생성된 플랜
+├── spec.md                         # 사용자가 작성하는 스펙
 └── (개발 코드들...)
 ```
 
@@ -374,6 +392,65 @@ Claude가 지원하는 모든 언어로 개발할 수 있습니다.
 
 **Q: 기존 프로젝트에도 쓸 수 있나요?**
 A: 네. 기존 프로젝트 폴더에서 `tdc init` 후 바로 사용 가능합니다.
+
+---
+
+## 삭제 (Uninstall)
+
+### 전체 삭제
+
+```bash
+# 1. 글로벌 파일 삭제
+rm -rf ~/.tdc
+
+# 2. Claude Code에서 tdc 스킬/에이전트 삭제
+rm -rf ~/.claude/skills/tdc ~/.claude/skills/tdc-plan ~/.claude/skills/tdc-dev \
+       ~/.claude/skills/tdc-debug ~/.claude/skills/tdc-review ~/.claude/skills/tdc-session
+rm -f ~/.claude/agents/master.md ~/.claude/agents/planner.md ~/.claude/agents/developer.md \
+      ~/.claude/agents/debugger.md ~/.claude/agents/reviewer.md ~/.claude/agents/architect.md
+
+# 3. CLI 심볼릭 링크 삭제
+rm -f ~/.local/bin/tdc
+
+# 4. bashrc/zshrc에서 TDC 관련 줄 삭제 (수동)
+#    아래 줄들을 ~/.bashrc 또는 ~/.zshrc에서 제거:
+#    export PATH="$HOME/.local/bin:$PATH"   (다른 용도로 쓰고 있다면 남겨두세요)
+#    export TDC_HOME="$HOME/.tdc"
+```
+
+### 프로젝트에서만 삭제
+
+```bash
+# 프로젝트 폴더에서:
+rm -rf .tdc .claude/skills/tdc* .claude/agents/{master,planner,developer,debugger,reviewer,architect}.md
+```
+
+### settings.json 원복
+
+tdc가 추가한 설정을 되돌리려면 `~/.claude/settings.json`에서 아래를 삭제:
+- `env` 안의 `TDC_HOME`, `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS`
+- `hooks` 안의 `PostToolUse` 중 `context-guard.sh` 항목
+
+---
+
+## 트러블슈팅
+
+**`/tdc` 입력 시 "Unknown skill" 에러**
+- `tdc doctor` 실행해서 설치 상태를 확인하세요
+- `~/.claude/skills/tdc/SKILL.md` 파일이 있는지 확인
+- 없으면: `curl -sSL .../install.sh | bash`로 재설치
+
+**`tdc: command not found`**
+- `source ~/.bashrc` (또는 `source ~/.zshrc`) 실행
+- 또는 새 터미널을 열어보세요
+
+**Settings Error (Invalid key)**
+- `~/.claude/settings.json`에 잘못된 hook 키가 있을 수 있습니다
+- 재설치하면 자동으로 수정됩니다 (기존 `postToolExecution` → `PostToolUse`)
+
+**rtk가 "not installed"로 표시됨**
+- `source ~/.bashrc` 후 `rtk --version` 확인
+- PATH에 `~/.local/bin`이 포함되어 있는지 확인
 
 ---
 

@@ -81,13 +81,13 @@ techdog-claude/
 │   │   ├── debugger.md   # 디버거 — sonnet — 에러 자동 진단/수정 (Master가 자동 호출)
 │   │   ├── reviewer.md   # 리뷰어 — haiku — 자동 코드 리뷰 (구현 후 자동 실행)
 │   │   └── architect.md  # 아키텍트 — opus — 설계 판단 (필요시만 호출)
-│   ├── skills/           # 슬래시 커맨드 정의 (6개)
-│   │   ├── tdc.md        # /tdc — 메인 진입점. .md 파일 감지, 자동 파이프라인 실행
-│   │   ├── tdc-plan.md   # /tdc-plan — 기획만 따로 (수동 모드)
-│   │   ├── tdc-dev.md    # /tdc-dev — 개발만 따로 (수동 모드)
-│   │   ├── tdc-debug.md  # /tdc-debug — 디버깅만 따로 (수동 모드)
-│   │   ├── tdc-review.md # /tdc-review — 리뷰만 따로 (수동 모드)
-│   │   └── tdc-session.md# /tdc-session — 세션 관리 (save/resume/list/clean)
+│   ├── skills/           # 슬래시 커맨드 정의 (6개, 각각 폴더/SKILL.md 형식)
+│   │   ├── tdc/SKILL.md        # /tdc — 메인 진입점. 자동 파이프라인 실행
+│   │   ├── tdc-plan/SKILL.md   # /tdc-plan — 기획만 따로 (수동 모드)
+│   │   ├── tdc-dev/SKILL.md    # /tdc-dev — 개발만 따로 (수동 모드)
+│   │   ├── tdc-debug/SKILL.md  # /tdc-debug — 디버깅만 따로 (수동 모드)
+│   │   ├── tdc-review/SKILL.md # /tdc-review — 리뷰만 따로 (수동 모드)
+│   │   └── tdc-session/SKILL.md# /tdc-session — 세션 관리
 │   └── hooks/
 │       ├── context-guard.sh  # 도구 호출 횟수 추적 (80: 경고, 120: 자동 저장)
 │       └── session-save.sh   # 대화 종료 시 오버플로 감지 → 자동 세션 저장
@@ -173,8 +173,10 @@ techdog-claude/
 - 에이전트 간 전달 컨텍스트를 늘리면 토큰 효율이 떨어짐. 최소 컨텍스트 원칙 유지.
 
 ### 새 스킬 추가
-1. `.claude/skills/tdc-<name>.md` 생성 (frontmatter 필수: name, description, user-invocable: true)
-2. `tdc.md`의 라우팅에 반영
+1. `.claude/skills/tdc-<name>/SKILL.md` 생성 (폴더/SKILL.md 구조 필수)
+   - frontmatter 필수: name, description, user-invocable: true, argument-hint
+   - `$ARGUMENTS`로 사용자 입력 참조
+2. `tdc/SKILL.md`의 라우팅에 반영
 3. `scripts/tdc` CLI의 case문에 추가
 4. CLAUDE.md에 커맨드 목록 업데이트
 5. README에 "개별 명령어" 테이블에 추가 (메인 명령어가 아님을 명시)
