@@ -138,6 +138,7 @@ install_global() {
     # Copy files to TDC home
     cp -r "$TDC_HOME/.repo/.claude/agents/"* "$TDC_HOME/agents/" 2>/dev/null || true
     cp -r "$TDC_HOME/.repo/.claude/skills/"* "$TDC_HOME/skills/" 2>/dev/null || true
+    # Note: skills are now in folder/SKILL.md format
     cp -r "$TDC_HOME/.repo/.claude/hooks/"* "$TDC_HOME/hooks/" 2>/dev/null || true
     cp -r "$TDC_HOME/.repo/scripts/"* "$TDC_HOME/scripts/" 2>/dev/null || true
 

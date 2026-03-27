@@ -2,7 +2,10 @@
 name: tdc-review
 description: "TechDog Claude - Code review workflow"
 user-invocable: true
+argument-hint: "[파일 경로]"
 ---
+
+**입력:** $ARGUMENTS
 
 # /tdc-review - Code Review Workflow
 

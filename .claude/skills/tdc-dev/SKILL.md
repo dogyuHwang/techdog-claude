@@ -2,7 +2,10 @@
 name: tdc-dev
 description: "TechDog Claude - Development workflow. Accepts a plan file or task description."
 user-invocable: true
+argument-hint: "[plan.md 또는 설명]"
 ---
+
+**입력:** $ARGUMENTS
 
 # /tdc-dev — 개발 워크플로우
 

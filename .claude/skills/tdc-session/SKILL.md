@@ -2,7 +2,10 @@
 name: tdc-session
 description: "TechDog Claude - Session management for context preservation across sessions"
 user-invocable: true
+argument-hint: "[save|resume|list|clean]"
 ---
+
+**입력:** $ARGUMENTS
 
 # /tdc-session - Session Management
 

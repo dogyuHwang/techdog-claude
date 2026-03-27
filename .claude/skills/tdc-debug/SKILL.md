@@ -2,7 +2,10 @@
 name: tdc-debug
 description: "TechDog Claude - Debugging workflow for bug diagnosis and fixing"
 user-invocable: true
+argument-hint: "[에러 메시지 또는 설명]"
 ---
+
+**입력:** $ARGUMENTS
 
 # /tdc-debug - Debugging Workflow
 

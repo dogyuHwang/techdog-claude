@@ -2,11 +2,14 @@
 name: tdc
 description: "TechDog Claude - Main entry point. Pass a spec file (.md) or describe what you want to build."
 user-invocable: true
+argument-hint: "[spec.md 또는 설명]"
 ---
 
 # /tdc — TechDog Claude
 
 멀티 에이전트 개발 오케스트레이션의 메인 진입점입니다.
+
+**입력:** $ARGUMENTS
 
 ## 사용법
 
