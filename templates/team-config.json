@@ -1,0 +1,68 @@
+{
+  "team": {
+    "name": "techdog-claude",
+    "version": "1.0.0",
+    "agents": {
+      "master": {
+        "role": "orchestrator",
+        "model": "opus",
+        "description": "Team leader — delegates, synthesizes, manages context",
+        "max_concurrent_delegates": 3
+      },
+      "planner": {
+        "role": "planner",
+        "model": "sonnet",
+        "description": "Requirement analysis and task breakdown",
+        "token_budget": 4000
+      },
+      "developer": {
+        "role": "executor",
+        "model": "sonnet",
+        "description": "Code implementation and feature development",
+        "token_budget": 8000
+      },
+      "debugger": {
+        "role": "executor",
+        "model": "sonnet",
+        "description": "Bug diagnosis and root cause analysis",
+        "token_budget": 6000
+      },
+      "reviewer": {
+        "role": "reviewer",
+        "model": "haiku",
+        "description": "Code review, style and security checks",
+        "token_budget": 3000
+      },
+      "architect": {
+        "role": "advisor",
+        "model": "opus",
+        "description": "System design and architecture decisions",
+        "token_budget": 6000
+      }
+    },
+    "model_tiers": {
+      "haiku": {
+        "use_for": ["review", "simple_queries", "style_checks"],
+        "cost_per_1k_input": 0.0008,
+        "cost_per_1k_output": 0.004
+      },
+      "sonnet": {
+        "use_for": ["implementation", "debugging", "planning", "standard_tasks"],
+        "cost_per_1k_input": 0.003,
+        "cost_per_1k_output": 0.015
+      },
+      "opus": {
+        "use_for": ["architecture", "complex_reasoning", "orchestration"],
+        "cost_per_1k_input": 0.015,
+        "cost_per_1k_output": 0.075
+      }
+    },
+    "token_optimization": {
+      "max_context_tool_calls": 120,
+      "warn_at_tool_calls": 80,
+      "auto_save_on_overflow": true,
+      "compress_intermediate_results": true,
+      "lazy_load_agent_context": true
+    }
+  }
+}

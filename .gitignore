@@ -1,0 +1,7 @@
+node_modules/
+state/sessions/*
+state/context/*
+!state/sessions/.gitkeep
+!state/context/.gitkeep
+.tdc/
+*.log

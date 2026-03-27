@@ -1,0 +1,17 @@
+{
+  "name": "techdog-claude",
+  "version": "1.0.0",
+  "description": "Claude Code multi-agent development architecture with token optimization",
+  "bin": {
+    "tdc": "./scripts/tdc"
+  },
+  "scripts": {
+    "install": "bash scripts/setup.sh",
+    "postinstall": "bash scripts/link.sh"
+  },
+  "keywords": ["claude-code", "multi-agent", "development", "orchestration"],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

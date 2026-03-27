@@ -1,0 +1,133 @@
+#!/bin/bash
+# tdc — TechDog Claude CLI wrapper
+# Usage: tdc <command> [args]
+# Commands: plan, dev, debug, review, session, status, init
+
+set -e
+
+TDC_VERSION="1.0.0"
+TDC_HOME="${TDC_HOME:-$HOME/.tdc}"
+TDC_PROJECT_DIR="$(pwd)"
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+show_help() {
+    cat << 'HELP'
+TechDog Claude (tdc) v1.0.0
+Multi-agent development orchestration for Claude Code
+
+USAGE:
+    tdc <command> [arguments]
+
+COMMANDS:
+    plan <desc>       Planning workflow — requirement analysis & task breakdown
+    dev <desc>        Development workflow — code implementation
+    debug <desc>      Debugging workflow — bug diagnosis & fix
+    review [files]    Code review workflow
+    session <action>  Session management (save|resume|list|clean)
+    status            Show current context & session status
+    init              Initialize .tdc/ in current project
+    help              Show this help message
+
+EXAMPLES:
+    tdc plan "Add user authentication with OAuth2"
+    tdc dev "Implement the login API endpoint"
+    tdc debug "TypeError in user service on line 42"
+    tdc review src/auth/
+    tdc session save
+    tdc session resume
+
+CLAUDE CODE INTEGRATION:
+    Inside Claude Code, use slash commands directly:
+    /tdc, /tdc-plan, /tdc-dev, /tdc-debug, /tdc-review, /tdc-session
+HELP
+}
+
+cmd_init() {
+    mkdir -p .tdc/{sessions,context,plans}
+    echo -e "${GREEN}[tdc]${NC} Initialized .tdc/ in $(pwd)"
+}
+
+cmd_status() {
+    bash "${TDC_HOME}/scripts/context-monitor.sh" "$TDC_PROJECT_DIR"
+}
+
+cmd_session() {
+    local action="${1:-list}"
+    local session_dir=".tdc/sessions"
+
+    case "$action" in
+        list)
+            if [ ! -d "$session_dir" ] || [ -z "$(ls -A "$session_dir" 2>/dev/null)" ]; then
+                echo -e "${YELLOW}[tdc]${NC} No saved sessions."
+                return
+            fi
+            echo "=== Saved Sessions ==="
+            for f in "$session_dir"/*.json; do
+                [ -f "$f" ] || continue
+                local id=$(basename "$f" .json)
+                local task=$(python3 -c "import json; d=json.load(open('$f')); print(d.get('task','(auto-save)'))" 2>/dev/null || echo "unknown")
+                echo "  $id — $task"
+            done
+            ;;
+        save)
+            echo -e "${BLUE}[tdc]${NC} Use /tdc-session save inside Claude Code for full context preservation."
+            ;;
+        resume)
+            local target="$2"
+            if [ -z "$target" ]; then
+                target=$(ls -t "$session_dir"/*.json 2>/dev/null | head -1)
+            else
+                target="$session_dir/${target}.json"
+            fi
+            if [ -f "$target" ]; then
+                echo -e "${GREEN}[tdc]${NC} Resuming session: $(basename "$target" .json)"
+                cat "$target"
+            else
+                echo -e "${RED}[tdc]${NC} No session found to resume."
+            fi
+            ;;
+        clean)
+            find "$session_dir" -name "*.json" -mtime +7 -delete 2>/dev/null
+            echo -e "${GREEN}[tdc]${NC} Cleaned sessions older than 7 days."
+            ;;
+        *)
+            echo -e "${RED}[tdc]${NC} Unknown session action: $action"
+            ;;
+    esac
+}
+
+# Route to Claude Code with appropriate skill
+cmd_claude() {
+    local skill="$1"
+    shift
+    local args="$*"
+
+    if command -v claude &> /dev/null; then
+        echo -e "${BLUE}[tdc]${NC} Launching Claude Code with /${skill}..."
+        claude --skill "$skill" --args "$args" 2>/dev/null || \
+        claude -p "/$skill $args"
+    else
+        echo -e "${RED}[tdc]${NC} Claude Code CLI not found. Install it first:"
+        echo "  npm install -g @anthropic-ai/claude-code"
+    fi
+}
+
+# Main routing
+case "${1:-help}" in
+    plan)    shift; cmd_claude "tdc-plan" "$@" ;;
+    dev)     shift; cmd_claude "tdc-dev" "$@" ;;
+    debug)   shift; cmd_claude "tdc-debug" "$@" ;;
+    review)  shift; cmd_claude "tdc-review" "$@" ;;
+    session) shift; cmd_session "$@" ;;
+    status)  cmd_status ;;
+    init)    cmd_init ;;
+    help|-h|--help) show_help ;;
+    version|-v|--version) echo "tdc v${TDC_VERSION}" ;;
+    *)       cmd_claude "tdc" "$@" ;;
+esac
