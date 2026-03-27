@@ -57,6 +57,131 @@ Claude Code 안에서 직접 사용:
 /tdc-session <cmd>    세션 관리 — save / resume / list / clean
 ```
 
+## Example: Flask 서버 만들기
+
+"간단한 Flask REST API 서버를 만들고 싶다"는 상황을 예시로 전체 워크플로우를 보여줍니다.
+
+### Step 1. 기획 — `/tdc-plan`
+
+Claude Code에서 다음과 같이 입력합니다:
+
+```
+/tdc-plan 간단한 Flask REST API 서버. 유저 CRUD + 헬스체크 엔드포인트. SQLite 사용.
+```
+
+**Planner Agent (sonnet)** 가 요구사항을 분석하고 태스크를 분해합니다:
+
+```markdown
+## Plan: Flask User CRUD API
+
+### Goal
+SQLite 기반 Flask REST API 서버 구축 (User CRUD + 헬스체크)
+
+### Tasks
+1. [ ] 프로젝트 초기화 (requirements.txt, app.py) — complexity: low — agent: developer
+2. [ ] SQLite DB 모델 정의 (User 테이블) — complexity: low — agent: developer
+3. [ ] CRUD 엔드포인트 구현 (GET/POST/PUT/DELETE /users) — complexity: mid — agent: developer
+4. [ ] 헬스체크 엔드포인트 (GET /health) — complexity: low — agent: developer
+5. [ ] 에러 핸들링 및 입력 검증 — complexity: mid — agent: developer
+6. [ ] 테스트 작성 — complexity: mid — agent: developer
+
+### Acceptance Criteria
+- [ ] GET /health 200 응답
+- [ ] User CRUD 전체 동작
+- [ ] 잘못된 입력 시 적절한 에러 응답
+```
+
+플랜이 `.tdc/plans/flask-user-crud.md`에 저장됩니다.
+
+### Step 2. 개발 — `/tdc-dev`
+
+플랜을 승인하면 개발 워크플로우를 시작합니다:
+
+```
+/tdc-dev flask-user-crud 플랜대로 구현해줘
+```
+
+**Developer Agent (sonnet)** 가 플랜을 읽고 순서대로 구현합니다:
+
+```
+app.py           ← Flask 앱 + 라우트 정의
+models.py        ← SQLAlchemy User 모델
+requirements.txt ← flask, flask-sqlalchemy
+tests/test_app.py ← pytest 기반 API 테스트
+```
+
+### Step 3. 디버깅 (필요시) — `/tdc-debug`
+
+만약 서버 실행 중 에러가 발생하면:
+
+```
+/tdc-debug flask run 하면 "sqlalchemy.exc.OperationalError: no such table: user" 에러 발생
+```
+
+**Debugger Agent (sonnet)** 가 근본 원인을 추적합니다:
+
+```markdown
+### Bug Report
+**Symptom:** 서버 시작 시 user 테이블 없음 에러
+**Root Cause:** db.create_all()이 app context 밖에서 호출됨
+**Location:** app.py:15
+
+### Fix Applied
+- app.py — with app.app_context(): db.create_all() 추가
+```
+
+### Step 4. 리뷰 — `/tdc-review`
+
+구현이 끝나면 코드 리뷰를 요청합니다:
+
+```
+/tdc-review
+```
+
+**Reviewer Agent (haiku)** 가 빠르게 체크합니다:
+
+```markdown
+### Review: APPROVE
+
+**Warnings:**
+- app.py:8 — SECRET_KEY가 하드코딩됨 → 환경변수로 분리 권장
+- models.py:12 — email 필드에 unique 제약 없음 → unique=True 추가 권장
+
+**Summary:** CRUD 로직 정상. 보안/데이터 무결성 개선 권장.
+```
+
+### Step 5. 세션 관리 (대규모 작업 시)
+
+작업이 길어지면 Master Agent가 자동으로 컨텍스트를 관리합니다:
+
+```
+[TDC] WARNING: High context usage (80 tool calls). Consider saving session.
+```
+
+```
+/tdc-session save    ← 현재 진행 상황 저장
+```
+
+새 Claude Code 세션을 열고:
+
+```
+/tdc-session resume  ← 이전 세션에서 이어서 작업
+```
+
+### 전체 흐름 요약
+
+```
+/tdc-plan "Flask REST API 서버"     ← Planner가 태스크 분해
+         ↓ 승인
+/tdc-dev "플랜대로 구현"              ← Developer가 코드 작성
+         ↓ 에러 발생 시
+/tdc-debug "에러 메시지"              ← Debugger가 진단 & 수정
+         ↓ 구현 완료
+/tdc-review                          ← Reviewer가 코드 리뷰
+         ↓ 컨텍스트 초과 시
+/tdc-session save → resume           ← 세션 저장 & 재개
+```
+
 ## Architecture
 
 ```
