@@ -49,7 +49,18 @@ HELP
 
 cmd_init() {
     mkdir -p .tdc/{sessions,context,plans}
-    echo -e "${GREEN}[tdc]${NC} Initialized .tdc/ in $(pwd)"
+    mkdir -p .claude/{skills,agents}
+
+    # Copy skills & agents to project-local .claude/ for Claude Code to find
+    if [ -d "$TDC_HOME/skills" ]; then
+        cp -r "$TDC_HOME/skills/"* .claude/skills/ 2>/dev/null || true
+    fi
+    if [ -d "$TDC_HOME/agents" ]; then
+        cp -r "$TDC_HOME/agents/"* .claude/agents/ 2>/dev/null || true
+    fi
+
+    echo -e "${GREEN}[tdc]${NC} Initialized .tdc/ and .claude/ in $(pwd)"
+    echo -e "${GREEN}[tdc]${NC} Skills & agents are ready. Run 'claude' then '/tdc spec.md'"
 }
 
 cmd_status() {

@@ -141,6 +141,14 @@ install_global() {
     cp -r "$TDC_HOME/.repo/.claude/hooks/"* "$TDC_HOME/hooks/" 2>/dev/null || true
     cp -r "$TDC_HOME/.repo/scripts/"* "$TDC_HOME/scripts/" 2>/dev/null || true
 
+    # Install skills & agents to Claude Code global path (~/.claude/)
+    # This is where Claude Code actually looks for skills and agents
+    CLAUDE_DIR="$HOME/.claude"
+    mkdir -p "$CLAUDE_DIR/skills" "$CLAUDE_DIR/agents"
+    cp -r "$TDC_HOME/.repo/.claude/skills/"* "$CLAUDE_DIR/skills/" 2>/dev/null || true
+    cp -r "$TDC_HOME/.repo/.claude/agents/"* "$CLAUDE_DIR/agents/" 2>/dev/null || true
+    echo -e "${GREEN}[tdc]${NC} Skills & agents installed to $CLAUDE_DIR/"
+
     # Make scripts executable
     chmod +x "$TDC_HOME/scripts/"* 2>/dev/null || true
     chmod +x "$TDC_HOME/hooks/"* 2>/dev/null || true
