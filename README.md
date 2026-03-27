@@ -2,20 +2,47 @@
 
 > Claude Code를 위한 멀티 에이전트 개발 오케스트레이션 시스템
 
-**스펙 파일 하나만 쓰면, AI 에이전트 팀이 기획부터 개발까지 진행합니다.**
+**만들고 싶은 것을 문서로 적고, `/tdc spec.md` 한 줄이면 AI 에이전트 팀이 기획부터 개발까지 해줍니다.**
+
+---
+
+## 이게 뭔가요?
+
+[Claude Code](https://claude.ai/code)는 터미널에서 AI와 대화하며 코드를 작성하는 도구입니다.
+
+TechDog Claude(tdc)는 이 Claude Code 위에 **6명의 전문 AI 에이전트**를 배치하여,
+혼자 하는 코딩을 **팀 개발**처럼 바꿔줍니다.
 
 ```
-spec.md 작성  →  /tdc spec.md  →  기획 → 개발 → 리뷰 → 완성
+평소:  나 ↔ Claude (1:1 대화)
+
+tdc:   나 → Master Agent → Planner    (기획)
+                         → Developer  (개발)
+                         → Debugger   (디버깅)
+                         → Reviewer   (리뷰)
+                         → Architect  (설계)
 ```
 
 ---
 
-## 처음 사용하시나요?
+## 설치
 
-### 1단계: 설치
+### 사전 준비
+
+1. **Node.js** (18 이상) — [설치](https://nodejs.org/)
+2. **Claude Code** 설치:
+   ```bash
+   npm install -g @anthropic-ai/claude-code
+   ```
+3. Claude Code 로그인:
+   ```bash
+   claude    # 처음 실행하면 로그인 안내가 나옵니다
+   ```
+
+### tdc 설치
 
 ```bash
-# 방법 A: 원격 설치
+# 방법 A: 원격 설치 (권장)
 curl -sSL https://raw.githubusercontent.com/dogyuHwang/techdog-claude/main/install.sh | bash
 
 # 방법 B: 클론 후 설치
@@ -23,323 +50,332 @@ git clone https://github.com/dogyuHwang/techdog-claude.git
 cd techdog-claude && bash install.sh
 ```
 
-> **필수 조건:** [Claude Code CLI](https://claude.ai/code)가 설치되어 있어야 합니다.
-> ```bash
-> npm install -g @anthropic-ai/claude-code
-> ```
-
-### 2단계: 프로젝트 초기화
-
-만들고 싶은 프로젝트 폴더에서:
-
-```bash
-mkdir my-project && cd my-project
-tdc init
-```
-
-이렇게 하면 두 가지가 생깁니다:
-- `.tdc/` — tdc가 사용하는 상태 폴더
-- `spec-template.md` — **여기에 만들고 싶은 것을 작성합니다**
-
-### 3단계: 스펙 작성
-
-`spec-template.md`를 `spec.md`로 복사하고 내용을 채웁니다:
-
-```markdown
-# Flask User API
-
-## 목적
-유저 관리용 REST API 서버
-
-## 기술 스택
-- 언어: Python 3.11+
-- 프레임워크: Flask
-- DB: SQLite
-- 인증: JWT
-
-## 기능 목록
-- [ ] 회원가입
-- [ ] 로그인 (JWT 발급)
-- [ ] 유저 CRUD
-- [ ] 헬스체크
-
-## API 엔드포인트
-| Method | Path           | Description |
-|--------|----------------|-------------|
-| POST   | /auth/register | 회원가입     |
-| POST   | /auth/login    | 로그인       |
-| GET    | /users         | 유저 목록    |
-| GET    | /users/:id     | 유저 조회    |
-| PUT    | /users/:id     | 유저 수정    |
-| DELETE | /users/:id     | 유저 삭제    |
-| GET    | /health        | 헬스체크     |
-
-## 기타 요구사항
-- 비밀번호 bcrypt 해싱
-- 에러 응답 JSON 통일
-- pytest 테스트
-```
-
-> **팁:** 스펙은 자유 형식입니다. 위 형식을 꼭 따를 필요 없이, 만들고 싶은 것을 자유롭게 적으면 됩니다.
-
-### 4단계: 실행!
-
-Claude Code를 열고:
-
-```
-/tdc spec.md
-```
-
-또는 터미널에서:
-
-```bash
-tdc spec.md
-```
-
-그러면 이런 일이 일어납니다:
-
-```
-📄 spec.md 읽기
-    ↓
-🧠 Planner Agent — 스펙을 분석하고 태스크 목록 생성
-    ↓
-📋 플랜을 보여주고 "이대로 진행할까요?" 확인
-    ↓  승인
-💻 Developer Agent — 태스크별로 코드 구현
-    ↓
-🔍 Reviewer Agent — 자동 코드 리뷰
-    ↓
-✅ 완성!
-```
+설치하면 자동으로:
+- `tdc` 명령어가 터미널에 등록됩니다
+- Claude Code에 `/tdc` 슬래시 커맨드가 추가됩니다
+- [rtk](https://github.com/rtk-ai/rtk) (토큰 60-90% 절감 도구)가 함께 설치됩니다
+- Claude Code Team 모드가 활성화됩니다
 
 ---
 
-## 전체 워크플로우 예제: Flask REST API 서버
+## 사용법 (처음부터 따라하기)
 
-### 1. 기획
+### 0. Claude Code란?
+
+Claude Code는 **터미널(명령 프롬프트)**에서 실행하는 AI 코딩 도구입니다.
+
+```bash
+# 터미널을 열고 아무 폴더에서:
+claude
+```
+
+이렇게 치면 Claude Code가 실행되고, AI와 대화할 수 있는 입력창이 나타납니다.
+이 입력창 안에서 `/tdc` 같은 슬래시(/) 명령어를 사용합니다.
+
+```
+╭─────────────────────────────────────────╮
+│ Claude Code                             │
+│                                         │
+│ > 여기에 타이핑합니다                      │
+│ > /tdc spec.md    ← 이렇게 입력          │
+╰─────────────────────────────────────────╯
+```
+
+### 1. 프로젝트 시작
+
+먼저 터미널에서 프로젝트 폴더를 만들고 초기화합니다:
+
+```bash
+mkdir my-project
+cd my-project
+tdc init         # .tdc/ 폴더가 생깁니다
+```
+
+### 2. 스펙 파일 작성
+
+**스펙 파일**은 "내가 뭘 만들고 싶은지" 적은 문서입니다.
+형식은 자유이고, 메모장이나 에디터로 `spec.md` 파일을 만들면 됩니다.
+
+**예시 — 간단한 웹 서버:**
+
+```markdown
+# 내 블로그 API
+
+## 목적
+블로그 글을 관리하는 REST API 서버
+
+## 기술 스택
+- Python + Flask
+- SQLite
+
+## 기능
+- 글 작성 (제목, 내용, 작성자)
+- 글 목록 조회
+- 글 수정 / 삭제
+- 헬스체크 엔드포인트
+```
+
+**예시 — React 앱:**
+
+```markdown
+# 할일 관리 앱
+
+## 목적
+간단한 Todo 앱
+
+## 기술 스택
+- React + TypeScript
+- localStorage 저장
+
+## 기능
+- 할일 추가 / 삭제 / 완료 체크
+- 필터링 (전체 / 완료 / 미완료)
+- 다크모드
+```
+
+**예시 — CLI 도구:**
+
+```markdown
+# 파일 정리 스크립트
+
+## 목적
+다운로드 폴더의 파일을 확장자별로 자동 분류
+
+## 기술 스택
+- Python
+
+## 기능
+- 지정한 폴더를 스캔
+- 확장자별로 하위 폴더로 이동 (images/, docs/, videos/ 등)
+- 중복 파일 감지
+- dry-run 모드 (실제로 옮기지 않고 미리보기)
+```
+
+> 한국어/영어 모두 OK. 완벽하지 않아도 됩니다. AI가 부족한 부분은 물어봅니다.
+
+### 3. 실행
+
+터미널에서 Claude Code를 열고 `/tdc` 명령어를 입력합니다:
+
+```bash
+claude               # Claude Code 실행
+```
+
+Claude Code 입력창에서:
 
 ```
 /tdc spec.md
 ```
 
-Planner Agent가 스펙을 읽고 태스크를 분해합니다:
-
-```markdown
-## Plan: Flask User API
-
-### 태스크
-1. [ ] 프로젝트 초기화 (requirements.txt, 디렉토리 구조) — low
-2. [ ] DB 모델 정의 (User, SQLAlchemy) — low
-3. [ ] 인증 엔드포인트 (register, login) — mid
-4. [ ] CRUD 엔드포인트 (/users) — mid
-5. [ ] 에러 핸들링 & 입력 검증 — mid
-6. [ ] 테스트 작성 (pytest) — mid
-
-### 검증 기준
-- [ ] GET /health → 200
-- [ ] 회원가입 → 로그인 → JWT 발급 성공
-- [ ] CRUD 전체 동작
-- [ ] 잘못된 입력 → 에러 응답
-```
-
-> "이 플랜대로 진행할까요?" → **Y**
-
-### 2. 개발
-
-승인하면 Developer Agent가 순서대로 구현합니다:
+그러면 이런 일이 벌어집니다:
 
 ```
-✅ Task 1: requirements.txt, app.py, models.py 생성
-✅ Task 2: User 모델 정의
-✅ Task 3: /auth/register, /auth/login 구현
-✅ Task 4: /users CRUD 구현
-✅ Task 5: 에러 핸들링 추가
-✅ Task 6: tests/test_app.py 작성
+1. 스펙 파일을 읽습니다
+2. Planner Agent가 태스크를 분해합니다
+   └─ "이 플랜대로 진행할까요?" 라고 물어봅니다
+3. "Y" 하면 Developer Agent가 코드를 작성합니다
+4. Reviewer Agent가 코드를 검토합니다
+5. 완성!
 ```
 
-### 3. 문제 발생 시
+### 4. 문제가 생기면
 
-서버 실행 중 에러가 나면:
-
-```
-/tdc-debug flask run 하면 "OperationalError: no such table: user" 에러
-```
-
-Debugger Agent가 원인을 찾고 수정합니다:
+코드를 실행했는데 에러가 나면, Claude Code 입력창에 이렇게 치세요:
 
 ```
-Root Cause: db.create_all()이 app context 밖에서 호출됨
-Fix: app.py:15에 with app.app_context(): db.create_all() 추가
+/tdc-debug 서버 실행하면 "ModuleNotFoundError: No module named flask" 에러가 나요
 ```
 
-### 4. 코드 리뷰
+에러 메시지를 그대로 복붙하면 됩니다. Debugger Agent가 원인을 찾고 고쳐줍니다.
+
+### 5. 코드 리뷰
+
+개발이 끝나면:
 
 ```
 /tdc-review
 ```
 
-Reviewer Agent가 빠르게 체크합니다:
+Reviewer Agent가 보안 문제, 버그 가능성, 개선점을 체크합니다.
+
+### 6. 작업이 길어질 때 (세션 관리)
+
+오랜 작업 중 "컨텍스트 사용량이 높습니다"라는 경고가 나오면:
 
 ```
-Review: APPROVE
-Warnings:
-- app.py:8 — SECRET_KEY 하드코딩 → 환경변수로 분리
-- models.py:12 — email에 unique 제약 없음
+/tdc-session save      # 지금까지 한 것 저장
 ```
 
-### 5. 컨텍스트가 찰 때
-
-작업이 길어지면 자동으로 알려줍니다:
+Claude Code를 다시 열고:
 
 ```
-[TDC] WARNING: 컨텍스트 사용량이 높습니다 (80 tool calls)
-```
-
-```
-/tdc-session save     ← 진행 상황 저장
-```
-
-새 Claude Code 세션을 열고:
-
-```
-/tdc-session resume   ← 이전 작업 이어서 진행
+/tdc-session resume    # 이전 작업 이어서 계속
 ```
 
 ---
 
-## 명령어 정리
+## 명령어 모음
 
-### Claude Code 안에서 (슬래시 커맨드)
+모든 명령어는 **Claude Code 입력창** 안에서 사용합니다.
+(터미널에서 `claude`를 실행한 후 나오는 입력창)
 
-| 명령어 | 설명 | 예시 |
-|--------|------|------|
-| `/tdc <file.md>` | 스펙 파일로 전체 워크플로우 시작 | `/tdc spec.md` |
-| `/tdc <설명>` | 텍스트로 간단히 지시 | `/tdc 로그인 기능 추가해줘` |
-| `/tdc-plan <file\|설명>` | 기획만 진행 | `/tdc-plan api-spec.md` |
-| `/tdc-dev <file\|설명>` | 개발만 진행 | `/tdc-dev` (최신 플랜 사용) |
-| `/tdc-debug <설명>` | 버그 진단 & 수정 | `/tdc-debug "에러 메시지"` |
-| `/tdc-review [files]` | 코드 리뷰 | `/tdc-review` |
-| `/tdc-session <cmd>` | 세션 관리 | `/tdc-session resume` |
+### 기본 명령어
 
-### 터미널에서
+| 입력하는 것 | 무슨 일이 벌어지는지 |
+|------------|-------------------|
+| `/tdc spec.md` | 스펙 파일을 읽고 기획 → 개발 → 리뷰까지 진행 |
+| `/tdc 로그인 기능 추가해줘` | 텍스트로 간단히 지시 (스펙 파일 없이) |
+| `/tdc-plan spec.md` | 기획만 하고 멈춤 (플랜 확인 후 직접 개발 진행할 때) |
+| `/tdc-dev` | 가장 최근 플랜을 기반으로 개발 시작 |
+| `/tdc-debug <에러 내용>` | 에러 메시지를 주면 원인 찾고 고쳐줌 |
+| `/tdc-review` | 지금까지 변경한 코드를 리뷰 |
+
+### 세션 관리
+
+| 입력하는 것 | 무슨 일이 벌어지는지 |
+|------------|-------------------|
+| `/tdc-session save` | 현재 진행 상황을 파일로 저장 |
+| `/tdc-session resume` | 저장한 세션에서 이어서 작업 |
+| `/tdc-session list` | 저장된 세션 목록 보기 |
+| `/tdc-session clean` | 7일 이상 된 세션 삭제 |
+
+### 터미널 명령어 (Claude Code 밖에서)
+
+Claude Code를 실행하지 않고 터미널에서 직접 쓸 수도 있습니다:
 
 ```bash
-tdc init                  # 프로젝트 초기화 + 스펙 템플릿 생성
-tdc template my-spec.md   # 빈 스펙 템플릿 생성
-tdc spec.md               # 스펙 파일로 시작
-tdc plan spec.md          # 기획만
-tdc dev                   # 개발 (최신 플랜 사용)
-tdc debug "에러 메시지"    # 디버깅
-tdc review                # 코드 리뷰
-tdc session list           # 저장된 세션 목록
-tdc session resume         # 마지막 세션 재개
-tdc status                 # 컨텍스트 상태 확인
+tdc init              # 프로젝트 초기화
+tdc spec.md           # Claude Code를 열면서 스펙 파일 전달
+tdc status            # 현재 세션 상태 확인
+tdc session list      # 저장된 세션 목록
+tdc session resume    # 이전 세션 재개
+tdc --help            # 도움말
 ```
 
 ---
 
-## Architecture
+## 아키텍처
+
+### 에이전트 팀 구성
 
 ```
-사용자가 spec.md 작성
-        ↓
-    /tdc spec.md
-        ↓
-┌─── Master Agent (opus) ── 오케스트레이션 ───┐
-│       ↓                                      │
-│   Planner (sonnet) ─── 태스크 분해           │
-│       ↓                                      │
-│   Developer (sonnet) ── 코드 구현            │
-│       ↓ (에러 시)                            │
-│   Debugger (sonnet) ─── 진단 & 수정          │
-│       ↓                                      │
-│   Reviewer (haiku) ──── 코드 리뷰            │
-│       ↓ (아키텍처 이슈 시)                    │
-│   Architect (opus) ──── 설계 판단            │
-└──────────────────────────────────────────────┘
+사용자 → spec.md 작성
+              ↓
+         /tdc spec.md
+              ↓
+┌─── Master Agent (opus) ─── 팀 리더 ─────────┐
+│                                               │
+│   Planner (sonnet) ── 스펙 → 태스크 분해      │
+│       ↓                                       │
+│   Developer (sonnet) ── 태스크별 코드 구현     │
+│       ↓ (에러 시)                              │
+│   Debugger (sonnet) ── 원인 진단 & 수정        │
+│       ↓                                       │
+│   Reviewer (haiku) ── 코드 리뷰               │
+│       ↓ (설계 이슈 시)                         │
+│   Architect (opus) ── 아키텍처 판단            │
+└───────────────────────────────────────────────┘
 ```
 
-### 에이전트 역할
+### 왜 에이전트를 나누나요?
 
-| Agent | Model | 비용 | 역할 |
-|-------|-------|------|------|
-| **Master** | opus | 높음 | 팀 리더. 에이전트 위임, 컨텍스트 관리, 세션 전환 |
-| **Planner** | sonnet | 중간 | 요구사항 분석, 태스크 분해, PRD 생성 |
-| **Developer** | sonnet | 중간 | 코드 구현, 기능 개발, 테스트 작성 |
-| **Debugger** | sonnet | 중간 | 버그 진단, 근본 원인 분석, 수정 |
-| **Reviewer** | haiku | 낮음 | 코드 리뷰, 보안 체크, 품질 검증 |
-| **Architect** | opus | 높음 | 시스템 설계, 기술 스택 결정 (필요시만) |
+| Agent | AI 모델 | 비용 | 하는 일 |
+|-------|---------|------|--------|
+| **Master** | opus (고성능) | 높음 | 전체 지휘. 누구한테 뭘 시킬지 판단 |
+| **Planner** | sonnet (범용) | 중간 | "뭘 만들어야 하는지" 정리 |
+| **Developer** | sonnet (범용) | 중간 | 실제 코드 작성 |
+| **Debugger** | sonnet (범용) | 중간 | 버그 찾아서 고침 |
+| **Reviewer** | haiku (경량) | 낮음 | 코드 검토 (빠르고 저렴) |
+| **Architect** | opus (고성능) | 높음 | 큰 그림 설계 (필요할 때만) |
 
-### 토큰 최적화
+간단한 리뷰에 비싼 opus를 쓸 필요가 없습니다.
+모델을 역할에 맞게 배치해서 **비용을 30-50% 절감**합니다.
 
-비용을 30-50% 절감:
+### 토큰 절감 전략
 
-| 전략 | 설명 |
-|------|------|
-| **Model Tiering** | 간단한 작업은 haiku, 일반 작업은 sonnet, 복잡한 판단만 opus |
-| **Context Compression** | 컨텍스트 차면 자동 요약 후 새 세션 |
-| **Focused Delegation** | 에이전트에 최소 필요 컨텍스트만 전달 |
-| **Session Persistence** | 저장 & 재개로 중복 처리 방지 |
-| **Lazy Loading** | 필요한 에이전트만 활성화 |
+| 방법 | 설명 | 절감 효과 |
+|------|------|----------|
+| **모델 티어링** | 역할별로 haiku/sonnet/opus 배치 | 30-50% |
+| **rtk** | 명령어 출력을 자동 압축 ([rtk-ai/rtk](https://github.com/rtk-ai/rtk)) | 60-90% |
+| **컨텍스트 압축** | 오래된 대화 자동 요약 후 새 세션 | 중복 제거 |
+| **최소 컨텍스트 전달** | 에이전트에 필요한 정보만 전달 | 불필요한 토큰 제거 |
+| **세션 저장/재개** | 처음부터 다시 설명할 필요 없음 | 재작업 방지 |
+
+### 세션 관리 (컨텍스트 오버플로)
+
+AI와 오래 대화하면 "컨텍스트"가 가득 차서 이전 내용을 잊게 됩니다.
+tdc는 이걸 자동으로 관리합니다:
+
+```
+대화 중...
+  ↓ (도구 호출 80회) → "컨텍스트가 높습니다" 경고
+  ↓ (도구 호출 120회) → 자동으로 진행 상황 저장
+  ↓
+/tdc-session resume  →  이전 맥락을 불러와서 이어서 작업
+```
 
 ---
 
 ## 디렉토리 구조
 
 ```
-techdog-claude/                     # 이 레포지토리
-├── .claude/
-│   ├── agents/                     # 에이전트 정의
-│   │   ├── master.md               # 팀 리더
-│   │   ├── planner.md              # 기획자
-│   │   ├── developer.md            # 개발자
-│   │   ├── debugger.md             # 디버거
-│   │   ├── reviewer.md             # 리뷰어
-│   │   └── architect.md            # 아키텍트
-│   ├── skills/                     # 슬래시 커맨드
-│   │   ├── tdc.md                  # /tdc (메인)
-│   │   ├── tdc-plan.md             # /tdc-plan
-│   │   ├── tdc-dev.md              # /tdc-dev
-│   │   ├── tdc-debug.md            # /tdc-debug
-│   │   ├── tdc-review.md           # /tdc-review
-│   │   └── tdc-session.md          # /tdc-session
-│   └── hooks/                      # 자동화 훅
-├── scripts/tdc                     # CLI
-├── templates/
-│   ├── spec-template.md            # 빈 스펙 템플릿
-│   └── examples/
-│       └── flask-api-spec.md       # Flask API 예제 스펙
-├── install.sh                      # 설치 스크립트
-├── CLAUDE.md                       # Claude Code 프로젝트 지침
-└── MAINTENANCE.md                  # 유지보수 가이드
+~/.tdc/                         # 글로벌 설치 (한 번 설치하면 어디서든 사용)
+  agents/                       # 에이전트 정의 파일들
+  skills/                       # 슬래시 커맨드 정의 파일들
+  hooks/                        # 자동화 스크립트
+  scripts/tdc                   # tdc CLI
 
-~/.tdc/                             # 글로벌 설치 (설치 시 생성)
-
-your-project/                       # 사용자 프로젝트
-├── .tdc/                           # tdc init 시 생성
-│   ├── sessions/                   # 세션 저장
-│   ├── context/                    # 컨텍스트 모니터링
-│   └── plans/                      # 생성된 플랜
-└── spec.md                         # 사용자가 작성하는 스펙
+your-project/                   # 사용자의 프로젝트 폴더
+├── .tdc/                       # tdc init 시 생성 (gitignore 권장)
+│   ├── sessions/               # 저장된 세션
+│   ├── context/                # 컨텍스트 모니터링
+│   └── plans/                  # 생성된 플랜
+├── spec.md                     # 사용자가 작성하는 스펙
+└── (개발 코드들...)
 ```
+
+---
+
+## FAQ
+
+**Q: Claude Code가 뭔가요?**
+A: Anthropic이 만든 AI 코딩 도구입니다. 터미널에서 `claude`를 치면 실행됩니다.
+자세한 내용은 [claude.ai/code](https://claude.ai/code)를 참고하세요.
+
+**Q: 유료인가요?**
+A: Claude Code는 Anthropic API 사용량에 따라 과금됩니다.
+tdc 자체는 무료이며, 모델 티어링과 rtk로 비용을 최소화합니다.
+
+**Q: spec.md는 꼭 써야 하나요?**
+A: 아닙니다. `/tdc 로그인 기능 만들어줘`처럼 직접 타이핑해도 됩니다.
+하지만 복잡한 프로젝트일수록 스펙 파일을 쓰는 게 결과가 좋습니다.
+
+**Q: 어떤 언어/프레임워크를 지원하나요?**
+A: 제한 없습니다. Python, JavaScript, TypeScript, Go, Rust, Java, Swift, Kotlin 등
+Claude가 지원하는 모든 언어로 개발할 수 있습니다.
+
+**Q: 기존 프로젝트에도 쓸 수 있나요?**
+A: 네. 기존 프로젝트 폴더에서 `tdc init` 후 바로 사용 가능합니다.
 
 ---
 
 ## Requirements
 
-- [Claude Code CLI](https://claude.ai/code) v2.0+
+- [Claude Code](https://claude.ai/code) v2.0+
 - macOS or Linux
+- Node.js 18+
 - bash 4+
 - python3
 - git
 
 ## Maintenance
 
-에이전트 추가, 스킬 변경, 아키텍처 수정은 [`MAINTENANCE.md`](MAINTENANCE.md)를 참고하세요.
+에이전트 추가, 스킬 변경, 아키텍처 수정은 [MAINTENANCE.md](MAINTENANCE.md)를 참고하세요.
 
 ## Inspired By
 
-- [oh-my-claudecode](https://github.com/yeachan-heo/oh-my-claudecode)
+- [oh-my-claudecode](https://github.com/yeachan-heo/oh-my-claudecode) — Claude Code 멀티 에이전트 프레임워크
+- [rtk](https://github.com/rtk-ai/rtk) — LLM 토큰 절감 CLI 프록시
 
 ## License
 

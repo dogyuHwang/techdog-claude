@@ -33,6 +33,7 @@ Multi-agent development orchestration system for Claude Code.
 
 - 스펙 원문은 planner에게만. 다른 에이전트에는 플랜/태스크만 전달.
 - haiku → sonnet → opus 순으로 비용 효율적 라우팅.
+- rtk (https://github.com/rtk-ai/rtk) 로 명령어 출력 자동 압축 (60-90% 절감).
 - 컨텍스트 오버플로 시 자동 세션 저장 (.tdc/sessions/).
 
 ## State Directory

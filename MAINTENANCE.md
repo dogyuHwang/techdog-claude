@@ -61,6 +61,12 @@ techdog-claude/
 
 ## Key Design Decisions
 
+### 0. rtk 통합 (토큰 60-90% 절감)
+- install.sh에서 자동 설치 (`install_rtk` 함수)
+- `rtk init -g`로 Claude Code Bash hook에 등록 (`setup_rtk` 함수)
+- Bash 명령어 출력을 자동 압축하여 컨텍스트 절약
+- rtk 관련 수정: install.sh의 `install_rtk()`, `setup_rtk()` 함수
+
 ### 1. Model Tiering (토큰 최적화 핵심)
 - **haiku**: reviewer만 사용. 비용 최소화. 간단한 체크리스트 기반 작업.
 - **sonnet**: planner, developer, debugger. 대부분의 실무 작업.

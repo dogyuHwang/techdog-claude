@@ -4,7 +4,7 @@
 
 set -e
 
-TDC_VERSION="1.0.0"
+TDC_VERSION="1.1.0"
 TDC_HOME="${TDC_HOME:-$HOME/.tdc}"
 TDC_PROJECT_DIR="$(pwd)"
 
@@ -18,121 +18,38 @@ NC='\033[0m'
 
 show_help() {
     cat << 'HELP'
-TechDog Claude (tdc) v1.0.0
+TechDog Claude (tdc) v1.1.0
 Multi-agent development orchestration for Claude Code
 
 USAGE:
-    tdc <file.md>             Spec 파일로 기획 → 개발 시작
+    tdc <file.md>             스펙 파일로 기획 → 개발 시작
     tdc <command> [arguments]  서브커맨드 실행
 
 COMMANDS:
-    <file.md>         Spec/Plan 파일을 읽고 자동 라우팅
-    plan <file|desc>  기획 워크플로우 — 요구사항 분석 & 태스크 분해
-    dev  <file|desc>  개발 워크플로우 — 코드 구현
-    debug <desc>      디버깅 워크플로우 — 버그 진단 & 수정
+    <file.md>         스펙/플랜 파일을 읽고 자동 라우팅
+    plan <file|desc>  기획 워크플로우
+    dev  <file|desc>  개발 워크플로우
+    debug <desc>      디버깅 워크플로우
     review [files]    코드 리뷰 워크플로우
     session <action>  세션 관리 (save|resume|list|clean)
     status            컨텍스트 & 세션 상태 확인
-    init              프로젝트에 .tdc/ 초기화 + 스펙 템플릿 생성
-    template          빈 스펙 템플릿 생성
+    init              프로젝트에 .tdc/ 초기화
     help              도움말
 
-QUICK START:
-    1. tdc init                      .tdc/ 초기화 + spec-template.md 생성
-    2. (spec.md 작성)                 만들고 싶은 것을 정리
-    3. tdc spec.md                   기획 → 개발 시작!
-
 EXAMPLES:
-    tdc spec.md                      스펙 파일 기반 전체 워크플로우
-    tdc plan my-api.md               스펙 파일 기반 기획만
-    tdc dev                          최신 플랜으로 개발 진행
-    tdc debug "TypeError on line 42" 버그 수정
-    tdc review                       최근 변경 코드 리뷰
-
-CLAUDE CODE (inside Claude Code session):
-    /tdc spec.md
-    /tdc plan spec.md
-    /tdc-dev
-    /tdc-debug "error message"
-    /tdc-review
-    /tdc-session resume
+    tdc init                      프로젝트 초기화
+    tdc spec.md                   스펙 파일 기반 전체 워크플로우
+    tdc plan my-api.md            기획만
+    tdc dev                       최신 플랜으로 개발
+    tdc debug "TypeError line 42" 버그 수정
+    tdc review                    코드 리뷰
+    tdc session resume            이전 세션 이어서
 HELP
 }
 
 cmd_init() {
     mkdir -p .tdc/{sessions,context,plans}
-
-    # Copy spec template if not exists
-    if [ ! -f "spec-template.md" ]; then
-        if [ -f "$TDC_HOME/.repo/templates/spec-template.md" ]; then
-            cp "$TDC_HOME/.repo/templates/spec-template.md" ./spec-template.md
-        else
-            # Inline fallback template
-            cat > spec-template.md << 'TMPL'
-# 프로젝트 이름
-
-## 목적
-<!-- 무엇을 만들고, 왜 만드는지 한두 줄로 -->
-
-
-## 기술 스택
-- 언어:
-- 프레임워크:
-- DB:
-- 기타:
-
-## 기능 목록
-- [ ]
-- [ ]
-- [ ]
-
-## API 엔드포인트 (해당 시)
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | /health | 헬스체크 |
-
-## 기타 요구사항 (선택)
-<!-- 인증, 보안, 성능, 테스트, 배포 등 -->
-
-TMPL
-        fi
-    fi
-
     echo -e "${GREEN}[tdc]${NC} Initialized .tdc/ in $(pwd)"
-    echo -e "${GREEN}[tdc]${NC} Created spec-template.md — 이 파일을 수정하고 'tdc spec.md' 실행!"
-}
-
-cmd_template() {
-    local name="${1:-spec.md}"
-    if [ -f "$name" ]; then
-        echo -e "${YELLOW}[tdc]${NC} $name already exists. Overwrite? (y/N)"
-        read -r confirm
-        [[ "$confirm" != "y" && "$confirm" != "Y" ]] && return
-    fi
-
-    if [ -f "$TDC_HOME/.repo/templates/spec-template.md" ]; then
-        cp "$TDC_HOME/.repo/templates/spec-template.md" "./$name"
-    else
-        cat > "./$name" << 'TMPL'
-# 프로젝트 이름
-
-## 목적
-
-
-## 기술 스택
-- 언어:
-- 프레임워크:
-- DB:
-
-## 기능 목록
-- [ ]
-- [ ]
-
-## 기타 요구사항
-
-TMPL
-    fi
-    echo -e "${GREEN}[tdc]${NC} Created $name"
 }
 
 cmd_status() {
@@ -184,7 +101,6 @@ cmd_session() {
     esac
 }
 
-# Route to Claude Code with appropriate skill
 cmd_claude() {
     local skill="$1"
     shift
@@ -200,7 +116,6 @@ cmd_claude() {
     fi
 }
 
-# Check if argument is a file (ends with .md or file exists)
 is_file_arg() {
     [[ "$1" == *.md ]] || [[ -f "$1" ]]
 }
@@ -216,11 +131,9 @@ case "$INPUT" in
     session) shift; cmd_session "$@" ;;
     status)  cmd_status ;;
     init)    cmd_init ;;
-    template) shift; cmd_template "$@" ;;
     help|-h|--help) show_help ;;
     version|-v|--version) echo "tdc v${TDC_VERSION}" ;;
     *)
-        # .md file → auto-route to /tdc with file
         if is_file_arg "$INPUT"; then
             if [ ! -f "$INPUT" ]; then
                 echo -e "${RED}[tdc]${NC} File not found: $INPUT"
@@ -229,7 +142,6 @@ case "$INPUT" in
             echo -e "${BLUE}[tdc]${NC} Reading spec: $INPUT"
             cmd_claude "tdc" "$INPUT"
         else
-            # Plain text description
             cmd_claude "tdc" "$@"
         fi
         ;;

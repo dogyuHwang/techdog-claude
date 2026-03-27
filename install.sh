@@ -48,6 +48,36 @@ check_prereq() {
 check_prereq "git" || exit 1
 check_prereq "claude" || echo -e "${YELLOW}[tdc]${NC} Warning: Claude Code CLI not found. Install with: npm install -g @anthropic-ai/claude-code"
 
+# Install RTK (token optimizer)
+install_rtk() {
+    if command -v rtk &> /dev/null; then
+        echo -e "${GREEN}[tdc]${NC} rtk already installed: $(rtk --version 2>/dev/null)"
+        return
+    fi
+
+    echo -e "${BLUE}[tdc]${NC} Installing rtk (token optimizer)..."
+
+    if command -v brew &> /dev/null; then
+        brew install rtk 2>/dev/null && echo -e "${GREEN}[tdc]${NC} rtk installed via brew" && return
+    fi
+
+    # Fallback: install script
+    if curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh 2>/dev/null; then
+        echo -e "${GREEN}[tdc]${NC} rtk installed via install script"
+    else
+        echo -e "${YELLOW}[tdc]${NC} rtk auto-install failed. Install manually:"
+        echo "  brew install rtk"
+        echo "  or: curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh"
+    fi
+}
+
+setup_rtk() {
+    if command -v rtk &> /dev/null; then
+        echo -e "${BLUE}[tdc]${NC} Configuring rtk for Claude Code..."
+        rtk init -g 2>/dev/null && echo -e "${GREEN}[tdc]${NC} rtk configured for Claude Code" || true
+    fi
+}
+
 # Install mode
 MODE="${1:---global}"
 
@@ -118,6 +148,10 @@ install_global() {
 
     # Configure Claude Code settings
     setup_claude_settings
+
+    # Install and configure rtk
+    install_rtk
+    setup_rtk
 
     echo -e "${GREEN}[tdc]${NC} Global installation complete!"
 }
@@ -206,17 +240,16 @@ echo ""
 echo -e "${BOLD}${GREEN}=== TechDog Claude installed successfully! ===${NC}"
 echo ""
 echo -e "  ${BOLD}Quick Start:${NC}"
-echo -e "    tdc init          Initialize .tdc/ in your project"
-echo -e "    tdc plan \"...\"    Plan a feature"
-echo -e "    tdc dev \"...\"     Implement code"
-echo -e "    tdc debug \"...\"   Fix a bug"
-echo -e "    tdc review        Review recent changes"
+echo -e "    1. 프로젝트 폴더에서: tdc init"
+echo -e "    2. 만들고 싶은 것을 spec.md로 작성"
+echo -e "    3. 터미널에서 'claude' 입력하여 Claude Code 실행"
+echo -e "    4. Claude Code 안에서: /tdc spec.md"
 echo -e ""
-echo -e "  ${BOLD}Inside Claude Code:${NC}"
-echo -e "    /tdc              Main orchestrator"
-echo -e "    /tdc-plan         Planning workflow"
-echo -e "    /tdc-dev          Development workflow"
-echo -e "    /tdc-debug        Debug workflow"
-echo -e "    /tdc-review       Code review"
-echo -e "    /tdc-session      Session management"
+echo -e "  ${BOLD}Token Optimization:${NC}"
+if command -v rtk &> /dev/null; then
+    echo -e "    rtk: ${GREEN}installed${NC} — 토큰 60-90% 절감 활성화"
+    echo -e "    rtk gain    절감량 확인"
+else
+    echo -e "    rtk: ${YELLOW}not installed${NC} — 설치하면 토큰 추가 절감 가능"
+fi
 echo ""

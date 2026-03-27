@@ -13,7 +13,7 @@ user-invocable: true
 ```
 /tdc-plan spec.md                  스펙 파일 기반 기획
 /tdc-plan plan.md                  기획서 파일 기반
-/tdc-plan 간단한 Flask CRUD 서버    인라인 설명
+/tdc-plan 간단한 TODO 앱 만들어줘    인라인 설명
 ```
 
 ## 실행 흐름
