@@ -178,18 +178,35 @@ install_local() {
 
     PROJECT_DIR="$(pwd)"
 
-    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
     mkdir -p "$PROJECT_DIR/.claude"/{agents,skills,hooks}
     mkdir -p "$PROJECT_DIR/.tdc"/{sessions,context,plans}
 
-    cp -r "$SCRIPT_DIR/.claude/agents/"* "$PROJECT_DIR/.claude/agents/" 2>/dev/null || true
-    cp -r "$SCRIPT_DIR/.claude/skills/"* "$PROJECT_DIR/.claude/skills/" 2>/dev/null || true
-    cp -r "$SCRIPT_DIR/.claude/hooks/"* "$PROJECT_DIR/.claude/hooks/" 2>/dev/null || true
+    # Find source: prefer TDC_HOME repo, then try BASH_SOURCE dir
+    local SRC_CLAUDE=""
+    if [ -d "$TDC_HOME/.repo/.claude" ]; then
+        SRC_CLAUDE="$TDC_HOME/.repo/.claude"
+    elif [ -n "${BASH_SOURCE[0]}" ]; then
+        local SCRIPT_DIR
+        SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+        if [ -d "$SCRIPT_DIR/.claude" ]; then
+            SRC_CLAUDE="$SCRIPT_DIR/.claude"
+        fi
+    fi
 
-    chmod +x "$PROJECT_DIR/.claude/hooks/"* 2>/dev/null || true
+    # Fallback: global ~/.claude/ already has tdc files from global install
+    if [ -z "$SRC_CLAUDE" ] && [ -f "$HOME/.claude/skills/tdc.md" ]; then
+        SRC_CLAUDE="$HOME/.claude"
+    fi
 
-    echo -e "${GREEN}[tdc]${NC} Local installation complete in $PROJECT_DIR"
+    if [ -n "$SRC_CLAUDE" ]; then
+        cp -r "$SRC_CLAUDE/agents/"* "$PROJECT_DIR/.claude/agents/" 2>/dev/null || true
+        cp -r "$SRC_CLAUDE/skills/"* "$PROJECT_DIR/.claude/skills/" 2>/dev/null || true
+        [ -d "$SRC_CLAUDE/hooks" ] && cp -r "$SRC_CLAUDE/hooks/"* "$PROJECT_DIR/.claude/hooks/" 2>/dev/null || true
+        chmod +x "$PROJECT_DIR/.claude/hooks/"* 2>/dev/null || true
+        echo -e "${GREEN}[tdc]${NC} Local installation complete in $PROJECT_DIR"
+    else
+        echo -e "${YELLOW}[tdc]${NC} No source files found. Run global install first, then tdc init."
+    fi
 }
 
 setup_claude_settings() {
