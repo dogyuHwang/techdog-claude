@@ -96,9 +96,14 @@ techdog-claude/
 │   ├── context-monitor.sh# 컨텍스트 상태 확인 유틸리티
 │   ├── setup.sh          # npm install 후처리
 │   └── link.sh           # tdc를 ~/.local/bin/에 심볼릭 링크
+├── state/
+│   ├── sessions/         # 로컬 세션 저장 (.gitkeep)
+│   └── context/          # 컨텍스트 모니터링 데이터 (.gitkeep)
 ├── templates/
 │   ├── examples/
 │   │   └── flask-api-spec.md  # 예제 스펙 (참고용)
+│   ├── project-init/
+│   │   └── .tdc/README.md     # tdc init 시 복사되는 템플릿
 │   ├── settings.json     # Claude Code settings.json 템플릿
 │   └── team-config.json  # 팀 모드 설정 (모델 티어, 토큰 예산)
 ├── install.sh            # 원격 설치 — tdc + rtk + Claude Code 설정 자동 구성
@@ -132,7 +137,7 @@ techdog-claude/
 - 변경 시: 각 에이전트 `.md` 파일 상단의 `## Model Tier` 섹션 수정.
 
 ### 3. Context Overflow 관리
-- `context-guard.sh`: 매 도구 호출마다 카운트 증가. 80에서 경고, 120에서 자동 저장 플래그.
+- `context-guard.sh`: 매 도구 호출마다 `.tdc/context/.tool_count`에 카운트 증가. 80에서 경고, 120에서 `.overflow_flag` 생성.
 - `session-save.sh`: 대화 종료 시 오버플로 플래그가 있으면 자동 세션 저장.
 - Master agent의 `Context Overflow Protocol`: JSON 형태로 진행 상황 저장 후 resume 안내.
 - 임계값 변경: `context-guard.sh`의 80/120 값과 `team-config.json`의 `token_optimization` 섹션.

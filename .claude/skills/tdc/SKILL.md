@@ -59,9 +59,11 @@ Master Agent가 전체 파이프라인을 **사용자 개입 없이 자동으로
     ↓ (자동 진행, 승인 불필요)
 [Phase 2] Developer Agent — 태스크별 순차/병렬 구현
     ↓ (에러 발생 시 자동으로 Debugger 호출)
-[Phase 3] Reviewer Agent — 자동 코드 리뷰
+[Phase 3] Verify — 테스트/린터 실행 → 실패 시 Debugger 자동 호출
+    ↓
+[Phase 4] Reviewer Agent — 자동 코드 리뷰
     ↓ (치명적 이슈 발견 시 자동으로 Developer가 수정)
-[Phase 4] 최종 결과 보고 — 사용자에게 한 번에 전달
+[Phase 5] 최종 결과 보고 — 사용자에게 한 번에 전달
 ```
 
 **에이전트 간 통신은 Master를 통해 자동으로 이루어진다.**

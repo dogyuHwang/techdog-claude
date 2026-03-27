@@ -17,7 +17,7 @@ BOLD='\033[1m'
 NC='\033[0m'
 
 # Find tdc resource files (skills, agents)
-# Priority: ~/.tdc/ → ~/.claude/ → error
+# Priority: ~/.tdc/ → ~/.claude/ → ~/.tdc/.repo/.claude/ → error
 find_tdc_source() {
     local resource_type="$1"  # "skills" or "agents"
 
@@ -104,7 +104,7 @@ cmd_init() {
 
     if [ "$copied" = true ]; then
         echo -e "${GREEN}[tdc]${NC} .tdc/ and .claude/ initialized"
-        echo -e "${GREEN}[tdc]${NC} Skills installed: $(ls .claude/skills/*.md 2>/dev/null | wc -l) files"
+        echo -e "${GREEN}[tdc]${NC} Skills installed: $(find .claude/skills -name 'SKILL.md' 2>/dev/null | wc -l) files"
         echo -e "${GREEN}[tdc]${NC} Agents installed: $(ls .claude/agents/*.md 2>/dev/null | wc -l) files"
         echo ""
         echo -e "  ${BOLD}Next steps:${NC}"
@@ -139,9 +139,9 @@ cmd_doctor() {
 
     # Check global skills
     echo -n "Global skills:  "
-    local global_skills=$(ls "$HOME/.claude/skills/tdc"*.md 2>/dev/null | wc -l)
+    local global_skills=$(find "$HOME/.claude/skills" -name 'SKILL.md' -path '*/tdc*' 2>/dev/null | wc -l)
     if [ "$global_skills" -gt 0 ]; then
-        echo -e "${GREEN}OK${NC} ($global_skills files in ~/.claude/skills/)"
+        echo -e "${GREEN}OK${NC} ($global_skills skills in ~/.claude/skills/)"
     else
         echo -e "${RED}NOT FOUND${NC} (run install.sh)"
     fi
@@ -157,8 +157,8 @@ cmd_doctor() {
 
     # Check local project
     echo -n "Local .claude/:  "
-    if [ -d ".claude/skills" ] && [ "$(ls .claude/skills/tdc*.md 2>/dev/null | wc -l)" -gt 0 ]; then
-        echo -e "${GREEN}OK${NC} ($(ls .claude/skills/tdc*.md 2>/dev/null | wc -l) skills)"
+    if [ -d ".claude/skills" ] && [ "$(find .claude/skills -name 'SKILL.md' -path '*/tdc*' 2>/dev/null | wc -l)" -gt 0 ]; then
+        echo -e "${GREEN}OK${NC} ($(find .claude/skills -name 'SKILL.md' -path '*/tdc*' 2>/dev/null | wc -l) skills)"
     else
         echo -e "${YELLOW}NOT INIT${NC} (run 'tdc init' in this project)"
     fi
@@ -216,7 +216,7 @@ cmd_session() {
             for f in "$session_dir"/*.json; do
                 [ -f "$f" ] || continue
                 local id=$(basename "$f" .json)
-                local task=$(python3 -c "import json; d=json.load(open('$f')); print(d.get('task','(auto-save)'))" 2>/dev/null || echo "unknown")
+                local task=$(python3 -c "import json,sys; d=json.load(open(sys.argv[1])); print(d.get('task','(auto-save)'))" "$f" 2>/dev/null || echo "unknown")
                 echo "  $id — $task"
             done
             ;;
@@ -289,7 +289,7 @@ case "$INPUT" in
             echo -e "${BLUE}[tdc]${NC} Reading spec: $INPUT"
             cmd_claude "tdc" "$INPUT"
         else
-            cmd_claude "tdc" "$@"
+            shift; cmd_claude "tdc" "$@"
         fi
         ;;
 esac

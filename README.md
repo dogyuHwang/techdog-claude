@@ -62,27 +62,6 @@ cd techdog-claude && bash install.sh
 
 ## 사용법 (처음부터 따라하기)
 
-### 0. Claude Code란?
-
-Claude Code는 **터미널(명령 프롬프트)**에서 실행하는 AI 코딩 도구입니다.
-
-```bash
-# 터미널을 열고 아무 폴더에서:
-claude
-```
-
-이렇게 치면 Claude Code가 실행되고, AI와 대화할 수 있는 입력창이 나타납니다.
-이 입력창 안에서 `/tdc` 같은 슬래시(/) 명령어를 사용합니다.
-
-```
-╭─────────────────────────────────────────╮
-│ Claude Code                             │
-│                                         │
-│ > 여기에 타이핑합니다                      │
-│ > /tdc spec.md    ← 이렇게 입력          │
-╰─────────────────────────────────────────╯
-```
-
 ### 1. 프로젝트 시작
 
 먼저 터미널에서 프로젝트 폴더를 만들고 초기화합니다:
@@ -182,6 +161,8 @@ Claude Code 입력창에서:
 [자동] Developer Agent가 태스크별로 코드를 작성합니다
     ↓ (에러가 나면?)
 [자동] Debugger Agent가 알아서 원인을 찾고 고칩니다  ← 사용자 개입 불필요
+    ↓
+[자동] 테스트/린터 실행 → 실패 시 Debugger가 자동 수정
     ↓
 [자동] Reviewer Agent가 완성된 코드를 검토합니다
     ↓ (심각한 문제가 있으면?)
@@ -283,11 +264,13 @@ tdc --help            # 도움말
 │       ↓ 에러 발생?                                              │
 │       └→ Debugger (sonnet) ── 자동 진단 & 수정 → Developer 계속  │
 │       ↓ 자동                                                    │
-│   [Phase 3] Reviewer (haiku) ── 자동 코드 리뷰                  │
+│   [Phase 3] Verify ── 테스트/린터 실행 → 실패 시 Debugger 호출   │
+│       ↓ 자동                                                    │
+│   [Phase 4] Reviewer (haiku) ── 자동 코드 리뷰                  │
 │       ↓ 심각한 이슈?                                            │
 │       └→ Developer (sonnet) ── 자동 수정                        │
 │       ↓ 자동                                                    │
-│   [Phase 4] 최종 결과 보고 → 사용자에게 전달                     │
+│   [Phase 5] 최종 결과 보고 → 사용자에게 전달                     │
 │                                                                 │
 │   * Architect (opus) ── 설계 판단이 필요할 때만 자동 호출        │
 └─────────────────────────────────────────────────────────────────┘
@@ -348,6 +331,8 @@ tdc는 이걸 자동으로 관리합니다:
   skills/                           # 스킬 백업
   hooks/                            # 자동화 스크립트
   scripts/tdc                       # tdc CLI
+  state/sessions/                   # 세션 데이터
+  state/context/                    # 컨텍스트 모니터링
 
 ~/.claude/                          # Claude Code가 읽는 경로 (install.sh로 생성)
   skills/                           # /tdc 슬래시 커맨드 (여기에 있어야 인식됨)
@@ -430,6 +415,7 @@ rm -rf .tdc .claude/skills/tdc* .claude/agents/{master,planner,developer,debugge
 tdc가 추가한 설정을 되돌리려면 `~/.claude/settings.json`에서 아래를 삭제:
 - `env` 안의 `TDC_HOME`, `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS`
 - `hooks` 안의 `PostToolUse` 중 `context-guard.sh` 항목
+- `hooks` 안의 `Stop` 중 `session-save.sh` 항목
 
 ---
 

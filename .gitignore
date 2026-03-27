@@ -5,3 +5,9 @@ state/context/*
 !state/context/.gitkeep
 .tdc/
 *.log
+.env
+.env.*
+*.pem
+*.key
+credentials.json
+service-account*.json

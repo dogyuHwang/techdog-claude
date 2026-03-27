@@ -67,7 +67,7 @@ Developer Agent (model: sonnet)를 호출한다:
 
 **테스트:** 통과 (5/5)
 
-**다음 단계:** /tdc-review 로 코드 리뷰 권장
+**다음 단계:** 자동 파이프라인에서는 Master가 자동으로 리뷰 진행. 수동 모드에서는 /tdc-review 로 코드 리뷰 권장
 ```
 
 ## 토큰 최적화

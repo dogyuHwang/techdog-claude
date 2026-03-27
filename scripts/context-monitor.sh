@@ -10,7 +10,8 @@ if [ ! -f "$TOOL_COUNT_FILE" ]; then
     exit 0
 fi
 
-COUNT=$(cat "$TOOL_COUNT_FILE")
+COUNT=$(cat "$TOOL_COUNT_FILE" 2>/dev/null | tr -dc '0-9')
+COUNT=${COUNT:-0}
 echo "=== TDC Context Monitor ==="
 echo "Tool calls this session: $COUNT"
 

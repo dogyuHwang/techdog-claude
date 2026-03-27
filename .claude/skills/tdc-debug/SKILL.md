@@ -37,8 +37,10 @@ User reports a bug, error, or unexpected behavior.
 ## Escalation
 
 If the debugger agent identifies an architectural issue:
-- Escalate to `architect` agent (model: opus) for design guidance
-- Then return to `developer` agent for implementation
+- Report the architectural issue to Master Agent
+- Master invokes `architect` agent (model: opus) for design guidance
+- Master routes the design guidance to `developer` agent for implementation
+- All communication goes through Master (hub-and-spoke model)
 
 ## Token Optimization
 

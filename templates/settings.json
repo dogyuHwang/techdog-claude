@@ -14,14 +14,28 @@
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash $HOME/.tdc/hooks/session-save.sh"
+          }
+        ]
+      }
     ]
   },
   "permissions": {
     "allow": [
       "Bash(mkdir -p .tdc/*)",
       "Read(.tdc/**)",
-      "Write(.tdc/**)",
-      "Bash(bash $HOME/.tdc/hooks/*)"
+      "Write(.tdc/sessions/**)",
+      "Write(.tdc/context/**)",
+      "Write(.tdc/plans/**)",
+      "Bash(bash $HOME/.tdc/hooks/context-guard.sh)",
+      "Bash(bash $HOME/.tdc/hooks/session-save.sh)"
     ]
   }
 }

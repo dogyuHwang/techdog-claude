@@ -195,7 +195,7 @@ install_local() {
     fi
 
     # Fallback: global ~/.claude/ already has tdc files from global install
-    if [ -z "$SRC_CLAUDE" ] && [ -f "$HOME/.claude/skills/tdc.md" ]; then
+    if [ -z "$SRC_CLAUDE" ] && [ -d "$HOME/.claude/skills/tdc" ]; then
         SRC_CLAUDE="$HOME/.claude"
     fi
 
@@ -259,6 +259,25 @@ existing = [h for h in hooks.get("PostToolUse", [])
             if any("context-guard" in hk.get("command", "") for hk in h.get("hooks", []))]
 if not existing:
     hooks["PostToolUse"].append(tdc_hook_entry)
+
+# Add Stop hook for session auto-save
+if "Stop" not in hooks:
+    hooks["Stop"] = []
+
+session_hook_entry = {
+    "matcher": "",
+    "hooks": [
+        {
+            "type": "command",
+            "command": f"bash {tdc_home}/hooks/session-save.sh"
+        }
+    ]
+}
+
+existing_session = [h for h in hooks.get("Stop", [])
+                    if any("session-save" in hk.get("command", "") for hk in h.get("hooks", []))]
+if not existing_session:
+    hooks["Stop"].append(session_hook_entry)
 
 settings["hooks"] = hooks
 
