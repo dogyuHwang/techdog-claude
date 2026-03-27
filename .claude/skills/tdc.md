@@ -44,21 +44,27 @@ user-invocable: true
 mkdir -p .tdc/{sessions,context,plans}
 ```
 
-### 3단계: 에이전트 실행
+### 3단계: 자동 파이프라인 실행
+
+Master Agent가 전체 파이프라인을 **사용자 개입 없이 자동으로** 실행한다.
+사용자는 `/tdc spec.md` 한 번만 입력하면 된다.
 
 ```
 스펙 파일 읽기
     ↓
-Planner Agent — 태스크 분해, 플랜 생성
-    ↓ (.tdc/plans/에 저장)
-사용자 승인 확인
-    ↓ 승인
-Developer Agent — 태스크별 순차/병렬 구현
-    ↓
-Reviewer Agent — 자동 코드 리뷰
-    ↓
-결과 보고
+[Phase 1] Planner Agent — 태스크 분해 → .tdc/plans/에 저장
+    ↓ (자동 진행, 승인 불필요)
+[Phase 2] Developer Agent — 태스크별 순차/병렬 구현
+    ↓ (에러 발생 시 자동으로 Debugger 호출)
+[Phase 3] Reviewer Agent — 자동 코드 리뷰
+    ↓ (치명적 이슈 발견 시 자동으로 Developer가 수정)
+[Phase 4] 최종 결과 보고 — 사용자에게 한 번에 전달
 ```
+
+**에이전트 간 통신은 Master를 통해 자동으로 이루어진다.**
+Developer가 에러를 만나면 Master가 Debugger를 호출하고,
+Reviewer가 문제를 찾으면 Master가 Developer에게 수정을 지시한다.
+사용자가 중간에 개입할 필요 없다.
 
 ## 스펙 파일 형식
 
