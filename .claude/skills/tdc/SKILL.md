@@ -21,6 +21,7 @@ argument-hint: "[spec.md 또는 설명]"
 /tdc debug <설명>           디버깅
 /tdc review [파일들]        코드 리뷰
 /tdc session <명령>         세션 관리
+/tdc version               버전 정보 표시
 ```
 
 ## 실행 흐름
@@ -32,8 +33,9 @@ argument-hint: "[spec.md 또는 설명]"
 2. 스펙이면 → **기획 워크플로우**로 진입
 3. 이미 태스크가 분해된 플랜이면 → **개발 워크플로우**로 진입
 
-**B. 서브커맨드가 있는 경우** (plan, dev, debug, review, session)
-- 해당 워크플로우로 직접 라우팅
+**B. 서브커맨드가 있는 경우** (plan, dev, debug, review, session, version)
+- `version` → `~/.tdc/.repo/package.json`에서 버전을 읽어 표시. 없으면 "버전 정보를 찾을 수 없습니다. 재설치를 권장합니다." 출력.
+- 나머지 → 해당 워크플로우로 직접 라우팅
 
 **C. 텍스트만 전달된 경우**
 - 의도를 분석하여 적절한 에이전트 선택
