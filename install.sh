@@ -300,27 +300,18 @@ export PATH="$LOCAL_BIN:$PATH"
 echo ""
 echo -e "${BOLD}${GREEN}=== TechDog Claude v${TDC_VERSION} installed successfully! ===${NC}"
 echo ""
-echo -e "  ${BOLD}Quick Start:${NC}"
-echo -e "    1. 프로젝트 폴더에서: tdc init"
-echo -e "    2. 만들고 싶은 것을 spec.md로 작성"
-echo -e "    3. 터미널에서 'claude' 입력하여 Claude Code 실행"
-echo -e "    4. Claude Code 안에서: /tdc spec.md"
+echo -e "  ${BOLD}${GREEN}바로 시작하세요!${NC}"
 echo -e ""
-echo -e "  ${BOLD}Token Optimization:${NC}"
+echo -e "    ${BOLD}claude${NC} 실행 → ${BOLD}/tdc spec.md${NC} 입력  ← 지금 바로 됩니다!"
+echo -e ""
+echo -e "  ${BOLD}Quick Start:${NC}"
+echo -e "    1. 만들고 싶은 것을 spec.md로 작성"
+echo -e "    2. 터미널에서 ${BOLD}claude${NC} 입력"
+echo -e "    3. Claude Code 안에서 ${BOLD}/tdc spec.md${NC}"
+echo -e ""
 if command -v rtk &> /dev/null; then
-    echo -e "    rtk: ${GREEN}installed $(rtk --version 2>/dev/null)${NC} — 토큰 60-90% 절감 활성화"
-else
-    echo -e "    rtk: ${YELLOW}not installed${NC} — 설치하면 토큰 추가 절감 가능"
+    echo -e "  rtk: ${GREEN}$(rtk --version 2>/dev/null)${NC} — 토큰 60-90% 절감 활성화"
 fi
 echo ""
-# 현재 세션에서 바로 tdc를 쓸 수 있도록 PATH 설정 스크립트 생성
-_TDC_ENV_SCRIPT="$HOME/.tdc/.env.sh"
-cat > "$_TDC_ENV_SCRIPT" << 'ENVEOF'
-export PATH="$HOME/.local/bin:$PATH"
-export TDC_HOME="$HOME/.tdc"
-ENVEOF
-
-echo -e "  ${GREEN}TIP:${NC} 현재 터미널에서 바로 사용하려면:"
-echo -e "       ${BOLD}source ~/.tdc/.env.sh${NC}"
-echo -e "       (새 터미널에서는 자동 적용됩니다)"
+echo -e "  ${YELLOW}터미널에서 tdc 명령어를 쓰려면 새 터미널을 열어주세요.${NC}"
 echo ""
