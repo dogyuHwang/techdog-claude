@@ -1,5 +1,9 @@
 # TechDog Claude (tdc)
 
+<p align="center">
+  <img src="tdc.png" alt="TechDog Claude" width="400" />
+</p>
+
 > Claude Code를 위한 멀티 에이전트 개발 오케스트레이션 시스템
 
 **만들고 싶은 것을 문서로 적고, `/tdc spec.md` 한 줄이면 AI 에이전트 팀이 기획부터 개발까지 해줍니다.**
@@ -264,25 +268,61 @@ tdc --help            # 도움말
 │       ↓ 에러 발생?                                              │
 │       └→ Debugger (sonnet) ── 자동 진단 & 수정 → Developer 계속  │
 │       ↓ 자동                                                    │
-│   [Phase 3] Verify ── 테스트/린터 실행 → 실패 시 Debugger 호출   │
+│   [Phase 3] Reviewer (haiku) ── 자동 코드 리뷰                  │
+│       ↓ 이슈 발견?                                              │
+│       ├→ code-level → Developer 수정                            │
+│       ├→ design-level → Planner 재기획 → Developer 재구현       │
+│       └→ critical → Planner 재기획 + Developer 긴급 수정        │
 │       ↓ 자동                                                    │
-│   [Phase 4] Reviewer (haiku) ── 자동 코드 리뷰                  │
-│       ↓ 심각한 이슈?                                            │
-│       └→ Developer (sonnet) ── 자동 수정                        │
-│       ↓ 자동                                                    │
-│   [Phase 5] 최종 결과 보고 → 사용자에게 전달                     │
+│   [Phase 4] 최종 결과 보고 → 사용자에게 전달                     │
 │                                                                 │
 │   * Architect (opus) ── 설계 판단이 필요할 때만 자동 호출        │
 └─────────────────────────────────────────────────────────────────┘
 
-에이전트 간 통신:
+에이전트 간 통신 (Live Dashboard로 실시간 표시):
   Master가 중앙 허브 역할. 에이전트끼리 직접 통신하지 않고,
   Master를 통해 필요한 컨텍스트만 전달받습니다.
+  모든 통신은 사용자에게 실시간으로 보여지며, 로그로 기록됩니다.
 
   Planner 결과 → (Master가 요약) → Developer에게 전달
   Developer 에러 → (Master가 감지) → Debugger 자동 호출
-  Reviewer 이슈 → (Master가 판단) → Developer에게 수정 지시
+  Reviewer 이슈 → (Master가 심각도 판단) →
+    code-level: Developer에게 수정 지시
+    design-level: Planner에게 재기획 요청 → Developer 재구현
 ```
+
+### 실시간 진행 상황 (Live Dashboard)
+
+`/tdc spec.md`를 실행하면 아래처럼 **에이전트 활동이 실시간으로** 보입니다:
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  PHASE 1 — PLANNING                        [1/4]
+  Planner Agent가 스펙을 분석하고 있습니다...
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [Master → Planner] 스펙 파일 전달
+  [Planner → Master] 5개 태스크 분해 완료
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  PHASE 2 — IMPLEMENTATION                  [2/4]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [Master → Developer] 태스크 1/5 할당
+  [Developer → Master] 완료
+  [Master → Developer] 태스크 2/5 할당
+  [Developer → Master] 에러 발생!
+  [Master → Debugger] 자동 진단 요청
+  [Debugger → Master] 수정 완료
+  ...
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  PHASE 4 — COMPLETE                        [4/4]
+  모든 작업이 완료되었습니다!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+에이전트 간 모든 상호작용 기록은 `.tdc/context/agent-log.md`에 저장됩니다.
 
 ### 왜 에이전트를 나누나요?
 

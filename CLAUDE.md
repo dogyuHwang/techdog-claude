@@ -7,8 +7,9 @@ Multi-agent development orchestration system for Claude Code.
 1. 사용자가 spec 파일(.md)을 작성
 2. `/tdc spec.md` 로 실행
 3. Planner가 스펙을 분석하여 태스크 분해
-4. 사용자 승인 후 Developer가 구현
-5. Reviewer가 자동 리뷰
+4. Developer가 자동 구현 (승인 불필요)
+5. Reviewer가 자동 리뷰 → 이슈 심각도에 따라 회귀 루프 실행
+6. 모든 진행 상황은 Live Dashboard로 실시간 표시
 
 ## Commands
 
@@ -22,12 +23,28 @@ Multi-agent development orchestration system for Claude Code.
 
 ## Agents (model tier)
 
-- **Master** (opus): 오케스트레이션, 세션 전환
-- **Planner** (sonnet): 요구사항 분석, 태스크 분해
+- **Master** (opus): 오케스트레이션, Live Dashboard, 회귀 루프 관리
+- **Planner** (sonnet): 요구사항 분석, 태스크 분해, 재기획 (회귀 시)
 - **Developer** (sonnet): 코드 구현
 - **Debugger** (sonnet): 버그 진단/수정
-- **Reviewer** (haiku): 코드 리뷰
+- **Reviewer** (haiku): 코드 리뷰, 이슈 심각도 분류 (code/design/critical)
 - **Architect** (opus): 시스템 설계 (필요시만)
+
+## Regression Loop (회귀 루프)
+
+Reviewer 이슈 심각도에 따라 자동 회귀:
+- `code-level` → Developer가 직접 수정
+- `design-level` → Planner 재기획 → Developer 재구현
+- `critical` → Planner 재기획 + Developer 수정
+- Reviewer가 APPROVE할 때까지 무제한 회귀 (컨텍스트 오버플로 시 세션 저장/재개)
+
+## Live Dashboard
+
+Master Agent가 모든 에이전트 활동을 실시간으로 표시:
+- Phase 배너 (PLANNING → IMPLEMENTATION → REVIEW → COMPLETE)
+- 에이전트 간 통신 로그 (`[Master → Developer] 태스크 할당`)
+- 회귀 발생 시 `[REGRESSION #N]` 태그
+- 완료 후 `.tdc/context/agent-log.md`에 전체 로그 기록
 
 ## Token Optimization
 
@@ -41,6 +58,6 @@ Multi-agent development orchestration system for Claude Code.
 ```
 .tdc/
   sessions/     # Session persistence
-  context/      # Context monitoring
+  context/      # Context monitoring + agent-log.md
   plans/        # Generated plans
 ```

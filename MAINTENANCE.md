@@ -28,11 +28,13 @@ Master Agent (오케스트레이터)
     ↓ 에러 발생 시?
     └→ Master가 자동으로 Debugger Agent 호출 → 수정 → Developer 계속
     ↓
-[Phase 3] Reviewer Agent 호출 → 자동 코드 리뷰
-    ↓ 심각한 이슈 발견 시?
-    └→ Master가 자동으로 Developer Agent에 수정 지시
+[Phase 3] Reviewer Agent 호출 → 자동 코드 리뷰 (이슈 심각도 분류)
+    ↓ 이슈 발견 시? (심각도에 따라 회귀)
+    ├→ code-level → Developer 수정
+    ├→ design-level → Planner 재기획 → Developer 재구현 (최대 2회)
+    └→ critical → Planner 재기획 + Developer 긴급 수정
     ↓
-[Phase 4] 최종 결과를 사용자에게 한 번에 보고
+[Phase 4] agent-log.md 기록 + 최종 결과를 사용자에게 Live Dashboard로 보고
 ```
 
 ### 에이전트 간 통신 구조
@@ -40,11 +42,14 @@ Master Agent (오케스트레이터)
 ```
 User → Master (유일한 사용자 접점)
          ├→ Planner → Master (플랜 수신)
+         │   ↑ (design-level 회귀 시 재기획 요청)
          ├→ Developer → Master (코드 수신)
+         │   ↑ (Reviewer 이슈/Planner 재기획 시 재구현)
          │   └→ [에러] → Debugger → Master → Developer (자동 루프)
-         ├→ Reviewer → Master (리뷰 수신)
-         │   └→ [이슈] → Developer → Master (자동 수정)
-         └→ Master → User (최종 보고)
+         ├→ Reviewer → Master (리뷰 수신, 심각도 분류)
+         │   ├→ [code-level] → Developer → Master (직접 수정)
+         │   └→ [design-level] → Planner → Master → Developer (재기획 후 재구현)
+         └→ Master → User (Live Dashboard + 최종 보고)
 ```
 
 **핵심 규칙:**
@@ -52,11 +57,13 @@ User → Master (유일한 사용자 접점)
 - Master는 에이전트 간에 **필요한 컨텍스트만** 전달 (전체 대화 X).
 - Planner 결과 → 요약된 태스크 목록만 Developer에게 전달.
 - Developer 에러 → 에러 메시지 + 해당 파일만 Debugger에게 전달.
-- Reviewer 이슈 → 구체적 이슈 + 해당 파일만 Developer에게 전달.
+- Reviewer code-level 이슈 → 구체적 이슈 + 해당 파일만 Developer에게 전달.
+- Reviewer design-level 이슈 → 이슈 + 원본 스펙 발췌를 Planner에게 전달 → 수정 플랜을 Developer에게 전달.
 
 ### Master가 사용자에게 질문하는 경우 (예외)
 
 - 스펙이 너무 모호해서 뭘 만들지 판단할 수 없을 때
+- 컨텍스트 오버플로로 세션 저장이 필요할 때
 - "웹앱인가 CLI인가?" 같은 근본적 결정이 필요할 때
 - Debugger로도 해결할 수 없는 에러가 발생했을 때
 
@@ -123,6 +130,21 @@ techdog-claude/
 - **에러 시 자동 복구** — Developer 에러 → Debugger 자동 호출 → 수정 후 계속.
 - **리뷰 이슈 자동 수정** — Reviewer가 critical 이슈 발견 → Developer 자동 수정.
 - 관련 파일: `.claude/agents/master.md` (Automatic Pipeline, When to Ask the User 섹션)
+
+### 0.1. Live Dashboard & 에이전트 가시성 (v1.3.0~)
+- Master Agent가 모든 에이전트 활동을 **실시간 Live Dashboard**로 사용자에게 표시.
+- Phase 배너 (━━━ PHASE N — TITLE [N/4] ━━━) 로 현재 단계 시각화.
+- 에이전트 간 통신을 `[Agent → Agent] 메시지` 형태로 실시간 출력.
+- 파이프라인 완료 후 `.tdc/context/agent-log.md`에 전체 상호작용 로그 기록.
+- 관련 파일: `.claude/agents/master.md` (Live Dashboard, 에이전트 통신 로그 형식 섹션)
+
+### 0.2. 회귀 루프 — Reviewer → Planner (v1.3.0~)
+- Reviewer가 이슈 심각도를 `code-level` / `design-level` / `critical` 로 분류.
+- **code-level**: Developer가 직접 수정 (기존과 동일).
+- **design-level**: Master가 Planner에게 재기획 요청 → 수정된 플랜으로 Developer 재구현.
+- **critical**: Planner 재기획 + Developer 수정.
+- **무제한 회귀** — Reviewer가 APPROVE할 때까지 계속. 컨텍스트 오버플로 시 세션 저장/재개로 이어서 진행.
+- 관련 파일: `.claude/agents/master.md` (Regression Loop, Regression Policy), `.claude/agents/reviewer.md` (Issue Severity Classification)
 
 ### 1. rtk 통합 (토큰 60-90% 절감)
 - install.sh에서 자동 설치 (`install_rtk` 함수)
@@ -211,12 +233,13 @@ techdog-claude/
 
 | 파일 | 수정 시 영향 | 함께 확인할 파일 |
 |------|-------------|----------------|
-| `master.md` | 전체 파이프라인 흐름 변경 | tdc.md, README.md |
+| `master.md` | 전체 파이프라인 흐름, Live Dashboard, 회귀 루프 변경 | tdc.md, reviewer.md, README.md |
 | `tdc.md` | 메인 진입점 라우팅 변경 | master.md, scripts/tdc |
 | `scripts/tdc` | CLI 동작 변경 | tdc.md (스킬과 동기화) |
 | `install.sh` | 설치 과정 변경 | setup.sh, link.sh, settings.json 템플릿 |
 | `README.md` | 사용자 문서만 (기능 변경 없음) | 없음 |
 | `context-guard.sh` | 컨텍스트 임계값 변경 | team-config.json |
+| `reviewer.md` | 리뷰 출력 형식, 심각도 분류 변경 | master.md (Regression Loop) |
 | 개별 에이전트 | 해당 에이전트 동작만 | master.md (Available Agents 테이블) |
 | 개별 스킬 | 해당 수동 모드만 | tdc.md (라우팅), scripts/tdc (CLI case문) |
 
@@ -241,6 +264,16 @@ techdog-claude/
 ---
 
 ## Version History
+
+- **v1.3.0** (2026-03-29): Live Dashboard + 에이전트 회귀 루프
+  - Master Agent가 모든 에이전트 활동을 실시간 Live Dashboard로 표시
+  - Phase 배너, 에이전트 간 통신 로그를 사용자에게 실시간 출력
+  - `.tdc/context/agent-log.md`에 전체 상호작용 로그 기록
+  - Reviewer → Planner 회귀 루프 추가 (design-level 이슈 시 재기획)
+  - Reviewer에 이슈 심각도 분류 추가 (code-level / design-level / critical)
+  - Reviewer APPROVE까지 무제한 회귀 (컨텍스트 오버플로 시 세션 저장/재개)
+  - README에 tdc.png 메인 이미지 추가
+  - README에 Live Dashboard 예시 추가
 
 - **v1.2.0** (2026-03-27): 완전 자동 파이프라인 + rtk 통합
   - Master Agent가 전체 파이프라인을 사용자 개입 없이 자동 실행

@@ -68,8 +68,13 @@ Master Agent가 전체 파이프라인을 **사용자 개입 없이 자동으로
 
 **에이전트 간 통신은 Master를 통해 자동으로 이루어진다.**
 Developer가 에러를 만나면 Master가 Debugger를 호출하고,
-Reviewer가 문제를 찾으면 Master가 Developer에게 수정을 지시한다.
-사용자가 중간에 개입할 필요 없다.
+Reviewer가 문제를 찾으면 심각도에 따라:
+- `code-level` → Developer가 직접 수정
+- `design-level` → Planner에게 재기획 요청 후 Developer가 재구현
+- `critical` → Planner 재기획 + Developer 수정
+
+**모든 에이전트 활동은 Live Dashboard로 실시간 표시된다.**
+사용자가 중간에 개입할 필요 없다. 에이전트 간 상호작용 로그는 `.tdc/context/agent-log.md`에 기록된다.
 
 ## 스펙 파일 형식
 
