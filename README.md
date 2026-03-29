@@ -263,9 +263,32 @@ Claude Code를 다시 열고:
     design-level: Planner에게 재기획 요청 → Developer 재구현
 ```
 
-### 실시간 진행 상황 (Live Dashboard)
+### 실시간 진행 상황 (3중 가시성)
 
-`/tdc spec.md`를 실행하면 아래처럼 **에이전트 활동이 실시간으로** 보입니다:
+`/tdc spec.md`를 실행하면 에이전트 활동을 **3가지 방법**으로 실시간 확인할 수 있습니다:
+
+#### 1. Status Line (터미널 하단 상시 표시)
+
+터미널 맨 아래에 현재 상태가 항상 보입니다:
+
+```
+[TDC] Phase 2/4 — IMPLEMENTATION | developer working | 45 tools
+```
+
+에이전트가 바뀔 때마다 자동 업데이트됩니다.
+
+#### 2. Console Messages (에이전트 시작/완료 알림)
+
+에이전트가 시작하거나 완료될 때 자동으로 메시지가 표시됩니다:
+
+```
+[TDC] planner agent started (14:03:01)
+[TDC] planner agent completed (21s)
+[TDC] developer agent started (14:03:23)
+[TDC] developer agent completed (22s)
+```
+
+#### 3. Dashboard Banners (Phase 전환 시 상세 로그)
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -273,20 +296,19 @@ Claude Code를 다시 열고:
   Planner Agent가 스펙을 분석하고 있습니다...
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  [Master → Planner] 스펙 파일 전달
-  [Planner → Master] 5개 태스크 분해 완료
+  14:03:01 [Master → Planner] 스펙 파일 전달
+  14:03:22 [Planner → Master] 5개 태스크 분해 완료 (21s)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   PHASE 2 — IMPLEMENTATION                  [2/4]
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  [Master → Developer] 태스크 1/5 할당
-  [Developer → Master] 완료
-  [Master → Developer] 태스크 2/5 할당
-  [Developer → Master] 에러 발생!
-  [Master → Debugger] 자동 진단 요청
-  [Debugger → Master] 수정 완료
-  ...
+  14:03:23 [Master → Developer] 태스크 1/5: "DB 모델 구현"
+  14:03:45 [Developer → Master] 완료 (22s)
+  14:03:46 [Master → Developer] 태스크 2/5: "API 엔드포인트"
+  14:04:10 [Developer → Master] 에러 발생!
+  14:04:10 [Master → Debugger] 자동 진단 요청
+  14:04:25 [Debugger → Master] 수정 완료 (15s)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   PHASE 4 — COMPLETE                        [4/4]

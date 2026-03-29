@@ -15,6 +15,28 @@
         ]
       }
     ],
+    "SubagentStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash $HOME/.tdc/hooks/agent-tracker.sh"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash $HOME/.tdc/hooks/agent-tracker.sh"
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "matcher": "",
@@ -35,7 +57,9 @@
       "Write(.tdc/context/**)",
       "Write(.tdc/plans/**)",
       "Bash(bash $HOME/.tdc/hooks/context-guard.sh)",
-      "Bash(bash $HOME/.tdc/hooks/session-save.sh)"
+      "Bash(bash $HOME/.tdc/hooks/session-save.sh)",
+      "Bash(bash $HOME/.tdc/hooks/agent-tracker.sh)",
+      "Bash(bash $HOME/.tdc/hooks/tdc-status.sh)"
     ]
   }
 }

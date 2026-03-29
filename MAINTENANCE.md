@@ -97,7 +97,9 @@ techdog-claude/
 │   │   └── tdc-session/SKILL.md# /tdc-session — 세션 관리
 │   └── hooks/
 │       ├── context-guard.sh  # 도구 호출 횟수 추적 (80: 경고, 120: 자동 저장)
-│       └── session-save.sh   # 대화 종료 시 오버플로 감지 → 자동 세션 저장
+│       ├── session-save.sh   # 대화 종료 시 오버플로 감지 → 자동 세션 저장
+│       ├── agent-tracker.sh  # SubagentStart/Stop 훅 — 에이전트 시작/완료 추적, 상태 파일 기록
+│       └── tdc-status.sh     # Status Line 스크립트 — .phase + .agent-status 읽어서 한 줄 출력
 ├── scripts/
 │   └── setup.sh          # npm install 후처리
 ├── state/
@@ -128,12 +130,15 @@ techdog-claude/
 - **리뷰 이슈 자동 수정** — Reviewer가 critical 이슈 발견 → Developer 자동 수정.
 - 관련 파일: `.claude/agents/master.md` (Automatic Pipeline, When to Ask the User 섹션)
 
-### 0.1. Live Dashboard & 에이전트 가시성 (v1.3.0~)
-- Master Agent가 모든 에이전트 활동을 **실시간 Live Dashboard**로 사용자에게 표시.
-- Phase 배너 (━━━ PHASE N — TITLE [N/4] ━━━) 로 현재 단계 시각화.
-- 에이전트 간 통신을 `[Agent → Agent] 메시지` 형태로 실시간 출력.
-- 파이프라인 완료 후 `.tdc/context/agent-log.md`에 전체 상호작용 로그 기록.
-- 관련 파일: `.claude/agents/master.md` (Live Dashboard, 에이전트 통신 로그 형식 섹션)
+### 0.1. 3중 에이전트 가시성 (v1.6.0~, 기존 v1.3.0 확장)
+- **Status Line**: 터미널 하단에 현재 Phase/Agent/도구 사용량 상시 표시.
+  - `.tdc/context/.phase` + `.tdc/context/.agent-status` 파일 기반.
+  - `tdc-status.sh` 스크립트가 읽어서 한 줄 출력.
+- **Console Messages**: SubagentStart/SubagentStop 훅으로 에이전트 시작/완료 자동 알림.
+  - `agent-tracker.sh`가 `.tdc/context/.agent-status`에 상태 기록 + 콘솔 메시지 출력.
+  - `.tdc/context/.agent-events`에 전체 이벤트 타임라인 기록.
+- **Dashboard Banners**: Master Agent가 Phase 배너 + 타임스탬프 포함 에이전트 간 통신 로그 출력.
+- 관련 파일: `.claude/agents/master.md`, `.claude/hooks/agent-tracker.sh`, `.claude/hooks/tdc-status.sh`
 
 ### 0.2. 회귀 루프 — Reviewer → Planner (v1.3.0~)
 - Reviewer가 이슈 심각도를 `code-level` / `design-level` / `critical` 로 분류.
@@ -234,6 +239,8 @@ techdog-claude/
 | `install.sh` | 설치 과정 변경 | setup.sh, settings.json 템플릿 |
 | `README.md` | 사용자 문서만 (기능 변경 없음) | 없음 |
 | `context-guard.sh` | 컨텍스트 임계값 변경 | team-config.json |
+| `agent-tracker.sh` | 에이전트 가시성 변경 | settings.json, master.md |
+| `tdc-status.sh` | Status Line 표시 형식 변경 | agent-tracker.sh |
 | `reviewer.md` | 리뷰 출력 형식, 심각도 분류 변경 | master.md (Regression Loop) |
 | 개별 에이전트 | 해당 에이전트 동작만 | master.md (Available Agents 테이블) |
 | 개별 스킬 | 해당 수동 모드만 | tdc.md (라우팅) |
@@ -251,11 +258,23 @@ techdog-claude/
 - [ ] Claude Code에서 `/tdc-plan spec.md` — 기획만 따로 동작 확인
 - [ ] Claude Code에서 `/tdc-session list` — 세션 목록 확인
 - [ ] Hook 동작: 도구 호출 시 context-guard.sh 실행 확인
+- [ ] Hook 동작: 에이전트 시작/완료 시 agent-tracker.sh 실행 확인 (SubagentStart/Stop)
+- [ ] Status Line: `bash ~/.tdc/hooks/tdc-status.sh`로 상태 출력 확인
 - [ ] rtk 동작: `rtk gain` 으로 토큰 절감량 확인
 
 ---
 
 ## Version History
+
+- **v1.6.0** (2026-03-29): 3중 에이전트 가시성 시스템
+  - **Status Line**: 터미널 하단에 현재 Phase/Agent/진행률 상시 표시 (`tdc-status.sh`)
+  - **Console Messages**: SubagentStart/SubagentStop 훅으로 에이전트 시작/완료 자동 알림 (`agent-tracker.sh`)
+  - **Dashboard Timestamps**: 에이전트 간 통신 로그에 타임스탬프 + 경과 시간 추가
+  - `.tdc/context/.phase`, `.agent-status`, `.agent-events` 상태 파일 프로토콜 추가
+  - settings.json에 SubagentStart/SubagentStop 훅 등록
+  - install.sh에 새 훅 자동 설치 + 설정
+
+- **v1.5.0** (2026-03-29): /tdc version 커맨드 추가
 
 - **v1.4.0** (2026-03-29): 삭제 스크립트 추가
   - `uninstall.sh` 추가 — 스킬, 에이전트, ~/.tdc/, settings.json 훅까지 자동 정리

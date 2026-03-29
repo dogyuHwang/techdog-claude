@@ -4,7 +4,7 @@
 
 set -e
 
-TDC_VERSION="1.5.0"
+TDC_VERSION="1.6.0"
 TDC_HOME="$HOME/.tdc"
 TDC_REPO_URL="${TDC_REPO_URL:-https://github.com/dogyuHwang/techdog-claude}"
 
@@ -23,7 +23,7 @@ cat << 'BANNER'
    | | |  _|| |   | |_| | | | | | | | |  _
    | | | |__| |___|  _  | |_| | |_| | |_| |
    |_| |_____\____|_| |_|____/ \___/ \____|
-         Claude Code Orchestrator v1.5.0
+         Claude Code Orchestrator v1.6.0
 BANNER
 echo -e "${NC}"
 
@@ -197,6 +197,44 @@ existing_session = [h for h in hooks.get("Stop", [])
                     if any("session-save" in hk.get("command", "") for hk in h.get("hooks", []))]
 if not existing_session:
     hooks["Stop"].append(session_hook_entry)
+
+# Add SubagentStart hook for agent tracking
+if "SubagentStart" not in hooks:
+    hooks["SubagentStart"] = []
+
+agent_start_entry = {
+    "matcher": "",
+    "hooks": [
+        {
+            "type": "command",
+            "command": f"bash {tdc_home}/hooks/agent-tracker.sh"
+        }
+    ]
+}
+
+existing_agent_start = [h for h in hooks.get("SubagentStart", [])
+                        if any("agent-tracker" in hk.get("command", "") for hk in h.get("hooks", []))]
+if not existing_agent_start:
+    hooks["SubagentStart"].append(agent_start_entry)
+
+# Add SubagentStop hook for agent tracking
+if "SubagentStop" not in hooks:
+    hooks["SubagentStop"] = []
+
+agent_stop_entry = {
+    "matcher": "",
+    "hooks": [
+        {
+            "type": "command",
+            "command": f"bash {tdc_home}/hooks/agent-tracker.sh"
+        }
+    ]
+}
+
+existing_agent_stop = [h for h in hooks.get("SubagentStop", [])
+                       if any("agent-tracker" in hk.get("command", "") for hk in h.get("hooks", []))]
+if not existing_agent_stop:
+    hooks["SubagentStop"].append(agent_stop_entry)
 
 settings["hooks"] = hooks
 

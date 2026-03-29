@@ -38,13 +38,18 @@ Reviewer 이슈 심각도에 따라 자동 회귀:
 - `critical` → Planner 재기획 + Developer 수정
 - Reviewer가 APPROVE할 때까지 무제한 회귀 (컨텍스트 오버플로 시 세션 저장/재개)
 
-## Live Dashboard
+## Live Dashboard & Agent Visibility
 
-Master Agent가 모든 에이전트 활동을 실시간으로 표시:
-- Phase 배너 (PLANNING → IMPLEMENTATION → REVIEW → COMPLETE)
-- 에이전트 간 통신 로그 (`[Master → Developer] 태스크 할당`)
-- 회귀 발생 시 `[REGRESSION #N]` 태그
-- 완료 후 `.tdc/context/agent-log.md`에 전체 로그 기록
+에이전트 활동을 **3중 가시성**으로 실시간 표시:
+
+1. **Status Line** (터미널 하단 상시): `[TDC] Phase 2/4 — IMPLEMENTATION | developer working | 45 tools`
+   - `.tdc/context/.phase` + `.tdc/context/.agent-status` 파일 기반
+   - `tdc-status.sh` 스크립트가 읽어서 표시
+2. **Console Messages** (대화 흐름 중): `[TDC] developer agent started (14:03:23)`
+   - SubagentStart/SubagentStop 훅 (`agent-tracker.sh`)이 자동 출력
+3. **Dashboard Banners** (Phase 전환 시): 타임스탬프 포함 상세 로그
+   - Master Agent가 Phase 배너 + 에이전트 간 통신 로그 출력
+   - 완료 후 `.tdc/context/agent-log.md`에 전체 로그 기록
 
 ## Token Optimization
 
@@ -61,5 +66,8 @@ Master Agent가 모든 에이전트 활동을 실시간으로 표시:
 .tdc/
   sessions/     # Session persistence
   context/      # Context monitoring + agent-log.md
+    .phase      # Current phase (status line reads this)
+    .agent-status  # Active agent state (status line reads this)
+    .agent-events  # Agent start/stop event log
   plans/        # Generated plans
 ```

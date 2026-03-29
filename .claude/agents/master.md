@@ -91,7 +91,30 @@ Master: [Developer → Master] 재구현 완료
 
 **반드시** 각 Phase 시작 시 아래 형식의 배너를 출력한다. 사용자가 현재 상태를 직관적으로 파악할 수 있어야 한다.
 
+### Phase Status File (상태 파일 기록)
+
+각 Phase 전환 시 `.tdc/context/.phase` 파일에 현재 상태를 기록한다.
+Status Line과 훅이 이 파일을 읽어 터미널 하단에 실시간 표시한다.
+
+**Phase 전환 시 반드시 실행:**
+```bash
+# Phase 시작 시
+echo "Phase N/4 — PHASE_NAME" > .tdc/context/.phase
+
+# Phase 완료 시 (pipeline 종료)
+rm -f .tdc/context/.phase .tdc/context/.agent-status .tdc/context/.agent-events
+```
+
+예시:
+```bash
+echo "Phase 1/4 — PLANNING" > .tdc/context/.phase
+echo "Phase 2/4 — IMPLEMENTATION (3/5)" > .tdc/context/.phase
+echo "Phase 3/4 — REVIEW" > .tdc/context/.phase
+```
+
 ### Phase 배너 형식
+
+각 로그 라인에 **타임스탬프**를 포함하여 에이전트 활동 타이밍을 보여준다.
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -99,10 +122,10 @@ Master: [Developer → Master] 재구현 완료
   Planner Agent가 스펙을 분석하고 있습니다...
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  [Master → Planner] 스펙 파일 전달 (spec.md)
-  [Planner] 요구사항 분석 중...
-  [Planner] 태스크 분해 중...
-  [Planner → Master] 5개 태스크 분해 완료
+  14:03:01 [Master → Planner] 스펙 파일 전달 (spec.md)
+  14:03:01 [Planner] 요구사항 분석 중...
+  14:03:15 [Planner] 태스크 분해 중...
+  14:03:22 [Planner → Master] 5개 태스크 분해 완료 (21s)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   PHASE 2 — IMPLEMENTATION                  [2/4]
@@ -111,19 +134,16 @@ Master: [Developer → Master] 재구현 완료
 
   Progress: ░░░░░░░░░░ 0/5
 
-  [Master → Developer] 태스크 1/5 할당: "DB 모델 구현"
-  [Developer] 코드 작성 중...
-  [Developer → Master] 태스크 1/5 완료
+  14:03:23 [Master → Developer] 태스크 1/5: "DB 모델 구현"
+  14:03:45 [Developer → Master] 태스크 1/5 완료 (22s)
   Progress: ██░░░░░░░░ 1/5
 
-  [Master → Developer] 태스크 2/5 할당: "API 엔드포인트"
-  [Developer] 코드 작성 중...
-  [Developer → Master] 에러 발생!
-  [Master → Debugger] 자동 진단 요청
-  [Debugger] 에러 분석 중...
-  [Debugger → Master] 수정 완료 — import 경로 오류
-  [Developer] 태스크 2/5 재개...
-  [Developer → Master] 태스크 2/5 완료
+  14:03:46 [Master → Developer] 태스크 2/5: "API 엔드포인트"
+  14:04:10 [Developer → Master] 에러 발생!
+  14:04:10 [Master → Debugger] 자동 진단 요청
+  14:04:25 [Debugger → Master] 수정 완료 — import 경로 오류 (15s)
+  14:04:26 [Developer] 태스크 2/5 재개...
+  14:04:48 [Developer → Master] 태스크 2/5 완료 (62s)
   Progress: ████░░░░░░ 2/5
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -131,26 +151,37 @@ Master: [Developer → Master] 재구현 완료
   Reviewer Agent가 코드를 검토하고 있습니다...
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  [Master → Reviewer] 코드 리뷰 요청 (8개 파일)
-  [Reviewer] 검토 중...
-  [Reviewer → Master] APPROVE — 경미한 경고 2건
+  14:05:30 [Master → Reviewer] 코드 리뷰 요청 (8개 파일)
+  14:05:42 [Reviewer → Master] APPROVE — 경미한 경고 2건 (12s)
 
   --- 또는 회귀 발생 시 ---
 
-  [Reviewer → Master] REQUEST_CHANGES — design-level 이슈 1건
-  [REGRESSION #1] 설계 수준 이슈 감지 → Planner 재기획
-  [Master → Planner] 재기획 요청
-  [Planner → Master] 수정 플랜 전달
-  [Master → Developer] 재구현 지시
-  [Developer → Master] 재구현 완료
-  [Master → Reviewer] 재검토 요청
-  [Reviewer → Master] APPROVE
+  14:05:42 [Reviewer → Master] REQUEST_CHANGES — design-level 이슈 1건
+  14:05:42 [REGRESSION #1] 설계 수준 이슈 감지 → Planner 재기획
+  14:05:43 [Master → Planner] 재기획 요청
+  14:06:00 [Planner → Master] 수정 플랜 전달 (17s)
+  14:06:01 [Master → Developer] 재구현 지시
+  14:06:30 [Developer → Master] 재구현 완료 (29s)
+  14:06:31 [Master → Reviewer] 재검토 요청
+  14:06:40 [Reviewer → Master] APPROVE (9s)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   PHASE 4 — COMPLETE                        [4/4]
   모든 작업이 완료되었습니다!
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
+
+### Agent Visibility (에이전트 가시성)
+
+Claude Code의 **SubagentStart/SubagentStop 훅**이 에이전트 시작/완료를 자동 감지하여:
+1. **터미널 하단 Status Line**: `[TDC] Phase 2/4 — IMPLEMENTATION | developer working | 45 tools`
+2. **콘솔 메시지**: `[TDC] developer agent started (14:03:23)`, `[TDC] developer agent completed (22s)`
+3. **이벤트 로그**: `.tdc/context/.agent-events`에 모든 에이전트 시작/완료 시간 기록
+
+이 3중 가시성으로 사용자는:
+- **Status Line**으로 현재 상태를 항상 확인 가능 (터미널 하단, 실시간)
+- **콘솔 메시지**로 에이전트 전환을 즉시 인지 (대화 흐름 중)
+- **이벤트 로그**로 전체 타임라인 사후 분석 가능
 
 ### 에이전트 통신 로그 형식
 
@@ -286,7 +317,14 @@ Always use the Live Dashboard format above. At the final report, include:
 - Agents invoked: <count>
 - Communications: <count>
 - Regressions: <count>
+- Total elapsed: <start time ~ end time>
 - Log: .tdc/context/agent-log.md
+- Events: .tdc/context/.agent-events
+```
+
+**Phase 4 완료 시 반드시 상태 파일 정리:**
+```bash
+rm -f .tdc/context/.phase .tdc/context/.agent-status .tdc/context/.agent-events
 ```
 
 ## Critical Rules
