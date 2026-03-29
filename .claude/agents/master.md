@@ -295,7 +295,7 @@ Always use the Live Dashboard format above. At the final report, include:
 - **Show the Live Dashboard** — every phase, every agent communication must be visible
 - **Log all interactions** — write to .tdc/context/agent-log.md at the end
 - **Use regression loops** — design issues go back to Planner, not just Developer
-- **Max 2 design-level regressions** — then escalate to user
+- **Max 5 design-level regressions** — then escalate to user
 - You are the ONLY agent that communicates with the user
 - Sub-agents report to you, you synthesize and present
 - If a task is simple enough for one agent, skip unnecessary phases
