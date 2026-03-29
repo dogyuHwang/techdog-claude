@@ -313,10 +313,14 @@ else
     echo -e "    rtk: ${YELLOW}not installed${NC} — 설치하면 토큰 추가 절감 가능"
 fi
 echo ""
-if [ -f "$HOME/.zshrc" ]; then
-    _NOTED_RC="~/.zshrc"
-else
-    _NOTED_RC="~/.bashrc"
-fi
-echo -e "  ${YELLOW}NOTE:${NC} 새 터미널을 열거나 'source ${_NOTED_RC}' 실행 후 tdc 명령어를 사용하세요."
+# 현재 세션에서 바로 tdc를 쓸 수 있도록 PATH 설정 스크립트 생성
+_TDC_ENV_SCRIPT="$HOME/.tdc/.env.sh"
+cat > "$_TDC_ENV_SCRIPT" << 'ENVEOF'
+export PATH="$HOME/.local/bin:$PATH"
+export TDC_HOME="$HOME/.tdc"
+ENVEOF
+
+echo -e "  ${GREEN}TIP:${NC} 현재 터미널에서 바로 사용하려면:"
+echo -e "       ${BOLD}source ~/.tdc/.env.sh${NC}"
+echo -e "       (새 터미널에서는 자동 적용됩니다)"
 echo ""
