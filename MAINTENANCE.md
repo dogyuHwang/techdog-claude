@@ -99,10 +99,7 @@ techdog-claude/
 │       ├── context-guard.sh  # 도구 호출 횟수 추적 (80: 경고, 120: 자동 저장)
 │       └── session-save.sh   # 대화 종료 시 오버플로 감지 → 자동 세션 저장
 ├── scripts/
-│   ├── tdc               # CLI (bash) — .md 파일 자동 감지, Claude Code 연동
-│   ├── context-monitor.sh# 컨텍스트 상태 확인 유틸리티
-│   ├── setup.sh          # npm install 후처리
-│   └── link.sh           # tdc를 ~/.local/bin/에 심볼릭 링크
+│   └── setup.sh          # npm install 후처리
 ├── state/
 │   ├── sessions/         # 로컬 세션 저장 (.gitkeep)
 │   └── context/          # 컨텍스트 모니터링 데이터 (.gitkeep)
@@ -110,7 +107,7 @@ techdog-claude/
 │   ├── examples/
 │   │   └── flask-api-spec.md  # 예제 스펙 (참고용)
 │   ├── project-init/
-│   │   └── .tdc/README.md     # tdc init 시 복사되는 템플릿
+│   │   └── .tdc/README.md     # 프로젝트 .tdc/ 설명
 │   ├── settings.json     # Claude Code settings.json 템플릿
 │   └── team-config.json  # 팀 모드 설정 (모델 티어, 토큰 예산)
 ├── install.sh            # 원격 설치 — tdc + rtk + Claude Code 설정 자동 구성
@@ -168,7 +165,7 @@ techdog-claude/
 - `/tdc`가 메인 진입점. `.md` 파일이면 자동 파이프라인, 서브커맨드면 개별 워크플로우.
 - `/tdc-plan`, `/tdc-dev` 등은 수동 모드 (특정 단계만 따로 실행할 때).
 - 파일 없이 텍스트만 넘기면 인라인 모드로 동작.
-- CLI (`scripts/tdc`)도 `.md` 파일 자동 감지하여 Claude Code에 전달.
+- CLI는 제거됨 (v1.3.0). 모든 사용은 Claude Code 안에서 `/tdc` 슬래시 커맨드로.
 
 ### 5. Session Persistence
 - 세션 파일 위치: `.tdc/sessions/<id>.json`
@@ -204,8 +201,7 @@ techdog-claude/
    - frontmatter 필수: name, description, user-invocable: true, argument-hint
    - `$ARGUMENTS`로 사용자 입력 참조
 2. `tdc/SKILL.md`의 라우팅에 반영
-3. `scripts/tdc` CLI의 case문에 추가
-4. CLAUDE.md에 커맨드 목록 업데이트
+3. CLAUDE.md에 커맨드 목록 업데이트
 5. README에 "개별 명령어" 테이블에 추가 (메인 명령어가 아님을 명시)
 
 ### Hook 수정
@@ -214,8 +210,7 @@ techdog-claude/
 3. `install.sh`의 `setup_claude_settings()` 함수도 확인
 
 ### install.sh 수정
-- `install_global()`: 글로벌 설치 로직 (파일 복사, PATH, 설정)
-- `install_local()`: 프로젝트 로컬 설치 로직
+- `install_tdc()`: 메인 설치 로직 (레포 클론, 스킬/에이전트 복사, 설정)
 - `install_rtk()`: rtk 설치 (brew → curl fallback)
 - `setup_rtk()`: rtk를 Claude Code에 연동 (`rtk init -g`)
 - `setup_claude_settings()`: settings.json에 env, hooks 자동 추가
@@ -234,14 +229,13 @@ techdog-claude/
 | 파일 | 수정 시 영향 | 함께 확인할 파일 |
 |------|-------------|----------------|
 | `master.md` | 전체 파이프라인 흐름, Live Dashboard, 회귀 루프 변경 | tdc.md, reviewer.md, README.md |
-| `tdc.md` | 메인 진입점 라우팅 변경 | master.md, scripts/tdc |
-| `scripts/tdc` | CLI 동작 변경 | tdc.md (스킬과 동기화) |
-| `install.sh` | 설치 과정 변경 | setup.sh, link.sh, settings.json 템플릿 |
+| `tdc.md` | 메인 진입점 라우팅 변경 | master.md |
+| `install.sh` | 설치 과정 변경 | setup.sh, settings.json 템플릿 |
 | `README.md` | 사용자 문서만 (기능 변경 없음) | 없음 |
 | `context-guard.sh` | 컨텍스트 임계값 변경 | team-config.json |
 | `reviewer.md` | 리뷰 출력 형식, 심각도 분류 변경 | master.md (Regression Loop) |
 | 개별 에이전트 | 해당 에이전트 동작만 | master.md (Available Agents 테이블) |
-| 개별 스킬 | 해당 수동 모드만 | tdc.md (라우팅), scripts/tdc (CLI case문) |
+| 개별 스킬 | 해당 수동 모드만 | tdc.md (라우팅) |
 
 ---
 
@@ -249,12 +243,9 @@ techdog-claude/
 
 수정 후 확인할 항목:
 
-- [ ] `bash install.sh --local` — 로컬 설치 정상 동작
-- [ ] `bash install.sh --global` — 글로벌 설치 + rtk 설치 확인
-- [ ] `tdc help` — CLI 도움말 출력
-- [ ] `tdc init` — .tdc/ 디렉토리 생성
-- [ ] `tdc spec.md` — .md 파일 자동 감지 확인
-- [ ] `tdc status` — 컨텍스트 상태 확인
+- [ ] `bash install.sh` — 설치 + rtk 설치 확인
+- [ ] `~/.claude/skills/tdc/SKILL.md` 존재 확인
+- [ ] `~/.claude/agents/master.md` 존재 확인
 - [ ] Claude Code에서 `/tdc spec.md` — 자동 파이프라인 전체 동작 확인
 - [ ] Claude Code에서 `/tdc-plan spec.md` — 기획만 따로 동작 확인
 - [ ] Claude Code에서 `/tdc-session list` — 세션 목록 확인
@@ -274,6 +265,9 @@ techdog-claude/
   - Reviewer APPROVE까지 무제한 회귀 (컨텍스트 오버플로 시 세션 저장/재개)
   - README에 tdc.png 메인 이미지 추가
   - README에 Live Dashboard 예시 추가
+  - tdc CLI 제거 (scripts/tdc, link.sh, context-monitor.sh) — `/tdc` 슬래시 커맨드만 사용
+  - install.sh에서 PATH/symlink/ensure_path 로직 제거
+  - `tdc init` 제거 — `.tdc/` 디렉토리는 `/tdc` 첫 실행 시 자동 생성
 
 - **v1.2.0** (2026-03-27): 완전 자동 파이프라인 + rtk 통합
   - Master Agent가 전체 파이프라인을 사용자 개입 없이 자동 실행

@@ -1,14 +1,12 @@
 #!/bin/bash
 # TechDog Claude (tdc) — Remote Installer
 # Usage: curl -sSL https://raw.githubusercontent.com/dogyuHwang/techdog-claude/main/install.sh | bash
-# Or:    bash install.sh [--global|--local]
 
 set -e
 
 TDC_VERSION="1.3.0"
 TDC_HOME="$HOME/.tdc"
 TDC_REPO_URL="${TDC_REPO_URL:-https://github.com/dogyuHwang/techdog-claude}"
-LOCAL_BIN="$HOME/.local/bin"
 
 # Colors
 RED='\033[0;31m'
@@ -38,8 +36,8 @@ case "$OS" in
 esac
 echo -e "${GREEN}[tdc]${NC} Detected platform: $PLATFORM"
 
-# Ensure ~/.local/bin is in PATH for this session
-export PATH="$LOCAL_BIN:$PATH"
+# Ensure ~/.local/bin is in PATH for this session (rtk installs here)
+export PATH="$HOME/.local/bin:$PATH"
 
 # Check prerequisites
 check_prereq() {
@@ -51,26 +49,6 @@ check_prereq() {
 
 check_prereq "git" || exit 1
 check_prereq "claude" || echo -e "${YELLOW}[tdc]${NC} Warning: Claude Code CLI not found. Install with: npm install -g @anthropic-ai/claude-code"
-
-# Ensure PATH is in shell profile (do this early so rtk install can use it)
-ensure_path() {
-    SHELL_RC=""
-    if [ -f "$HOME/.zshrc" ]; then
-        SHELL_RC="$HOME/.zshrc"
-    elif [ -f "$HOME/.bashrc" ]; then
-        SHELL_RC="$HOME/.bashrc"
-    fi
-
-    if [ -n "$SHELL_RC" ]; then
-        if ! grep -q 'export PATH="$HOME/.local/bin:$PATH"' "$SHELL_RC" 2>/dev/null; then
-            echo '' >> "$SHELL_RC"
-            echo '# TechDog Claude' >> "$SHELL_RC"
-            echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$SHELL_RC"
-            echo 'export TDC_HOME="$HOME/.tdc"' >> "$SHELL_RC"
-            echo -e "${YELLOW}[tdc]${NC} Added PATH to $SHELL_RC"
-        fi
-    fi
-}
 
 # Install RTK (token optimizer)
 install_rtk() {
@@ -87,8 +65,7 @@ install_rtk() {
 
     # Fallback: install script
     if curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh 2>/dev/null; then
-        # Refresh PATH after rtk installs to ~/.local/bin
-        export PATH="$LOCAL_BIN:$PATH"
+        export PATH="$HOME/.local/bin:$PATH"
         echo -e "${GREEN}[tdc]${NC} rtk installed via install script"
     else
         echo -e "${YELLOW}[tdc]${NC} rtk auto-install failed. Install manually:"
@@ -98,8 +75,7 @@ install_rtk() {
 }
 
 setup_rtk() {
-    # Ensure PATH is fresh
-    export PATH="$LOCAL_BIN:$PATH"
+    export PATH="$HOME/.local/bin:$PATH"
 
     if command -v rtk &> /dev/null; then
         echo -e "${BLUE}[tdc]${NC} Configuring rtk for Claude Code..."
@@ -107,14 +83,12 @@ setup_rtk() {
     fi
 }
 
-# Install mode
-MODE="${1:---global}"
-
-install_global() {
-    echo -e "${BLUE}[tdc]${NC} Installing globally to $TDC_HOME..."
+# Main installation
+install_tdc() {
+    echo -e "${BLUE}[tdc]${NC} Installing to $TDC_HOME..."
 
     # Create TDC home
-    mkdir -p "$TDC_HOME"/{agents,skills,hooks,scripts,state/sessions,state/context}
+    mkdir -p "$TDC_HOME"/{hooks,state/sessions,state/context}
 
     # Clone or update repo
     if [ -d "$TDC_HOME/.repo" ]; then
@@ -126,7 +100,7 @@ install_global() {
         if git ls-remote "$TDC_REPO_URL" &>/dev/null; then
             git clone --quiet "$TDC_REPO_URL" "$TDC_HOME/.repo"
         else
-            echo -e "${YELLOW}[tdc]${NC} Repo not accessible. Using local install mode."
+            echo -e "${YELLOW}[tdc]${NC} Repo not accessible. Using local files."
             SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
             mkdir -p "$TDC_HOME/.repo"
             cp -r "$SCRIPT_DIR"/* "$TDC_HOME/.repo/" 2>/dev/null || true
@@ -135,34 +109,16 @@ install_global() {
         fi
     fi
 
-    # Copy files to TDC home
-    cp -r "$TDC_HOME/.repo/.claude/agents/"* "$TDC_HOME/agents/" 2>/dev/null || true
-    cp -r "$TDC_HOME/.repo/.claude/skills/"* "$TDC_HOME/skills/" 2>/dev/null || true
-    # Note: skills are now in folder/SKILL.md format
+    # Copy hooks to TDC home
     cp -r "$TDC_HOME/.repo/.claude/hooks/"* "$TDC_HOME/hooks/" 2>/dev/null || true
-    cp -r "$TDC_HOME/.repo/scripts/"* "$TDC_HOME/scripts/" 2>/dev/null || true
+    chmod +x "$TDC_HOME/hooks/"* 2>/dev/null || true
 
     # Install skills & agents to Claude Code global path (~/.claude/)
-    # This is where Claude Code actually looks for skills and agents
     CLAUDE_DIR="$HOME/.claude"
     mkdir -p "$CLAUDE_DIR/skills" "$CLAUDE_DIR/agents"
     cp -r "$TDC_HOME/.repo/.claude/skills/"* "$CLAUDE_DIR/skills/" 2>/dev/null || true
     cp -r "$TDC_HOME/.repo/.claude/agents/"* "$CLAUDE_DIR/agents/" 2>/dev/null || true
     echo -e "${GREEN}[tdc]${NC} Skills & agents installed to $CLAUDE_DIR/"
-
-    # Make scripts executable
-    chmod +x "$TDC_HOME/scripts/"* 2>/dev/null || true
-    chmod +x "$TDC_HOME/hooks/"* 2>/dev/null || true
-
-    # Install tdc CLI to PATH
-    TDC_BIN="$TDC_HOME/scripts/tdc"
-    chmod +x "$TDC_BIN"
-
-    mkdir -p "$LOCAL_BIN"
-    ln -sf "$TDC_BIN" "$LOCAL_BIN/tdc"
-
-    # Ensure PATH in shell profile
-    ensure_path
 
     # Configure Claude Code settings
     setup_claude_settings
@@ -171,43 +127,7 @@ install_global() {
     install_rtk
     setup_rtk
 
-    echo -e "${GREEN}[tdc]${NC} Global installation complete!"
-}
-
-install_local() {
-    echo -e "${BLUE}[tdc]${NC} Installing to current project..."
-
-    PROJECT_DIR="$(pwd)"
-
-    mkdir -p "$PROJECT_DIR/.claude"/{agents,skills,hooks}
-    mkdir -p "$PROJECT_DIR/.tdc"/{sessions,context,plans}
-
-    # Find source: prefer TDC_HOME repo, then try BASH_SOURCE dir
-    local SRC_CLAUDE=""
-    if [ -d "$TDC_HOME/.repo/.claude" ]; then
-        SRC_CLAUDE="$TDC_HOME/.repo/.claude"
-    elif [ -n "${BASH_SOURCE[0]}" ]; then
-        local SCRIPT_DIR
-        SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-        if [ -d "$SCRIPT_DIR/.claude" ]; then
-            SRC_CLAUDE="$SCRIPT_DIR/.claude"
-        fi
-    fi
-
-    # Fallback: global ~/.claude/ already has tdc files from global install
-    if [ -z "$SRC_CLAUDE" ] && [ -d "$HOME/.claude/skills/tdc" ]; then
-        SRC_CLAUDE="$HOME/.claude"
-    fi
-
-    if [ -n "$SRC_CLAUDE" ]; then
-        cp -r "$SRC_CLAUDE/agents/"* "$PROJECT_DIR/.claude/agents/" 2>/dev/null || true
-        cp -r "$SRC_CLAUDE/skills/"* "$PROJECT_DIR/.claude/skills/" 2>/dev/null || true
-        [ -d "$SRC_CLAUDE/hooks" ] && cp -r "$SRC_CLAUDE/hooks/"* "$PROJECT_DIR/.claude/hooks/" 2>/dev/null || true
-        chmod +x "$PROJECT_DIR/.claude/hooks/"* 2>/dev/null || true
-        echo -e "${GREEN}[tdc]${NC} Local installation complete in $PROJECT_DIR"
-    else
-        echo -e "${YELLOW}[tdc]${NC} No source files found. Run global install first, then tdc init."
-    fi
+    echo -e "${GREEN}[tdc]${NC} Installation complete!"
 }
 
 setup_claude_settings() {
@@ -254,7 +174,6 @@ tdc_hook_entry = {
     ]
 }
 
-# Check if hook already exists
 existing = [h for h in hooks.get("PostToolUse", [])
             if any("context-guard" in hk.get("command", "") for hk in h.get("hooks", []))]
 if not existing:
@@ -288,14 +207,8 @@ print("[tdc] Claude Code settings updated")
 PYEOF
 }
 
-# Main
-case "$MODE" in
-    --local|-l)  install_local ;;
-    --global|-g|*) install_global ;;
-esac
-
-# Refresh PATH for final status check
-export PATH="$LOCAL_BIN:$PATH"
+# Run installation
+install_tdc
 
 echo ""
 echo -e "${BOLD}${GREEN}=== TechDog Claude v${TDC_VERSION} installed successfully! ===${NC}"
@@ -312,6 +225,4 @@ echo -e ""
 if command -v rtk &> /dev/null; then
     echo -e "  rtk: ${GREEN}$(rtk --version 2>/dev/null)${NC} — 토큰 60-90% 절감 활성화"
 fi
-echo ""
-echo -e "  ${YELLOW}터미널에서 tdc 명령어를 쓰려면 새 터미널을 열어주세요.${NC}"
 echo ""

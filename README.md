@@ -55,31 +55,17 @@ cd techdog-claude && bash install.sh
 ```
 
 설치하면 자동으로:
-- `tdc` 명령어가 터미널에 등록됩니다
 - Claude Code에 `/tdc` 슬래시 커맨드가 추가됩니다 (`~/.claude/skills/` 에 설치)
 - [rtk](https://github.com/rtk-ai/rtk) (토큰 60-90% 절감 도구)가 함께 설치됩니다
 - Claude Code Team 모드가 활성화됩니다
 
-> 설치 후 `source ~/.zshrc` (또는 `source ~/.bashrc`) 실행하거나 새 터미널을 열어주세요.
+> 설치 직후 바로 사용 가능합니다. 터미널에서 `claude`를 실행하고 `/tdc spec.md`를 입력하세요.
 
 ---
 
 ## 사용법 (처음부터 따라하기)
 
-### 1. 프로젝트 시작
-
-먼저 터미널에서 프로젝트 폴더를 만들고 초기화합니다:
-
-```bash
-mkdir my-project
-cd my-project
-tdc init         # .tdc/ + .claude/ 폴더가 생깁니다
-```
-
-> `tdc init`은 이 프로젝트 폴더에 tdc 스킬과 에이전트를 설치합니다.
-> 글로벌 설치(`install.sh`)를 먼저 해야 `tdc init`이 동작합니다.
-
-### 2. 스펙 파일 작성
+### 1. 스펙 파일 작성
 
 **스펙 파일**은 "내가 뭘 만들고 싶은지" 적은 문서입니다.
 형식은 자유이고, 메모장이나 에디터로 `spec.md` 파일을 만들면 됩니다.
@@ -141,7 +127,7 @@ tdc init         # .tdc/ + .claude/ 폴더가 생깁니다
 
 > 한국어/영어 모두 OK. 완벽하지 않아도 됩니다. AI가 부족한 부분은 물어봅니다.
 
-### 3. 실행
+### 2. 실행
 
 터미널에서 Claude Code를 열고 `/tdc` 명령어를 입력합니다:
 
@@ -179,7 +165,7 @@ Claude Code 입력창에서:
 > 개발 중 에러가 나면 Debugger가 자동 호출되고, 리뷰에서 문제가 발견되면
 > Developer가 자동으로 수정합니다. **사용자는 처음에 한 번만 입력하면 됩니다.**
 
-### 4. 개별 명령어 (선택사항)
+### 3. 개별 명령어 (선택사항)
 
 자동 파이프라인이 아니라, 특정 단계만 따로 실행하고 싶을 때 사용합니다.
 **평소에는 쓸 일이 없습니다** — `/tdc spec.md` 하나면 충분합니다.
@@ -191,7 +177,7 @@ Claude Code 입력창에서:
 /tdc-review           ← 직접 작성한 코드를 리뷰받고 싶을 때
 ```
 
-### 5. 작업이 길어질 때 (세션 관리)
+### 4. 작업이 길어질 때 (세션 관리)
 
 오랜 작업 중 "컨텍스트 사용량이 높습니다"라는 경고가 나오면:
 
@@ -236,20 +222,6 @@ Claude Code를 다시 열고:
 | `/tdc-session resume` | 저장한 세션에서 이어서 작업 |
 | `/tdc-session list` | 저장된 세션 목록 보기 |
 | `/tdc-session clean` | 7일 이상 된 세션 삭제 |
-
-### 터미널 명령어 (Claude Code 밖에서)
-
-Claude Code를 실행하지 않고 터미널에서 직접 쓸 수도 있습니다:
-
-```bash
-tdc init              # 프로젝트 초기화 (.tdc/ + .claude/ 생성)
-tdc spec.md           # Claude Code를 열면서 스펙 파일 전달
-tdc status            # 현재 세션 상태 확인
-tdc session list      # 저장된 세션 목록
-tdc session resume    # 이전 세션 재개
-tdc doctor            # 설치 상태 진단 (문제 생기면 이거 먼저)
-tdc --help            # 도움말
-```
 
 ---
 
@@ -367,10 +339,7 @@ tdc는 이걸 자동으로 관리합니다:
 
 ```
 ~/.tdc/                             # 글로벌 설치 (install.sh로 생성)
-  agents/                           # 에이전트 정의
-  skills/                           # 스킬 백업
   hooks/                            # 자동화 스크립트
-  scripts/tdc                       # tdc CLI
   state/sessions/                   # 세션 데이터
   state/context/                    # 컨텍스트 모니터링
 
@@ -384,10 +353,7 @@ tdc는 이걸 자동으로 관리합니다:
     master.md, planner.md, ...
 
 your-project/                       # 사용자의 프로젝트 폴더
-├── .claude/                        # tdc init 시 생성 (프로젝트별 스킬/에이전트)
-│   ├── skills/tdc/SKILL.md ...
-│   └── agents/master.md ...
-├── .tdc/                           # tdc init 시 생성 (gitignore 권장)
+├── .tdc/                           # /tdc 첫 실행 시 자동 생성
 │   ├── sessions/                   # 저장된 세션
 │   ├── context/                    # 컨텍스트 모니터링
 │   └── plans/                      # 생성된 플랜
@@ -416,13 +382,11 @@ A: 제한 없습니다. Python, JavaScript, TypeScript, Go, Rust, Java, Swift, K
 Claude가 지원하는 모든 언어로 개발할 수 있습니다.
 
 **Q: 기존 프로젝트에도 쓸 수 있나요?**
-A: 네. 기존 프로젝트 폴더에서 `tdc init` 후 바로 사용 가능합니다.
+A: 네. 기존 프로젝트 폴더에서 `claude`를 실행하고 `/tdc spec.md`를 입력하면 됩니다.
 
 ---
 
 ## 삭제 (Uninstall)
-
-### 전체 삭제
 
 ```bash
 # 1. 글로벌 파일 삭제
@@ -434,49 +398,28 @@ rm -rf ~/.claude/skills/tdc ~/.claude/skills/tdc-plan ~/.claude/skills/tdc-dev \
 rm -f ~/.claude/agents/master.md ~/.claude/agents/planner.md ~/.claude/agents/developer.md \
       ~/.claude/agents/debugger.md ~/.claude/agents/reviewer.md ~/.claude/agents/architect.md
 
-# 3. CLI 심볼릭 링크 삭제
-rm -f ~/.local/bin/tdc
-
-# 4. bashrc/zshrc에서 TDC 관련 줄 삭제 (수동)
-#    아래 줄들을 ~/.bashrc 또는 ~/.zshrc에서 제거:
-#    export PATH="$HOME/.local/bin:$PATH"   (다른 용도로 쓰고 있다면 남겨두세요)
-#    export TDC_HOME="$HOME/.tdc"
+# 3. settings.json 원복 (선택)
+#    ~/.claude/settings.json에서 아래를 삭제:
+#    - env 안의 TDC_HOME, CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS
+#    - hooks 안의 PostToolUse 중 context-guard.sh 항목
+#    - hooks 안의 Stop 중 session-save.sh 항목
 ```
-
-### 프로젝트에서만 삭제
-
-```bash
-# 프로젝트 폴더에서:
-rm -rf .tdc .claude/skills/tdc* .claude/agents/{master,planner,developer,debugger,reviewer,architect}.md
-```
-
-### settings.json 원복
-
-tdc가 추가한 설정을 되돌리려면 `~/.claude/settings.json`에서 아래를 삭제:
-- `env` 안의 `TDC_HOME`, `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS`
-- `hooks` 안의 `PostToolUse` 중 `context-guard.sh` 항목
-- `hooks` 안의 `Stop` 중 `session-save.sh` 항목
 
 ---
 
 ## 트러블슈팅
 
 **`/tdc` 입력 시 "Unknown skill" 에러**
-- `tdc doctor` 실행해서 설치 상태를 확인하세요
 - `~/.claude/skills/tdc/SKILL.md` 파일이 있는지 확인
-- 없으면: `curl -sSL .../install.sh | bash`로 재설치
-
-**`tdc: command not found`**
-- `source ~/.zshrc` (또는 `source ~/.bashrc`) 실행
-- 또는 새 터미널을 열어보세요
+- 없으면: `curl -sSL https://raw.githubusercontent.com/dogyuHwang/techdog-claude/main/install.sh | bash`로 재설치
 
 **Settings Error (Invalid key)**
 - `~/.claude/settings.json`에 잘못된 hook 키가 있을 수 있습니다
-- 재설치하면 자동으로 수정됩니다 (기존 `postToolExecution` → `PostToolUse`)
+- 재설치하면 자동으로 수정됩니다
 
-**rtk가 "not installed"로 표시됨**
-- `source ~/.bashrc` 후 `rtk --version` 확인
-- PATH에 `~/.local/bin`이 포함되어 있는지 확인
+**rtk가 동작하지 않음**
+- `rtk --version` 확인
+- 안 되면: `brew install rtk` 또는 재설치
 
 ---
 
