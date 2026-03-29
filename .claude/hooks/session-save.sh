@@ -6,6 +6,7 @@ TDC_PROJECT_DIR="${TDC_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null 
 TDC_DIR="$TDC_PROJECT_DIR/.tdc"
 SESSION_DIR="$TDC_DIR/sessions"
 CONTEXT_DIR="$TDC_DIR/context"
+PLANS_DIR="$TDC_DIR/plans"
 
 mkdir -p "$SESSION_DIR" "$CONTEXT_DIR"
 
@@ -14,6 +15,46 @@ if [ -f "$CONTEXT_DIR/.overflow_flag" ]; then
     TIMESTAMP=$(date -u +%Y%m%d_%H%M%S)
     SESSION_FILE="$SESSION_DIR/auto_${TIMESTAMP}.json"
 
+    # --- Gather state from project artifacts ---
+
+    # 1. Latest plan file (if any)
+    LATEST_PLAN=""
+    if [ -d "$PLANS_DIR" ]; then
+        LATEST_PLAN=$(ls -t "$PLANS_DIR"/*.md 2>/dev/null | head -1)
+    fi
+    PLAN_NAME=""
+    if [ -n "$LATEST_PLAN" ]; then
+        PLAN_NAME=$(basename "$LATEST_PLAN")
+    fi
+
+    # 2. Modified files (git tracked)
+    FILES_MODIFIED="[]"
+    if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+        FILES_MODIFIED=$(git diff --name-only HEAD 2>/dev/null | head -20 | \
+            awk 'BEGIN{printf "["} NR>1{printf ","} {gsub(/\\/, "\\\\"); gsub(/"/, "\\\""); printf "\"%s\"", $0} END{printf "]"}')
+        [ "$FILES_MODIFIED" = "[]" ] && \
+            FILES_MODIFIED=$(git diff --name-only 2>/dev/null | head -20 | \
+                awk 'BEGIN{printf "["} NR>1{printf ","} {gsub(/\\/, "\\\\"); gsub(/"/, "\\\""); printf "\"%s\"", $0} END{printf "]"}')
+    fi
+
+    # 3. Tool call count at save time
+    TOOL_CALLS=0
+    if [ -f "$CONTEXT_DIR/.tool_count" ]; then
+        TOOL_CALLS=$(cat "$CONTEXT_DIR/.tool_count")
+    fi
+
+    # 4. Extract completed/pending tasks from latest plan ([ ] and [x] markers)
+    COMPLETED="[]"
+    PENDING="[]"
+    if [ -n "$LATEST_PLAN" ] && [ -f "$LATEST_PLAN" ]; then
+        COMPLETED=$(grep -E '^\s*-\s*\[x\]' "$LATEST_PLAN" 2>/dev/null | \
+            sed 's/.*\[x\]\s*//' | head -20 | \
+            awk 'BEGIN{printf "["} NR>1{printf ","} {gsub(/"/, "\\\""); printf "\"%s\"", $0} END{printf "]"}')
+        PENDING=$(grep -E '^\s*-\s*\[ \]' "$LATEST_PLAN" 2>/dev/null | \
+            sed 's/.*\[ \]\s*//' | head -20 | \
+            awk 'BEGIN{printf "["} NR>1{printf ","} {gsub(/"/, "\\\""); printf "\"%s\"", $0} END{printf "]"}')
+    fi
+
     cat > "$SESSION_FILE" << SESSIONEOF
 {
   "session_id": "$TIMESTAMP",
@@ -21,12 +62,17 @@ if [ -f "$CONTEXT_DIR/.overflow_flag" ]; then
   "reason": "context_overflow",
   "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
   "project": "$TDC_PROJECT_DIR",
+  "plan_file": "$PLAN_NAME",
+  "tool_calls_at_save": $TOOL_CALLS,
+  "completed": $COMPLETED,
+  "pending": $PENDING,
+  "files_modified": $FILES_MODIFIED,
   "note": "Session auto-saved due to context overflow. Resume with /tdc-session resume"
 }
 SESSIONEOF
 
-    echo "[TDC] Session auto-saved to $SESSION_FILE"
+    echo "[TDC] Session auto-saved to $SESSION_FILE (with task state)"
 
-    # Clean up flags
-    rm -f "$CONTEXT_DIR/.overflow_flag" "$CONTEXT_DIR/.tool_count"
+    # Clean up flags and counter
+    rm -f "$CONTEXT_DIR/.overflow_flag" "$CONTEXT_DIR/.tool_count" "$CONTEXT_DIR/.rtk_status"
 fi

@@ -41,6 +41,7 @@ Every issue MUST be tagged with a severity level. Master Agent uses this to deci
 - **Actionable feedback** — every comment should have a clear fix
 - **Binary verdict** — APPROVE or REQUEST_CHANGES, no maybes
 - **Always classify severity** — every issue must have `[code-level]`, `[design-level]`, or `[critical]` tag
+- **Token budget: ~3,000 tokens** (see team-config.json). Be terse — one-liner per issue
 
 ## Output Format
 

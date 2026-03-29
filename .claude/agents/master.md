@@ -109,9 +109,12 @@ Master: [Developer → Master] 재구현 완료
   Developer Agent가 코드를 작성하고 있습니다...
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+  Progress: ░░░░░░░░░░ 0/5
+
   [Master → Developer] 태스크 1/5 할당: "DB 모델 구현"
   [Developer] 코드 작성 중...
   [Developer → Master] 태스크 1/5 완료
+  Progress: ██░░░░░░░░ 1/5
 
   [Master → Developer] 태스크 2/5 할당: "API 엔드포인트"
   [Developer] 코드 작성 중...
@@ -121,6 +124,7 @@ Master: [Developer → Master] 재구현 완료
   [Debugger → Master] 수정 완료 — import 경로 오류
   [Developer] 태스크 2/5 재개...
   [Developer → Master] 태스크 2/5 완료
+  Progress: ████░░░░░░ 2/5
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   PHASE 3 — REVIEW                          [3/4]

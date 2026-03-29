@@ -40,10 +40,14 @@ Resume from the latest saved session.
 
 1. Read the latest `.tdc/sessions/*.json`
 2. Display session summary to user
-3. Load context and continue work
+3. **Determine session richness:**
+   - If `completed`/`pending` arrays are present and non-empty → **Rich session**: show task progress, pick up from first pending task
+   - If only metadata (project, timestamp, note) → **Minimal session**: read the latest plan from `.tdc/plans/`, check `git log --oneline -10` and `git diff --stat` to reconstruct state, then continue
+4. If a `plan_file` field exists, read that plan and use it as the continuation point
+5. Load context and continue work
 
 ### `/tdc-session resume <session_id>`
-Resume a specific session by ID.
+Resume a specific session by ID. Same logic as above, applied to the specified session file.
 
 ### `/tdc-session list`
 List all saved sessions with timestamps and task summaries.

@@ -50,8 +50,10 @@ Master Agent가 모든 에이전트 활동을 실시간으로 표시:
 
 - 스펙 원문은 planner에게만. 다른 에이전트에는 플랜/태스크만 전달.
 - haiku → sonnet → opus 순으로 비용 효율적 라우팅.
+- 각 에이전트 프롬프트에 토큰 예산 명시 (planner: 4k, developer: 8k, debugger: 6k, reviewer: 3k).
 - rtk (https://github.com/rtk-ai/rtk) 로 명령어 출력 자동 압축 (60-90% 절감).
-- 컨텍스트 오버플로 시 자동 세션 저장 (.tdc/sessions/).
+  - context-guard.sh가 세션 시작 시 rtk 상태를 검증 (미설치/오작동 시 경고).
+- 컨텍스트 오버플로 시 자동 세션 저장 (.tdc/sessions/) — 태스크 상태 포함.
 
 ## State Directory
 

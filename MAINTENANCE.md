@@ -156,9 +156,10 @@ techdog-claude/
 - 변경 시: 각 에이전트 `.md` 파일 상단의 `## Model Tier` 섹션 수정.
 
 ### 3. Context Overflow 관리
-- `context-guard.sh`: 매 도구 호출마다 `.tdc/context/.tool_count`에 카운트 증가. 80에서 경고, 120에서 `.overflow_flag` 생성.
-- `session-save.sh`: 대화 종료 시 오버플로 플래그가 있으면 자동 세션 저장.
+- `context-guard.sh`: 매 도구 호출마다 `.tdc/context/.tool_count`에 카운트 증가. 80에서 경고, 120에서 `.overflow_flag` 생성. 세션 시작 시 rtk 상태도 검증 (`.rtk_status` 파일).
+- `session-save.sh`: 대화 종료 시 오버플로 플래그가 있으면 자동 세션 저장. 최신 플랜에서 completed/pending 태스크를 추출하고, git diff로 변경 파일 목록도 캡처.
 - Master agent의 `Context Overflow Protocol`: JSON 형태로 진행 상황 저장 후 resume 안내.
+- `/tdc-session resume`: rich 세션 (태스크 상태 있음)과 minimal 세션 (메타데이터만)을 구분하여 처리.
 - 임계값 변경: `context-guard.sh`의 80/120 값과 `team-config.json`의 `token_optimization` 섹션.
 
 ### 4. Skill 라우팅
@@ -255,6 +256,14 @@ techdog-claude/
 ---
 
 ## Version History
+
+- **v1.3.1** (2026-03-29): 토큰 최적화/시각화/컨텍스트 감사 및 개선
+  - context-guard.sh에 rtk 상태 검증 추가 (미설치/오작동 시 경고)
+  - 에이전트 프롬프트에 토큰 예산 명시 (planner 4k, developer 8k, debugger 6k, reviewer 3k)
+  - SKILL.md Phase 수를 master.md와 통일 (5→4 phase)
+  - master.md에 태스크별 진행률 바 (Progress: ████░░░░░░) 추가
+  - session-save.sh 자동 저장에 태스크 상태 포함 (completed/pending/files_modified/plan_file)
+  - tdc-session resume에 rich/minimal 세션 분기 처리 추가
 
 - **v1.3.0** (2026-03-29): Live Dashboard + 에이전트 회귀 루프
   - Master Agent가 모든 에이전트 활동을 실시간 Live Dashboard로 표시

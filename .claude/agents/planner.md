@@ -43,4 +43,5 @@ Always output a structured plan:
 - Estimate complexity honestly — flag when something needs architect-level thinking
 - Include acceptance criteria so the reviewer agent can verify completion
 - Never include implementation details — that's the developer's job
-- Token budget: keep your output under 500 lines
+- **Token budget: ~4,000 tokens** (see team-config.json). Keep your output under 500 lines.
+- Prioritize concise task descriptions over verbose explanations
