@@ -5,7 +5,7 @@
 
 set -e
 
-TDC_VERSION="1.2.0"
+TDC_VERSION="1.3.0"
 TDC_HOME="$HOME/.tdc"
 TDC_REPO_URL="${TDC_REPO_URL:-https://github.com/dogyuHwang/techdog-claude}"
 LOCAL_BIN="$HOME/.local/bin"
@@ -25,7 +25,7 @@ cat << 'BANNER'
    | | |  _|| |   | |_| | | | | | | | |  _
    | | | |__| |___|  _  | |_| | |_| | |_| |
    |_| |_____\____|_| |_|____/ \___/ \____|
-         Claude Code Orchestrator v1.2.0
+         Claude Code Orchestrator v1.3.0
 BANNER
 echo -e "${NC}"
 
