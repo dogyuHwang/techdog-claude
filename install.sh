@@ -313,5 +313,5 @@ else
     echo -e "    rtk: ${YELLOW}not installed${NC} — 설치하면 토큰 추가 절감 가능"
 fi
 echo ""
-echo -e "  ${YELLOW}NOTE:${NC} 새 터미널을 열거나 'source ~/.bashrc' 실행 후 tdc 명령어를 사용하세요."
+echo -e "  ${YELLOW}NOTE:${NC} 새 터미널을 열거나 'source ${SHELL_RC}' 실행 후 tdc 명령어를 사용하세요."
 echo ""
