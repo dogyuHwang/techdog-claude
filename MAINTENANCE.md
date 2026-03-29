@@ -257,6 +257,11 @@ techdog-claude/
 
 ## Version History
 
+- **v1.4.0** (2026-03-29): 삭제 스크립트 추가
+  - `uninstall.sh` 추가 — 스킬, 에이전트, ~/.tdc/, settings.json 훅까지 자동 정리
+  - `curl | bash` 원격 삭제 지원
+  - README.md 삭제 섹션을 한 줄 명령어로 간소화
+
 - **v1.3.1** (2026-03-29): 토큰 최적화/시각화/컨텍스트 감사 및 개선
   - context-guard.sh에 rtk 상태 검증 추가 (미설치/오작동 시 경고)
   - 에이전트 프롬프트에 토큰 예산 명시 (planner 4k, developer 8k, debugger 6k, reviewer 3k)

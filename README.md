@@ -389,21 +389,15 @@ A: 네. 기존 프로젝트 폴더에서 `claude`를 실행하고 `/tdc spec.md`
 ## 삭제 (Uninstall)
 
 ```bash
-# 1. 글로벌 파일 삭제
-rm -rf ~/.tdc
+# 한 줄로 삭제 (권장)
+curl -sSL https://raw.githubusercontent.com/dogyuHwang/techdog-claude/main/uninstall.sh | bash
 
-# 2. Claude Code에서 tdc 스킬/에이전트 삭제
-rm -rf ~/.claude/skills/tdc ~/.claude/skills/tdc-plan ~/.claude/skills/tdc-dev \
-       ~/.claude/skills/tdc-debug ~/.claude/skills/tdc-review ~/.claude/skills/tdc-session
-rm -f ~/.claude/agents/master.md ~/.claude/agents/planner.md ~/.claude/agents/developer.md \
-      ~/.claude/agents/debugger.md ~/.claude/agents/reviewer.md ~/.claude/agents/architect.md
-
-# 3. settings.json 원복 (선택)
-#    ~/.claude/settings.json에서 아래를 삭제:
-#    - env 안의 TDC_HOME, CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS
-#    - hooks 안의 PostToolUse 중 context-guard.sh 항목
-#    - hooks 안의 Stop 중 session-save.sh 항목
+# 또는 클론한 폴더에서
+bash uninstall.sh
 ```
+
+스킬, 에이전트, 글로벌 파일(`~/.tdc/`), settings.json 훅 설정까지 전부 자동 정리됩니다.
+rtk는 별도 도구이므로 삭제하지 않습니다 (`brew uninstall rtk`로 별도 삭제).
 
 ---
 
