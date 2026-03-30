@@ -4,7 +4,7 @@
 
 set -e
 
-TDC_VERSION="1.9.0"
+TDC_VERSION="2.0.0"
 TDC_HOME="$HOME/.tdc"
 TDC_REPO_URL="${TDC_REPO_URL:-https://github.com/dogyuHwang/techdog-claude}"
 
@@ -23,7 +23,7 @@ cat << 'BANNER'
    | | |  _|| |   | |_| | | | | | | | |  _
    | | | |__| |___|  _  | |_| | |_| | |_| |
    |_| |_____\____|_| |_|____/ \___/ \____|
-         Claude Code Orchestrator v1.9.0
+         Claude Code Orchestrator v2.0.0
 BANNER
 echo -e "${NC}"
 
@@ -252,6 +252,25 @@ existing_rate_limit = [h for h in hooks.get("PostToolUse", [])
                        if any("rate-limit-guard" in hk.get("command", "") for hk in h.get("hooks", []))]
 if not existing_rate_limit:
     hooks["PostToolUse"].append(rate_limit_entry)
+
+# Add PreCompact hook for context compaction survival
+if "PreCompact" not in hooks:
+    hooks["PreCompact"] = []
+
+pre_compact_entry = {
+    "matcher": "",
+    "hooks": [
+        {
+            "type": "command",
+            "command": f"bash {tdc_home}/hooks/pre-compact.sh"
+        }
+    ]
+}
+
+existing_pre_compact = [h for h in hooks.get("PreCompact", [])
+                        if any("pre-compact" in hk.get("command", "") for hk in h.get("hooks", []))]
+if not existing_pre_compact:
+    hooks["PreCompact"].append(pre_compact_entry)
 
 # Add Stop hook for session auto-save
 if "Stop" not in hooks:

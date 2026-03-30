@@ -32,6 +32,8 @@ Multi-agent development orchestration system for Claude Code.
 - **Developer** (sonnet): 코드 구현
 - **Debugger** (sonnet): 버그 진단/수정
 - **Reviewer** (haiku): 코드 리뷰, 이슈 심각도 분류 (code/design/critical)
+- **Security Reviewer** (haiku): 보안 전문 리뷰 (OWASP top 10)
+- **Test Engineer** (sonnet): 테스트 커버리지 분석 + 테스트 자동 생성
 - **Architect** (opus): 시스템 설계 (필요시만)
 
 ## Regression Loop (회귀 루프)
@@ -90,6 +92,23 @@ Reviewer 이슈 심각도에 따라 자동 회귀:
 - **Conversation Compaction**: 60 tool calls에서 컨텍스트 압축 트리거 (중간 결과 요약).
 - **Response Budget**: 누적 토큰 ~150k 초과 시 에이전트 출력 간결화 경고.
 - **Rate Limit Guard**: API rate limit 자동 감지 + 대기 시간 안내 + 3회 초과 시 세션 저장 제안.
+- **Preemptive Compaction**: PreCompact 훅으로 압축 전 상태 자동 저장 → notepad.md로 복구.
+- **Token Dashboard**: Phase 4에서 에이전트별 토큰 사용량 게이지 바 표시 + rtk 절감 추정.
+
+## Project Memory
+
+`.tdc/project-memory.md`에 프로젝트 수준의 지속적 지식을 저장:
+- 기술 결정 (예: "ESM import만 사용", "PostgreSQL + Prisma")
+- 코딩 컨벤션 (예: "함수명은 camelCase")
+- 비즈니스 규칙 (예: "할인율은 최대 30%")
+- Master Agent가 매 세션 시작 시 자동 로드 → "다시 설명" 불필요
+
+## Parallel Development (git worktree)
+
+독립 태스크를 git worktree로 병렬 구현:
+- Planner가 의존성 분석 → 독립 태스크 식별
+- 각 Developer가 별도 worktree에서 병렬 작업
+- 완료 후 자동 merge → 충돌 시 Debugger가 해결
 
 ## State Directory
 
@@ -100,8 +119,11 @@ Reviewer 이슈 심각도에 따라 자동 회귀:
     .phase         # Current phase (status line reads this)
     .agent-status  # Active agent state (status line reads this)
     .agent-events  # Agent start/stop event log
+    .agent-tokens  # Per-agent token usage tracking
     .ralph         # Ralph mode state (when active)
     .rate_limit    # Rate limit tracking
+    notepad.md     # Compaction survival data (auto-saved before compaction)
   plans/           # Generated plans
   learned-skills/  # Auto-learned skill patterns (/tdc-learn)
+  project-memory.md # Cross-session project knowledge
 ```

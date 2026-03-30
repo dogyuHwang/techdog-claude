@@ -104,8 +104,10 @@ techdog-claude/
 │   │   ├── planner.md    # 기획자 — sonnet — 스펙 → 태스크 분해
 │   │   ├── developer.md  # 개발자 — sonnet — 코드 구현, 테스트
 │   │   ├── debugger.md   # 디버거 — sonnet — 에러 자동 진단/수정 (Master가 자동 호출)
-│   │   ├── reviewer.md   # 리뷰어 — haiku — 자동 코드 리뷰 (구현 후 자동 실행)
-│   │   └── architect.md  # 아키텍트 — opus — 설계 판단 (필요시만 호출)
+│   │   ├── reviewer.md            # 리뷰어 — haiku — 자동 코드 리뷰 (구현 후 자동 실행)
+│   │   ├── security-reviewer.md   # 보안 리뷰어 — haiku — OWASP 보안 리뷰
+│   │   ├── test-engineer.md       # 테스트 엔지니어 — sonnet — 테스트 생성
+│   │   └── architect.md           # 아키텍트 — opus — 설계 판단 (필요시만 호출)
 │   ├── skills/           # 슬래시 커맨드 정의 (7개, 각각 폴더/SKILL.md 형식)
 │   │   ├── tdc/SKILL.md        # /tdc — 메인 진입점. 자동 파이프라인 실행
 │   │   ├── tdc-plan/SKILL.md   # /tdc-plan — 기획만 따로 (수동 모드)
@@ -169,7 +171,42 @@ techdog-claude/
 - **무제한 회귀** — Reviewer가 APPROVE할 때까지 계속. 컨텍스트 오버플로 시 세션 저장/재개로 이어서 진행.
 - 관련 파일: `.claude/agents/master.md` (Regression Loop, Regression Policy), `.claude/agents/reviewer.md` (Issue Severity Classification)
 
-### 0.3. Ralph Mode — 끈질긴 검증 (v1.9.0~)
+### 0.3. Preemptive Context Compaction (v2.0.0~)
+- `PreCompact` 훅으로 컨텍스트 압축 전에 핵심 상태를 `.tdc/context/notepad.md`에 자동 저장.
+- 저장 내용: 현재 Phase, 활성 에이전트, 도구 호출 수, 태스크 진행률, 수정 파일, 에이전트 토큰.
+- 압축 후 Master가 notepad.md를 읽어 상태를 복원하고 pending 태스크부터 재개.
+- 관련 파일: `.claude/hooks/pre-compact.sh`, `.claude/agents/master.md` (Preemptive Context Compaction)
+
+### 0.4. Project Memory — 교차 세션 지식 (v2.0.0~)
+- `.tdc/project-memory.md`에 프로젝트 규칙, 기술 결정, 코딩 컨벤션 저장.
+- Master가 Phase 0에서 자동 로드 → 매 세션마다 "다시 설명" 불필요.
+- Phase 4에서 새로 발견된 규칙 자동 추가 (중복 방지).
+- 코드에서 직접 알 수 있는 정보(파일 경로 등)는 저장하지 않음.
+- 관련 파일: `.claude/agents/master.md` (Phase 0, Phase 4)
+
+### 0.5. 도메인 특화 에이전트 (v2.0.0~)
+- **Security Reviewer** (haiku): OWASP top 10 기반 보안 전문 리뷰.
+  - Phase 3에서 Reviewer와 병렬 실행.
+  - critical/high 이슈 → regression loop의 critical로 처리.
+  - 관련 파일: `.claude/agents/security-reviewer.md`
+- **Test Engineer** (sonnet): 테스트 커버리지 분석 + 테스트 자동 생성.
+  - Phase 3에서 Reviewer 후 실행. 프레임워크 자동 감지.
+  - 관련 파일: `.claude/agents/test-engineer.md`
+
+### 0.6. Git Worktree 병렬 개발 (v2.0.0~)
+- 독립 태스크를 `isolation: "worktree"`로 병렬 구현.
+- Planner의 Dependencies 분석 결과를 기반으로 독립/의존 분류.
+- 완료 후 자동 merge. 충돌 시 Debugger가 해결.
+- 관련 파일: `.claude/agents/master.md` (Phase 2, Worktree Parallel Strategy)
+
+### 0.7. 에이전트별 토큰 대시보드 (v2.0.0~)
+- `agent-tracker.sh`가 에이전트 실행 시간 기반으로 토큰 사용량 추정.
+- `.tdc/context/.agent-tokens`에 에이전트별 누적 토큰 기록.
+- Phase 4 리포트에 시각적 게이지 바 (█/░) + 비율 + 비용 추정 표시.
+- rtk 절감량 표시 (실제 rtk gain 또는 60% 기본 추정).
+- 관련 파일: `.claude/hooks/agent-tracker.sh`, `.claude/agents/master.md` (Response Format)
+
+### 0.8. Ralph Mode — 끈질긴 검증 (v1.9.0~)
 - `ralph:` 키워드 또는 `/tdc ralph` 서브커맨드로 활성화.
 - 일반 regression loop보다 훨씬 엄격한 검증 루프 실행.
 - 테스트 → 빌드 → Reviewer → 최종검증 4단계 순환. 모두 통과해야 완료.
@@ -346,6 +383,18 @@ techdog-claude/
 ---
 
 ## Version History
+
+- **v2.0.0** (2026-03-30): 경쟁력 강화 5종 + 에이전트 확장
+  - **Preemptive Context Compaction**: PreCompact 훅으로 압축 전 상태 자동 저장. notepad.md로 복구
+  - **Project Memory**: `.tdc/project-memory.md`에 교차 세션 프로젝트 지식 저장/자동 로드
+  - **Security Reviewer Agent**: OWASP top 10 보안 전문 리뷰어 (haiku). Phase 3에서 자동 실행
+  - **Test Engineer Agent**: 테스트 커버리지 분석 + 테스트 자동 생성 (sonnet). Phase 3에서 자동 실행
+  - **Git Worktree 병렬 개발**: 독립 태스크를 worktree로 병렬 구현 → 자동 merge
+  - **Token Usage Dashboard**: Phase 4에 에이전트별 토큰 게이지 바 + rtk 절감 + 비용 추정
+  - agent-tracker.sh에 토큰 추적 기능 추가 (.agent-tokens)
+  - pre-compact.sh 신규 훅 + settings.json/install.sh에 등록
+  - security-reviewer.md, test-engineer.md 신규 에이전트 추가
+  - master.md에 Phase 0 (Project Memory + Skill Injection), Phase 2 (worktree), Phase 3 (security + test) 확장
 
 - **v1.9.0** (2026-03-30): OMC 영감 기능 4종 추가
   - **Ralph Mode**: `ralph:` 키워드로 끈질긴 검증 루프 활성화. 테스트+빌드+리뷰+최종검증 4단계 순환, 3회 실패 시 Architect 에스컬레이션

@@ -71,6 +71,17 @@
         ]
       }
     ],
+    "PreCompact": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash $HOME/.tdc/hooks/pre-compact.sh"
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "matcher": "",
@@ -94,7 +105,9 @@
       "Bash(bash $HOME/.tdc/hooks/session-save.sh)",
       "Bash(bash $HOME/.tdc/hooks/agent-tracker.sh)",
       "Bash(bash $HOME/.tdc/hooks/tdc-status.sh)",
-      "Bash(bash $HOME/.tdc/hooks/smart-read.sh)"
+      "Bash(bash $HOME/.tdc/hooks/smart-read.sh)",
+      "Bash(bash $HOME/.tdc/hooks/pre-compact.sh)",
+      "Bash(bash $HOME/.tdc/hooks/rate-limit-guard.sh)"
     ]
   }
 }
