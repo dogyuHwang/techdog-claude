@@ -451,6 +451,7 @@ rtk is a separate tool and is not removed (`brew uninstall rtk` to remove it sep
 - bash 4+
 - python3
 - git
+- jq (required for rtk token compression — install.sh auto-installs)
 
 ## Maintenance
 

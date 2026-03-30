@@ -53,6 +53,7 @@ check_prereq "claude" || echo -e "${YELLOW}[tdc]${NC} Warning: Claude Code CLI n
 # Install jq (required by rtk hook)
 install_jq() {
     if command -v jq &> /dev/null; then
+        echo -e "${GREEN}[tdc]${NC} jq already installed: $(jq --version 2>/dev/null)"
         return
     fi
 
