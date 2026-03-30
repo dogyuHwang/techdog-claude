@@ -14,12 +14,16 @@ NC='\033[0m'
 echo -e "${BOLD}TechDog Claude — Uninstaller${NC}"
 echo ""
 
-# Confirm
-read -p "tdc를 삭제하시겠습니까? (y/N) " -n 1 -r
-echo ""
-if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    echo -e "${YELLOW}[tdc]${NC} 삭제를 취소했습니다."
-    exit 0
+# Confirm (skip when piped via curl | bash)
+if [ -t 0 ]; then
+    read -p "tdc를 삭제하시겠습니까? (y/N) " -n 1 -r
+    echo ""
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo -e "${YELLOW}[tdc]${NC} 삭제를 취소했습니다."
+        exit 0
+    fi
+else
+    echo -e "${YELLOW}[tdc]${NC} 파이프 실행 감지 — 확인 없이 진행합니다."
 fi
 
 # 1. Remove skills
