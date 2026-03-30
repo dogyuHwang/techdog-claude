@@ -12,3 +12,4 @@ state/context/*
 *.key
 credentials.json
 service-account*.json
+.claude/settings.local.json
