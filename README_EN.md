@@ -18,17 +18,19 @@
 
 [Claude Code](https://claude.ai/code) is a tool that lets you write code by chatting with AI in the terminal.
 
-TechDog Claude (tdc) places **6 specialized AI agents** on top of Claude Code,
+TechDog Claude (tdc) places **8 specialized AI agents** on top of Claude Code,
 turning solo coding into a **team development** experience.
 
 ```
 Normally:  You <-> Claude (1:1 conversation)
 
-tdc:       You -> Master Agent -> Planner    (planning)
-                                -> Developer  (development)
-                                -> Debugger   (debugging)
-                                -> Reviewer   (review)
-                                -> Architect  (design)
+tdc:       You -> Master Agent -> Planner           (planning)
+                                -> Developer          (development)
+                                -> Debugger           (debugging)
+                                -> Reviewer           (review)
+                                -> Security Reviewer  (security audit)
+                                -> Test Engineer      (test generation)
+                                -> Architect          (design)
 ```
 
 ---
@@ -62,6 +64,18 @@ The installer automatically:
 - Adds the `/tdc` slash command to Claude Code (installed in `~/.claude/skills/`)
 - Installs [rtk](https://github.com/rtk-ai/rtk) (a tool that reduces tokens by 60-90%)
 - Enables Claude Code Team mode
+- **Language skill packs** selectable install (Python/Django, Next.js, Go, Rust, Java, Flutter, Kotlin, React)
+
+Language skill pack selection during install:
+```
+=== Language Skill Pack Installation ===
+
+  1) Install all (All skill packs)
+  2) Choose individually
+  3) Core only (no skill packs)
+
+  Choose (1/2/3) [1]:
+```
 
 > You can start using it immediately after installation. Run `claude` in your terminal and type `/tdc spec.md`.
 
@@ -141,14 +155,26 @@ claude               # Launch Claude Code
 
 In the Claude Code prompt:
 
+#### Normal Mode — auto pipeline from planning to development
 ```
 /tdc spec.md
 ```
 
-The **Master Agent then handles everything automatically:**
+#### Deep Mode — repeats until every check passes
+```
+/tdc deep spec.md
+```
+
+> **Normal mode** runs plan -> develop -> review once and completes.
+> **Deep mode** keeps iterating until tests pass + build succeeds + review is APPROVED — **all checks must pass**.
+> Use Deep mode for quality-critical work.
+
+Either way, the **Master Agent handles everything automatically:**
 
 ```
-/tdc spec.md   <-- Just type this and you're done!
+/tdc spec.md (or /tdc deep spec.md)   <-- Just type this and you're done!
+    |
+[If needed] AI asks clarifying questions once before starting (skipped if spec is clear)
     |
 [Auto] Planner Agent analyzes the spec and breaks it into tasks
     |
@@ -158,16 +184,17 @@ The **Master Agent then handles everything automatically:**
     |
 [Auto] Tests/linters run -> Debugger auto-fixes on failure
     |
-[Auto] Reviewer Agent reviews the finished code
+[Auto] Reviewer + Security Reviewer audit the code
     | (serious issues found?)
 [Auto] Developer Agent makes corrections  <-- No user intervention needed
+    | (Deep mode?)
+[Auto] Repeats until tests + build + review ALL pass  <-- Never cuts corners
     |
-Final results are reported to the user
+Final results reported to the user (with per-agent token usage)
 ```
 
 > **Key point:** The agents communicate with each other automatically through the Master Agent.
-> If an error occurs during development, the Debugger is called automatically. If the review
-> finds issues, the Developer fixes them automatically. **You only need to give input once at the start.**
+> **You only need to give input once at the start.**
 
 ### 3. Individual Commands (Optional)
 
@@ -204,10 +231,12 @@ All commands are used **inside the Claude Code prompt**.
 
 ### Main Commands (usually all you need)
 
-| What you type | What happens |
-|---------------|-------------|
-| `/tdc spec.md` | Reads the spec file and **automatically runs planning -> development -> debugging -> review** |
-| `/tdc Add a login feature` | Give instructions as text (full auto pipeline without a spec file) |
+| What you type | Mode | What happens |
+|---------------|------|-------------|
+| `/tdc spec.md` | Normal | **Auto pipeline**: planning -> development -> review |
+| `/tdc deep spec.md` | Deep | Normal + **repeats until all tests/build/review pass** |
+| `/tdc Add a login feature` | Normal | Text instructions without a spec file |
+| `/tdc deep Build a payment system` | Deep | Text instructions + thorough verification |
 
 ### Individual Commands (when you want a specific stage only)
 
@@ -331,10 +360,26 @@ A full record of all inter-agent interactions is saved in `.tdc/context/agent-lo
 | **Developer** | sonnet (general-purpose) | Medium | Writes the actual code |
 | **Debugger** | sonnet (general-purpose) | Medium | Finds and fixes bugs |
 | **Reviewer** | haiku (lightweight) | Low | Code review (fast and cheap) |
+| **Security Reviewer** | haiku (lightweight) | Low | OWASP security vulnerability audit |
+| **Test Engineer** | sonnet (general-purpose) | Medium | Test coverage analysis + auto test generation |
 | **Architect** | opus (high-performance) | High | Big-picture design (only when needed) |
 
 There's no need to use expensive opus for a simple review.
 By matching models to roles, **costs are reduced by 30-50%**.
+
+### Real-time Token Dashboard
+
+A **cumulative token gauge updates in real-time** as each agent completes:
+
+```
+[TDC] developer completed (22s) — Token Usage:
+       planner    ██░░░░░░░░ ~2.4k (17%)
+       developer  ████████░░ ~8.8k (63%)
+       debugger   ██░░░░░░░░ ~2.8k (20%)
+       ──────────── total: ~14.0k
+```
+
+Phase 4 includes a full summary with rtk savings estimate and cost estimate.
 
 ### Token Reduction Strategy
 
@@ -342,8 +387,11 @@ By matching models to roles, **costs are reduced by 30-50%**.
 |--------|-------------|---------|
 | **Model tiering** | Route to haiku/sonnet/opus based on role | 30-50% |
 | **rtk** | Auto-compress command output ([rtk-ai/rtk](https://github.com/rtk-ai/rtk)) | 60-90% |
-| **Context compression** | Auto-summarize old conversations and start new sessions | Deduplication |
-| **Minimal context passing** | Pass only necessary information to each agent | Eliminate unnecessary tokens |
+| **Smart Read** | Detect large file reads + force targeted reads (Grep first, offset/limit required) | 40-60% |
+| **Diff-Only Review** | Send only `git diff` to Reviewer instead of full files | 50-70% |
+| **Preemptive Compaction** | Auto-save state before context compression | Prevent context loss |
+| **Rate Limit Guard** | Auto-detect API limits + wait guidance | Prevent session interruption |
+| **Project Memory** | Persist project knowledge across sessions | Eliminate re-explanation |
 | **Session save/resume** | No need to re-explain from scratch | Prevent rework |
 
 ### Session Management (Context Overflow)
@@ -370,19 +418,26 @@ Chatting...
   state/context/                    # Context monitoring
 
 ~/.claude/                          # Path that Claude Code reads (created by install.sh)
-  skills/                           # /tdc slash commands (must be here to be recognized)
-    tdc/SKILL.md
-    tdc-plan/SKILL.md
-    tdc-dev/SKILL.md
-    ...
-  agents/                           # Agent definitions
-    master.md, planner.md, ...
+  skills/                           # /tdc slash commands + language skill packs
+    tdc/SKILL.md                    # Main entry point
+    tdc-plan/ tdc-dev/ ...          # Individual commands
+    tdc-learn/SKILL.md              # Skill learning
+    tdc-stack-python-django/        # Language skill packs (selectable)
+    tdc-stack-ts-nextjs/
+    tdc-stack-go/ tdc-stack-rust/
+    tdc-stack-java/ tdc-stack-react/
+    tdc-stack-flutter/ tdc-stack-kotlin/
+  agents/                           # Agent definitions (8)
+    master.md, planner.md, developer.md, debugger.md,
+    reviewer.md, security-reviewer.md, test-engineer.md, architect.md
 
 your-project/                       # Your project folder
 ├── .tdc/                           # Auto-created on first /tdc run
 │   ├── sessions/                   # Saved sessions
-│   ├── context/                    # Context monitoring
-│   └── plans/                      # Generated plans
+│   ├── context/                    # Context monitoring + token tracking
+│   ├── plans/                      # Generated plans
+│   ├── learned-skills/             # Auto-learned skill patterns
+│   └── project-memory.md           # Project knowledge (persists across sessions)
 ├── spec.md                         # Your spec file
 └── (your code...)
 ```
@@ -460,6 +515,7 @@ For adding agents, changing skills, or modifying the architecture, see [MAINTENA
 ## Inspired By
 
 - [oh-my-claudecode](https://github.com/yeachan-heo/oh-my-claudecode) -- Claude Code multi-agent framework
+- [everything-claude-code](https://github.com/affaan-m/everything-claude-code) -- Claude Code all-in-one agent harness
 - [rtk](https://github.com/rtk-ai/rtk) -- LLM token reduction CLI proxy
 
 ## License
