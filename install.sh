@@ -4,7 +4,7 @@
 
 set -e
 
-TDC_VERSION="2.2.0"
+TDC_VERSION="2.3.0"
 TDC_HOME="$HOME/.tdc"
 TDC_REPO_URL="${TDC_REPO_URL:-https://github.com/dogyuHwang/techdog-claude}"
 
@@ -23,7 +23,7 @@ cat << 'BANNER'
    | | |  _|| |   | |_| | | | | | | | |  _
    | | | |__| |___|  _  | |_| | |_| | |_| |
    |_| |_____\____|_| |_|____/ \___/ \____|
-         Claude Code Orchestrator v2.2.0
+         Claude Code Orchestrator v2.3.0
 BANNER
 echo -e "${NC}"
 
@@ -143,14 +143,22 @@ select_skill_packs() {
     echo -e "  ${BOLD}3)${NC} 스킬팩 없이 설치 (Core only)"
     echo ""
 
-    # Non-interactive mode: install all
-    if [ ! -t 0 ]; then
+    # Determine input source: use /dev/tty if available (works with curl | bash)
+    TTY_INPUT=""
+    if [ -t 0 ]; then
+        TTY_INPUT="/dev/stdin"
+    elif [ -e /dev/tty ]; then
+        TTY_INPUT="/dev/tty"
+    fi
+
+    # Non-interactive mode: no terminal available at all
+    if [ -z "$TTY_INPUT" ]; then
         echo -e "${BLUE}[tdc]${NC} Non-interactive mode: installing all 개발언어 skill packs"
         SELECTED_PACKS=("${SKILL_PACKS[@]}")
         return
     fi
 
-    read -r -p "  선택 (1/2/3) [1]: " PACK_CHOICE
+    read -r -p "  선택 (1/2/3) [1]: " PACK_CHOICE < "$TTY_INPUT"
     PACK_CHOICE="${PACK_CHOICE:-1}"
 
     case "$PACK_CHOICE" in
@@ -161,11 +169,11 @@ select_skill_packs() {
         2)
             SELECTED_PACKS=()
             echo ""
-            echo -e "  스페이스바로 선택/해제, 완료 후 Enter:"
+            echo -e "  각 스킬팩을 선택하세요 (y/n):"
             echo ""
             for i in "${!SKILL_PACKS[@]}"; do
                 IFS=':' read -r dir_name display_name <<< "${SKILL_PACKS[$i]}"
-                read -r -p "  [y/n] ${display_name}? [y]: " yn
+                read -r -p "  [y/n] ${display_name}? [y]: " yn < "$TTY_INPUT"
                 yn="${yn:-y}"
                 if [[ "$yn" =~ ^[yY] ]]; then
                     SELECTED_PACKS+=("${SKILL_PACKS[$i]}")

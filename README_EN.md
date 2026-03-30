@@ -477,8 +477,8 @@ curl -sSL https://raw.githubusercontent.com/dogyuHwang/techdog-claude/main/unins
 bash uninstall.sh
 ```
 
-This automatically cleans up skills, agents, global files (`~/.tdc/`), and settings.json hook configurations.
-rtk is a separate tool and is not removed (`brew uninstall rtk` to remove it separately).
+This automatically cleans up skills, agents, skill packs, global files (`~/.tdc/`), and settings.json hook configurations.
+You will be prompted whether to also remove rtk (token optimizer).
 
 ---
 

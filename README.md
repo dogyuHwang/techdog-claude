@@ -481,8 +481,8 @@ curl -sSL https://raw.githubusercontent.com/dogyuHwang/techdog-claude/main/unins
 bash uninstall.sh
 ```
 
-스킬, 에이전트, 글로벌 파일(`~/.tdc/`), settings.json 훅 설정까지 전부 자동 정리됩니다.
-rtk는 별도 도구이므로 삭제하지 않습니다 (`brew uninstall rtk`로 별도 삭제).
+스킬, 에이전트, 스킬팩, 글로벌 파일(`~/.tdc/`), settings.json 훅 설정까지 전부 자동 정리됩니다.
+rtk(토큰 절감 도구)도 삭제할지 물어봅니다.
 
 ---
 

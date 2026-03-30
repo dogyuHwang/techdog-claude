@@ -145,7 +145,7 @@ EOF
                     GT_DISP="$GRAND_TOTAL"
                 fi
                 echo "[TDC] $AGENT_NAME completed (${ELAPSED}) — Token Usage:"
-                printf "$GAUGE_LINE"
+                printf '%b' "$GAUGE_LINE"
                 echo "       ──────────── total: ~${GT_DISP}"
             else
                 echo "[TDC] $AGENT_NAME agent completed (${ELAPSED})"
