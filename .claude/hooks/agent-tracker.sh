@@ -103,9 +103,56 @@ EOF
         fi
     fi
 
-    # Console output
+    # Console output with live token gauge
     if [ -n "$ELAPSED" ]; then
-        echo "[TDC] $AGENT_NAME agent completed (${ELAPSED})"
+        # Build mini gauge from .agent-tokens
+        if [ -f "$AGENT_TOKENS_FILE" ]; then
+            GAUGE_LINE=""
+            GRAND_TOTAL=0
+            MAX_TOKENS=0
+            while IFS='=' read -r aname aval; do
+                [ -z "$aval" ] && continue
+                GRAND_TOTAL=$(( GRAND_TOTAL + aval ))
+                [ "$aval" -gt "$MAX_TOKENS" ] && MAX_TOKENS="$aval"
+            done < "$AGENT_TOKENS_FILE"
+
+            if [ "$GRAND_TOTAL" -gt 0 ]; then
+                # Build gauge bars (10 chars wide)
+                while IFS='=' read -r aname aval; do
+                    [ -z "$aval" ] && continue
+                    if [ "$MAX_TOKENS" -gt 0 ]; then
+                        FILLED=$(( aval * 10 / MAX_TOKENS ))
+                    else
+                        FILLED=0
+                    fi
+                    EMPTY=$(( 10 - FILLED ))
+                    BAR=""
+                    i=0; while [ $i -lt $FILLED ]; do BAR="${BAR}█"; i=$((i+1)); done
+                    i=0; while [ $i -lt $EMPTY ]; do BAR="${BAR}░"; i=$((i+1)); done
+                    # Format token count
+                    if [ "$aval" -ge 1000 ]; then
+                        TDISP="$(( aval / 1000 )).$(( (aval % 1000) / 100 ))k"
+                    else
+                        TDISP="${aval}"
+                    fi
+                    PCT=$(( aval * 100 / GRAND_TOTAL ))
+                    GAUGE_LINE="${GAUGE_LINE}       ${aname} ${BAR} ~${TDISP} (${PCT}%)\n"
+                done < "$AGENT_TOKENS_FILE"
+                # Grand total display
+                if [ "$GRAND_TOTAL" -ge 1000 ]; then
+                    GT_DISP="$(( GRAND_TOTAL / 1000 )).$(( (GRAND_TOTAL % 1000) / 100 ))k"
+                else
+                    GT_DISP="$GRAND_TOTAL"
+                fi
+                echo "[TDC] $AGENT_NAME completed (${ELAPSED}) — Token Usage:"
+                printf "$GAUGE_LINE"
+                echo "       ──────────── total: ~${GT_DISP}"
+            else
+                echo "[TDC] $AGENT_NAME agent completed (${ELAPSED})"
+            fi
+        else
+            echo "[TDC] $AGENT_NAME agent completed (${ELAPSED})"
+        fi
     else
         echo "[TDC] $AGENT_NAME agent completed"
     fi

@@ -18,17 +18,19 @@
 
 [Claude Code](https://claude.ai/code)는 터미널에서 AI와 대화하며 코드를 작성하는 도구입니다.
 
-TechDog Claude(tdc)는 이 Claude Code 위에 **6명의 전문 AI 에이전트**를 배치하여,
+TechDog Claude(tdc)는 이 Claude Code 위에 **8명의 전문 AI 에이전트**를 배치하여,
 혼자 하는 코딩을 **팀 개발**처럼 바꿔줍니다.
 
 ```
 평소:  나 ↔ Claude (1:1 대화)
 
-tdc:   나 → Master Agent → Planner    (기획)
-                         → Developer  (개발)
-                         → Debugger   (디버깅)
-                         → Reviewer   (리뷰)
-                         → Architect  (설계)
+tdc:   나 → Master Agent → Planner           (기획)
+                         → Developer          (개발)
+                         → Debugger           (디버깅)
+                         → Reviewer           (리뷰)
+                         → Security Reviewer  (보안 리뷰)
+                         → Test Engineer      (테스트 생성)
+                         → Architect          (설계)
 ```
 
 ---
@@ -62,6 +64,18 @@ cd techdog-claude && bash install.sh
 - Claude Code에 `/tdc` 슬래시 커맨드가 추가됩니다 (`~/.claude/skills/` 에 설치)
 - [rtk](https://github.com/rtk-ai/rtk) (토큰 60-90% 절감 도구)가 함께 설치됩니다
 - Claude Code Team 모드가 활성화됩니다
+- **프레임워크 스킬팩** 선택 설치 (Python/Django, Next.js, Go, Rust, Java, Flutter, Kotlin, React)
+
+설치 시 스킬팩 선택 화면:
+```
+=== Skill Pack Installation ===
+
+  1) 전체 설치 (All skill packs)
+  2) 선택 설치 (Choose individually)
+  3) 스킬팩 없이 설치 (Core only)
+
+  선택 (1/2/3) [1]:
+```
 
 > 설치 직후 바로 사용 가능합니다. 터미널에서 `claude`를 실행하고 `/tdc spec.md`를 입력하세요.
 
@@ -211,6 +225,8 @@ Claude Code를 다시 열고:
 |------------|-------------------|
 | `/tdc spec.md` | 스펙 파일을 읽고 **기획 → 개발 → 디버깅 → 리뷰까지 전부 자동** 진행 |
 | `/tdc 로그인 기능 추가해줘` | 텍스트로 간단히 지시 (스펙 파일 없이도 전체 자동 진행) |
+| `ralph: 결제 시스템 구현해줘` | **Ralph 모드** — APPROVE까지 끈질기게 검증 반복 |
+| `/tdc-learn extract` | 현재 세션에서 **문제 해결 패턴을 학습**하여 다음 세션에 자동 적용 |
 
 ### 개별 명령어 (특정 단계만 따로 하고 싶을 때)
 
@@ -334,10 +350,26 @@ Claude Code를 다시 열고:
 | **Developer** | sonnet (범용) | 중간 | 실제 코드 작성 |
 | **Debugger** | sonnet (범용) | 중간 | 버그 찾아서 고침 |
 | **Reviewer** | haiku (경량) | 낮음 | 코드 검토 (빠르고 저렴) |
+| **Security Reviewer** | haiku (경량) | 낮음 | OWASP 보안 취약점 검토 |
+| **Test Engineer** | sonnet (범용) | 중간 | 테스트 커버리지 분석 + 테스트 자동 생성 |
 | **Architect** | opus (고성능) | 높음 | 큰 그림 설계 (필요할 때만) |
 
 간단한 리뷰에 비싼 opus를 쓸 필요가 없습니다.
 모델을 역할에 맞게 배치해서 **비용을 30-50% 절감**합니다.
+
+### 실시간 토큰 대시보드
+
+에이전트가 완료될 때마다 **누적 토큰 게이지가 실시간으로 표시**됩니다:
+
+```
+[TDC] developer completed (22s) — Token Usage:
+       planner    ██░░░░░░░░ ~2.4k (17%)
+       developer  ████████░░ ~8.8k (63%)
+       debugger   ██░░░░░░░░ ~2.8k (20%)
+       ──────────── total: ~14.0k
+```
+
+Phase 4에서는 전체 요약 + rtk 절감 추정 + 비용 추정이 포함됩니다.
 
 ### 토큰 절감 전략
 
@@ -351,6 +383,9 @@ Claude Code를 다시 열고:
 | **Response Budget** | 누적 토큰 모니터링 + 초과 시 간결화 경고 | 과다 출력 방지 |
 | **최소 컨텍스트 전달** | 에이전트에 필요한 정보만 전달 | 불필요한 토큰 제거 |
 | **세션 저장/재개** | 처음부터 다시 설명할 필요 없음 | 재작업 방지 |
+| **Preemptive Compaction** | 압축 전에 상태 자동 저장 → 복구 | 컨텍스트 손실 방지 |
+| **Rate Limit Guard** | API 제한 자동 감지 + 대기 안내 | 세션 중단 방지 |
+| **Project Memory** | 프로젝트 지식을 세션 간 유지 | 반복 설명 제거 |
 
 ### 세션 관리 (컨텍스트 오버플로)
 
@@ -376,19 +411,26 @@ tdc는 이걸 자동으로 관리합니다:
   state/context/                    # 컨텍스트 모니터링
 
 ~/.claude/                          # Claude Code가 읽는 경로 (install.sh로 생성)
-  skills/                           # /tdc 슬래시 커맨드 (여기에 있어야 인식됨)
-    tdc/SKILL.md
-    tdc-plan/SKILL.md
-    tdc-dev/SKILL.md
-    ...
-  agents/                           # 에이전트 정의
-    master.md, planner.md, ...
+  skills/                           # /tdc 슬래시 커맨드 + 스킬팩
+    tdc/SKILL.md                    # 메인 진입점
+    tdc-plan/ tdc-dev/ ...          # 개별 명령어
+    tdc-learn/SKILL.md              # 스킬 학습
+    tdc-stack-python-django/        # 스킬팩 (선택 설치)
+    tdc-stack-ts-nextjs/
+    tdc-stack-go/ tdc-stack-rust/
+    tdc-stack-java/ tdc-stack-react/
+    tdc-stack-flutter/ tdc-stack-kotlin/
+  agents/                           # 에이전트 정의 (8개)
+    master.md, planner.md, developer.md, debugger.md,
+    reviewer.md, security-reviewer.md, test-engineer.md, architect.md
 
 your-project/                       # 사용자의 프로젝트 폴더
 ├── .tdc/                           # /tdc 첫 실행 시 자동 생성
 │   ├── sessions/                   # 저장된 세션
-│   ├── context/                    # 컨텍스트 모니터링
-│   └── plans/                      # 생성된 플랜
+│   ├── context/                    # 컨텍스트 모니터링 + 토큰 추적
+│   ├── plans/                      # 생성된 플랜
+│   ├── learned-skills/             # 학습된 스킬 패턴
+│   └── project-memory.md           # 프로젝트 지식 (세션 간 유지)
 ├── spec.md                         # 사용자가 작성하는 스펙
 └── (개발 코드들...)
 ```
@@ -466,6 +508,7 @@ rtk는 별도 도구이므로 삭제하지 않습니다 (`brew uninstall rtk`로
 ## Inspired By
 
 - [oh-my-claudecode](https://github.com/yeachan-heo/oh-my-claudecode) — Claude Code 멀티 에이전트 프레임워크
+- [everything-claude-code](https://github.com/affaan-m/everything-claude-code) — Claude Code 올인원 에이전트 하니스
 - [rtk](https://github.com/rtk-ai/rtk) — LLM 토큰 절감 CLI 프록시
 
 ## License

@@ -4,7 +4,7 @@
 
 set -e
 
-TDC_VERSION="2.0.0"
+TDC_VERSION="2.1.0"
 TDC_HOME="$HOME/.tdc"
 TDC_REPO_URL="${TDC_REPO_URL:-https://github.com/dogyuHwang/techdog-claude}"
 
@@ -23,7 +23,7 @@ cat << 'BANNER'
    | | |  _|| |   | |_| | | | | | | | |  _
    | | | |__| |___|  _  | |_| | |_| | |_| |
    |_| |_____\____|_| |_|____/ \___/ \____|
-         Claude Code Orchestrator v2.0.0
+         Claude Code Orchestrator v2.1.0
 BANNER
 echo -e "${NC}"
 
@@ -118,6 +118,76 @@ setup_rtk() {
     fi
 }
 
+# Skill pack definitions
+SKILL_PACKS=(
+    "tdc-stack-python-django:Python + Django"
+    "tdc-stack-ts-nextjs:TypeScript + Next.js"
+    "tdc-stack-go:Go"
+    "tdc-stack-rust:Rust"
+    "tdc-stack-java:Java + Spring Boot"
+    "tdc-stack-flutter:Flutter + Dart"
+    "tdc-stack-kotlin:Kotlin (Android/Ktor)"
+    "tdc-stack-react:React + TypeScript"
+)
+
+# Skill pack selection UI
+select_skill_packs() {
+    echo ""
+    echo -e "${BOLD}${BLUE}=== Skill Pack Installation ===${NC}"
+    echo ""
+    echo -e "  tdc에는 프레임워크별 스킬팩이 포함되어 있습니다."
+    echo -e "  에이전트가 해당 프레임워크 프로젝트에서 더 정확하게 작업합니다."
+    echo ""
+    echo -e "  ${BOLD}1)${NC} 전체 설치 (All skill packs)"
+    echo -e "  ${BOLD}2)${NC} 선택 설치 (Choose individually)"
+    echo -e "  ${BOLD}3)${NC} 스킬팩 없이 설치 (Core only)"
+    echo ""
+
+    # Non-interactive mode: install all
+    if [ ! -t 0 ]; then
+        echo -e "${BLUE}[tdc]${NC} Non-interactive mode: installing all skill packs"
+        SELECTED_PACKS=("${SKILL_PACKS[@]}")
+        return
+    fi
+
+    read -r -p "  선택 (1/2/3) [1]: " PACK_CHOICE
+    PACK_CHOICE="${PACK_CHOICE:-1}"
+
+    case "$PACK_CHOICE" in
+        1)
+            SELECTED_PACKS=("${SKILL_PACKS[@]}")
+            echo -e "${GREEN}[tdc]${NC} All skill packs selected"
+            ;;
+        2)
+            SELECTED_PACKS=()
+            echo ""
+            echo -e "  스페이스바로 선택/해제, 완료 후 Enter:"
+            echo ""
+            for i in "${!SKILL_PACKS[@]}"; do
+                IFS=':' read -r dir_name display_name <<< "${SKILL_PACKS[$i]}"
+                read -r -p "  [y/n] ${display_name}? [y]: " yn
+                yn="${yn:-y}"
+                if [[ "$yn" =~ ^[yY] ]]; then
+                    SELECTED_PACKS+=("${SKILL_PACKS[$i]}")
+                    echo -e "    ${GREEN}+${NC} ${display_name}"
+                else
+                    echo -e "    ${YELLOW}-${NC} ${display_name} (skipped)"
+                fi
+            done
+            echo ""
+            echo -e "${GREEN}[tdc]${NC} ${#SELECTED_PACKS[@]} skill packs selected"
+            ;;
+        3)
+            SELECTED_PACKS=()
+            echo -e "${YELLOW}[tdc]${NC} Skipping skill packs (core only)"
+            ;;
+        *)
+            SELECTED_PACKS=("${SKILL_PACKS[@]}")
+            echo -e "${GREEN}[tdc]${NC} All skill packs selected (default)"
+            ;;
+    esac
+}
+
 # Main installation
 install_tdc() {
     echo -e "${BLUE}[tdc]${NC} Installing to $TDC_HOME..."
@@ -148,12 +218,36 @@ install_tdc() {
     cp -r "$TDC_HOME/.repo/.claude/hooks/"* "$TDC_HOME/hooks/" 2>/dev/null || true
     chmod +x "$TDC_HOME/hooks/"* 2>/dev/null || true
 
-    # Install skills & agents to Claude Code global path (~/.claude/)
+    # Install core skills & agents to Claude Code global path (~/.claude/)
     CLAUDE_DIR="$HOME/.claude"
     mkdir -p "$CLAUDE_DIR/skills" "$CLAUDE_DIR/agents"
-    cp -r "$TDC_HOME/.repo/.claude/skills/"* "$CLAUDE_DIR/skills/" 2>/dev/null || true
+
+    # Core skills (always installed)
+    for core_skill in tdc tdc-plan tdc-dev tdc-debug tdc-review tdc-session tdc-learn; do
+        if [ -d "$TDC_HOME/.repo/.claude/skills/$core_skill" ]; then
+            cp -r "$TDC_HOME/.repo/.claude/skills/$core_skill" "$CLAUDE_DIR/skills/" 2>/dev/null || true
+        fi
+    done
+
+    # Agents (always installed)
     cp -r "$TDC_HOME/.repo/.claude/agents/"* "$CLAUDE_DIR/agents/" 2>/dev/null || true
-    echo -e "${GREEN}[tdc]${NC} Skills & agents installed to $CLAUDE_DIR/"
+    echo -e "${GREEN}[tdc]${NC} Core skills & agents installed to $CLAUDE_DIR/"
+
+    # Skill pack selection
+    select_skill_packs
+
+    # Install selected skill packs
+    PACK_COUNT=0
+    for pack in "${SELECTED_PACKS[@]}"; do
+        IFS=':' read -r dir_name display_name <<< "$pack"
+        if [ -d "$TDC_HOME/.repo/.claude/skills/$dir_name" ]; then
+            cp -r "$TDC_HOME/.repo/.claude/skills/$dir_name" "$CLAUDE_DIR/skills/" 2>/dev/null || true
+            PACK_COUNT=$((PACK_COUNT + 1))
+        fi
+    done
+    if [ "$PACK_COUNT" -gt 0 ]; then
+        echo -e "${GREEN}[tdc]${NC} $PACK_COUNT skill packs installed"
+    fi
 
     # Configure Claude Code settings
     setup_claude_settings
@@ -377,7 +471,19 @@ echo -e "    1. 만들고 싶은 것을 spec.md로 작성"
 echo -e "    2. 터미널에서 ${BOLD}claude${NC} 입력"
 echo -e "    3. Claude Code 안에서 ${BOLD}/tdc spec.md${NC}"
 echo -e ""
+echo -e "  ${BOLD}Installed:${NC}"
+echo -e "    Agents: 8 (master, planner, developer, debugger, reviewer, security-reviewer, test-engineer, architect)"
+echo -e "    Core skills: 7 (/tdc, /tdc-plan, /tdc-dev, /tdc-debug, /tdc-review, /tdc-session, /tdc-learn)"
+if [ "${#SELECTED_PACKS[@]}" -gt 0 ]; then
+    PACK_NAMES=""
+    for pack in "${SELECTED_PACKS[@]}"; do
+        IFS=':' read -r _ display_name <<< "$pack"
+        [ -n "$PACK_NAMES" ] && PACK_NAMES="$PACK_NAMES, "
+        PACK_NAMES="$PACK_NAMES$display_name"
+    done
+    echo -e "    Skill packs: ${#SELECTED_PACKS[@]} ($PACK_NAMES)"
+fi
 if command -v rtk &> /dev/null; then
-    echo -e "  rtk: ${GREEN}$(rtk --version 2>/dev/null)${NC} — 토큰 60-90% 절감 활성화"
+    echo -e "    rtk: ${GREEN}$(rtk --version 2>/dev/null)${NC} — 토큰 60-90% 절감 활성화"
 fi
 echo ""

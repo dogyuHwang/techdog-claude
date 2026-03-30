@@ -39,7 +39,28 @@ if [ -f "$STATUS_FILE" ]; then
     fi
 fi
 
-# 3. Tool count
+# 3. Token usage (real-time from .agent-tokens)
+AGENT_TOKENS_FILE="$CONTEXT_DIR/.agent-tokens"
+if [ -f "$AGENT_TOKENS_FILE" ]; then
+    TOTAL_TOKENS=0
+    while IFS='=' read -r name val; do
+        [ -n "$val" ] && TOTAL_TOKENS=$(( TOTAL_TOKENS + val )) 2>/dev/null
+    done < "$AGENT_TOKENS_FILE"
+    if [ "$TOTAL_TOKENS" -gt 0 ] 2>/dev/null; then
+        if [ "$TOTAL_TOKENS" -ge 1000 ]; then
+            TOKEN_DISPLAY="$(( TOTAL_TOKENS / 1000 )).$(( (TOTAL_TOKENS % 1000) / 100 ))k"
+        else
+            TOKEN_DISPLAY="${TOTAL_TOKENS}"
+        fi
+        if [ -n "$PARTS" ]; then
+            PARTS="$PARTS | ~${TOKEN_DISPLAY} tokens"
+        else
+            PARTS="~${TOKEN_DISPLAY} tokens"
+        fi
+    fi
+fi
+
+# 4. Tool count
 if [ -f "$TOOL_COUNT_FILE" ]; then
     TOOLS=$(cat "$TOOL_COUNT_FILE" 2>/dev/null)
     if [ -n "$TOOLS" ] && [ "$TOOLS" -gt 0 ] 2>/dev/null; then
