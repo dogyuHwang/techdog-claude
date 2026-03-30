@@ -61,6 +61,13 @@ except (FileNotFoundError, json.JSONDecodeError):
 
 changed = False
 
+# Remove statusLine
+if "statusLine" in settings:
+    sl = settings.get("statusLine", {})
+    if "tdc-status" in sl.get("command", ""):
+        del settings["statusLine"]
+        changed = True
+
 # Remove env vars
 env = settings.get("env", {})
 for key in ["TDC_HOME", "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS"]:
@@ -73,16 +80,18 @@ elif "env" in settings:
     del settings["env"]
     changed = True
 
-# Remove hooks
+# Remove all tdc hooks from all hook types
+tdc_hook_markers = ["context-guard", "session-save", "agent-tracker", "smart-read", "tdc-status"]
 hooks = settings.get("hooks", {})
-for hook_type in ["PostToolUse", "Stop"]:
-    if hook_type in hooks:
+for hook_type in list(hooks.keys()):
+    if hook_type in hooks and isinstance(hooks[hook_type], list):
         original_len = len(hooks[hook_type])
         hooks[hook_type] = [
             h for h in hooks[hook_type]
-            if not any("context-guard" in hk.get("command", "") or
-                       "session-save" in hk.get("command", "")
-                       for hk in h.get("hooks", []))
+            if not any(
+                any(marker in hk.get("command", "") for marker in tdc_hook_markers)
+                for hk in h.get("hooks", [])
+            )
         ]
         if len(hooks[hook_type]) != original_len:
             changed = True

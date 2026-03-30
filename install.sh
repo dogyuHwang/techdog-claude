@@ -155,6 +155,13 @@ env["TDC_HOME"] = tdc_home
 env["CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS"] = "1"
 settings["env"] = env
 
+# Add statusLine for tdc-status.sh
+settings["statusLine"] = {
+    "type": "command",
+    "command": f"bash {tdc_home}/hooks/tdc-status.sh",
+    "padding": 2
+}
+
 # Remove old invalid hook format if present
 hooks = settings.get("hooks", {})
 if "postToolExecution" in hooks:

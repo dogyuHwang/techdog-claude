@@ -3,6 +3,11 @@
     "TDC_HOME": "$HOME/.tdc",
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
   },
+  "statusLine": {
+    "type": "command",
+    "command": "bash $HOME/.tdc/hooks/tdc-status.sh",
+    "padding": 2
+  },
   "hooks": {
     "PreToolUse": [
       {
