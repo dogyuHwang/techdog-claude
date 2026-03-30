@@ -166,6 +166,32 @@ techdog-claude/
 - **무제한 회귀** — Reviewer가 APPROVE할 때까지 계속. 컨텍스트 오버플로 시 세션 저장/재개로 이어서 진행.
 - 관련 파일: `.claude/agents/master.md` (Regression Loop, Regression Policy), `.claude/agents/reviewer.md` (Issue Severity Classification)
 
+### 0.3. 4중 토큰 최적화 (v1.8.0~)
+
+**Smart Read Hook** (`smart-read.sh`):
+- PostToolUse(Read) 훅으로 대용량 파일 읽기(>200줄) 감지 + 경고 메시지 출력.
+- 누적 Read 토큰을 `.tdc/context/.read_tokens`에 추적.
+- 에이전트 프롬프트(developer.md, debugger.md)에 Smart Read Protocol 추가.
+- 관련 파일: `.claude/hooks/smart-read.sh`, `.claude/agents/developer.md`, `.claude/agents/debugger.md`
+
+**Diff-Only Review**:
+- master.md Phase 3에서 `git diff --unified=5` 결과만 Reviewer에게 전달.
+- reviewer.md에 "Input Format: Diff-Only Review" 섹션 추가.
+- 전체 파일 전달 대비 50-70% 토큰 절감.
+- 관련 파일: `.claude/agents/master.md`, `.claude/agents/reviewer.md`
+
+**Conversation Compaction**:
+- context-guard.sh에 60 tool calls 컴팩션 트리거 추가.
+- `.tdc/context/.compaction_done` 플래그로 중복 트리거 방지.
+- Master Agent가 중간 결과를 요약하여 유효 컨텍스트 확장.
+- 관련 파일: `.claude/hooks/context-guard.sh`, `.claude/agents/master.md`
+
+**Response Budget Enforcement**:
+- context-guard.sh에 누적 토큰 추정 로직 추가 (tool calls * 500 + read tokens).
+- ~150k 토큰 추정 초과 시 경고 메시지 출력.
+- `.tdc/context/.budget_warned` 플래그로 중복 경고 방지.
+- 관련 파일: `.claude/hooks/context-guard.sh`
+
 ### 1. rtk 통합 (토큰 60-90% 절감)
 - install.sh에서 자동 설치 (`install_rtk` 함수)
 - `rtk init -g`로 Claude Code Bash hook에 등록 (`setup_rtk` 함수)
@@ -283,6 +309,14 @@ techdog-claude/
 ---
 
 ## Version History
+
+- **v1.8.0** (2026-03-30): 4중 토큰 최적화 시스템
+  - **Smart Read Hook**: PostToolUse(Read) 훅으로 대용량 파일 읽기 감지 + 경고. 에이전트 프롬프트에 Smart Read Protocol 추가 (Grep/Glob 선행, offset/limit 필수)
+  - **Diff-Only Review**: Reviewer에게 전체 파일 대신 `git diff --unified=5` 전달 (50-70% 절감). master.md Phase 3 + reviewer.md 수정
+  - **Conversation Compaction**: context-guard.sh에 60 tool calls 컴팩션 트리거 추가. 중간 결과 요약으로 유효 컨텍스트 확장
+  - **Response Budget Enforcement**: 누적 토큰 추정 (~150k) 초과 시 에이전트 출력 간결화 경고. context-guard.sh에 통합
+  - `smart-read.sh` 신규 훅 + settings.json/install.sh에 등록
+  - developer.md, debugger.md에 Smart Read Protocol 추가
 
 - **v1.7.0** (2026-03-30): 사전 질문 + 다국어 README
   - **Pre-Development Clarification**: 스펙이 모호할 때 개발 전 한 번에 종합 질문, 개발 시작 후에는 질문 없이 자동 진행

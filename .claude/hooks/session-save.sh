@@ -74,5 +74,5 @@ SESSIONEOF
     echo "[TDC] Session auto-saved to $SESSION_FILE (with task state)"
 
     # Clean up flags and counter
-    rm -f "$CONTEXT_DIR/.overflow_flag" "$CONTEXT_DIR/.tool_count" "$CONTEXT_DIR/.rtk_status"
+    rm -f "$CONTEXT_DIR/.overflow_flag" "$CONTEXT_DIR/.tool_count" "$CONTEXT_DIR/.rtk_status" "$CONTEXT_DIR/.read_tokens" "$CONTEXT_DIR/.compaction_done" "$CONTEXT_DIR/.budget_warned"
 fi

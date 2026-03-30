@@ -60,6 +60,10 @@ Reviewer 이슈 심각도에 따라 자동 회귀:
 - rtk (https://github.com/rtk-ai/rtk) 로 명령어 출력 자동 압축 (60-90% 절감).
   - context-guard.sh가 세션 시작 시 rtk 상태를 검증 (미설치/오작동 시 경고).
 - 컨텍스트 오버플로 시 자동 세션 저장 (.tdc/sessions/) — 태스크 상태 포함.
+- **Smart Read**: 에이전트가 Grep/Glob 후 타겟 Read (>200줄 파일은 offset/limit 필수). `smart-read.sh` 훅이 모니터링.
+- **Diff-Only Review**: Reviewer에게 전체 파일 대신 `git diff --unified=5` 전달 (50-70% 절감).
+- **Conversation Compaction**: 60 tool calls에서 컨텍스트 압축 트리거 (중간 결과 요약).
+- **Response Budget**: 누적 토큰 ~150k 초과 시 에이전트 출력 간결화 경고.
 
 ## State Directory
 

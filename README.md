@@ -345,7 +345,10 @@ Claude Code를 다시 열고:
 |------|------|----------|
 | **모델 티어링** | 역할별로 haiku/sonnet/opus 배치 | 30-50% |
 | **rtk** | 명령어 출력을 자동 압축 ([rtk-ai/rtk](https://github.com/rtk-ai/rtk)) | 60-90% |
-| **컨텍스트 압축** | 오래된 대화 자동 요약 후 새 세션 | 중복 제거 |
+| **Smart Read** | 대용량 파일 읽기 감지 + 타겟 읽기 강제 (Grep 선행, offset/limit 필수) | 40-60% |
+| **Diff-Only Review** | Reviewer에게 전체 파일 대신 git diff만 전달 | 50-70% |
+| **Conversation Compaction** | 60 tool calls에서 중간 결과 자동 요약 | 컨텍스트 확장 |
+| **Response Budget** | 누적 토큰 모니터링 + 초과 시 간결화 경고 | 과다 출력 방지 |
 | **최소 컨텍스트 전달** | 에이전트에 필요한 정보만 전달 | 불필요한 토큰 제거 |
 | **세션 저장/재개** | 처음부터 다시 설명할 필요 없음 | 재작업 방지 |
 

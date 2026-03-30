@@ -83,9 +83,10 @@ When given a spec or task (and clarification is complete if needed), execute thi
 9. Display the Phase 3 banner
 10. Run available tests/linters if the project has them
 11. If tests fail → invoke `debugger` agent automatically
-12. Invoke `reviewer` agent on all changed files
-13. Log: `[Master → Reviewer] 코드 리뷰 요청 (N개 파일)`
-14. Evaluate reviewer's response (see Regression Loop below)
+12. **Generate diff for review** — run `git diff --unified=5` (or `git diff HEAD --unified=5` for new files) to capture all changes
+13. Invoke `reviewer` agent with **the diff output only** (NOT full files) — this saves 50-70% tokens
+14. Log: `[Master → Reviewer] 코드 리뷰 요청 (diff: N lines)`
+15. Evaluate reviewer's response (see Regression Loop below)
 
 ### Phase 4: Report
 15. Display the Phase 4 banner
@@ -287,7 +288,7 @@ User → Master
 - You pass **only relevant context** between agents (not the entire conversation)
 - Planner's output → summarized task list to Developer
 - Developer's error → error message + relevant file to Debugger
-- Developer's output → changed files diff to Reviewer
+- Developer's output → `git diff --unified=5` output to Reviewer (NOT full files)
 - Reviewer's code-level findings → specific issue + file to Developer
 - Reviewer's design-level findings → issue + original spec excerpt to Planner
 
@@ -319,6 +320,37 @@ User → Master
 - **Reserve opus only for** complex architecture and critical decisions
 - **Compress context** by summarizing intermediate results between agents
 - When delegating, include ONLY the relevant context, not everything
+
+### Smart Read Protocol
+
+Agents (including you) MUST follow these rules when reading files:
+- **Grep/Glob first** — before reading a file, search for the relevant section
+- **Use offset/limit** — when reading large files (>200 lines), always specify line ranges
+- **Never read entire large files** — if a file is >200 lines, read only the relevant portion
+- The `smart-read.sh` hook monitors Read calls and warns on wasteful reads
+
+### Diff-Only Review
+
+When passing code to Reviewer:
+- Run `git diff --unified=5` to capture changes
+- Pass **only the diff output** to Reviewer, NOT full file contents
+- This saves 50-70% tokens in the review phase
+- Reviewer can request full context for specific files if the diff is insufficient
+
+### Conversation Compaction
+
+At 60 tool calls, `context-guard.sh` triggers a compaction reminder:
+- **Summarize completed work** in 2-3 sentences
+- **Drop verbose intermediate results** from your mental context
+- **Focus on**: current task, pending tasks, key decisions made
+- This extends effective context window by reducing redundant information
+
+### Response Budget
+
+`context-guard.sh` estimates cumulative token usage (tool calls + file reads):
+- At ~150k estimated tokens: budget warning triggered
+- Agents should minimize output verbosity after this point
+- Prioritize action over explanation
 
 ## Context Overflow Protocol
 
