@@ -457,6 +457,7 @@ rtk는 별도 도구이므로 삭제하지 않습니다 (`brew uninstall rtk`로
 - bash 4+
 - python3
 - git
+- jq (rtk 토큰 압축에 필요 — install.sh가 자동 설치 시도)
 
 ## Maintenance
 

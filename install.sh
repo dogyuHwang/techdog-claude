@@ -50,6 +50,40 @@ check_prereq() {
 check_prereq "git" || exit 1
 check_prereq "claude" || echo -e "${YELLOW}[tdc]${NC} Warning: Claude Code CLI not found. Install with: npm install -g @anthropic-ai/claude-code"
 
+# Install jq (required by rtk hook)
+install_jq() {
+    if command -v jq &> /dev/null; then
+        return
+    fi
+
+    echo -e "${BLUE}[tdc]${NC} Installing jq (required by rtk hook)..."
+    if [ "$PLATFORM" = "mac" ]; then
+        if command -v brew &> /dev/null; then
+            brew install jq 2>/dev/null && echo -e "${GREEN}[tdc]${NC} jq installed via brew" && return
+        fi
+    else
+        # Linux: try apt, yum, dnf, pacman
+        if command -v apt-get &> /dev/null; then
+            sudo apt-get install -y jq 2>/dev/null && echo -e "${GREEN}[tdc]${NC} jq installed via apt" && return
+        elif command -v yum &> /dev/null; then
+            sudo yum install -y jq 2>/dev/null && echo -e "${GREEN}[tdc]${NC} jq installed via yum" && return
+        elif command -v dnf &> /dev/null; then
+            sudo dnf install -y jq 2>/dev/null && echo -e "${GREEN}[tdc]${NC} jq installed via dnf" && return
+        elif command -v pacman &> /dev/null; then
+            sudo pacman -S --noconfirm jq 2>/dev/null && echo -e "${GREEN}[tdc]${NC} jq installed via pacman" && return
+        fi
+    fi
+
+    echo -e "${YELLOW}[tdc]${NC} Could not auto-install jq. Please install manually:"
+    echo -e "  macOS: brew install jq"
+    echo -e "  Ubuntu/Debian: sudo apt-get install -y jq"
+    echo -e "  Fedora: sudo dnf install -y jq"
+    echo -e "  Arch: sudo pacman -S jq"
+    echo -e "${YELLOW}[tdc]${NC} Without jq, rtk token compression will not work."
+}
+
+install_jq
+
 # Install RTK (token optimizer)
 install_rtk() {
     if command -v rtk &> /dev/null; then
