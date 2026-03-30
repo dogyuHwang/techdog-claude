@@ -64,11 +64,11 @@ cd techdog-claude && bash install.sh
 - Claude Code에 `/tdc` 슬래시 커맨드가 추가됩니다 (`~/.claude/skills/` 에 설치)
 - [rtk](https://github.com/rtk-ai/rtk) (토큰 60-90% 절감 도구)가 함께 설치됩니다
 - Claude Code Team 모드가 활성화됩니다
-- **프레임워크 스킬팩** 선택 설치 (Python/Django, Next.js, Go, Rust, Java, Flutter, Kotlin, React)
+- **개발언어 스킬팩** 선택 설치 (Python/Django, Next.js, Go, Rust, Java, Flutter, Kotlin, React)
 
-설치 시 스킬팩 선택 화면:
+설치 시 개발언어 스킬팩 선택 화면:
 ```
-=== Skill Pack Installation ===
+=== 개발언어 Skill Pack Installation ===
 
   1) 전체 설치 (All skill packs)
   2) 선택 설치 (Choose individually)
@@ -155,14 +155,24 @@ claude               # Claude Code 실행
 
 Claude Code 입력창에서:
 
+#### 일반 모드 — 기획부터 개발까지 자동 진행
 ```
 /tdc spec.md
 ```
 
-그러면 **Master Agent가 전부 자동으로 처리합니다:**
+#### Deep 모드 — 모든 검증을 통과할 때까지 끈질기게 반복
+```
+/tdc deep spec.md
+```
+
+> **일반 모드**는 기획 → 개발 → 리뷰를 한 번 돌고 완료합니다.
+> **Deep 모드**는 테스트 통과 + 빌드 성공 + 리뷰 APPROVE가 **전부 통과할 때까지** 수정을 반복합니다.
+> 품질이 중요한 작업에는 Deep 모드를 추천합니다.
+
+어느 모드든 **Master Agent가 전부 자동으로 처리합니다:**
 
 ```
-/tdc spec.md   ← 이것만 입력하면 끝!
+/tdc spec.md (또는 /tdc deep spec.md)   ← 이것만 입력하면 끝!
     ↓
 [필요 시] 스펙이 모호하면 개발 전에 한 번만 종합 질문 (명확하면 생략)
     ↓
@@ -174,17 +184,18 @@ Claude Code 입력창에서:
     ↓
 [자동] 테스트/린터 실행 → 실패 시 Debugger가 자동 수정
     ↓
-[자동] Reviewer Agent가 완성된 코드를 검토합니다
+[자동] Reviewer + Security Reviewer가 코드를 검토합니다
     ↓ (심각한 문제가 있으면?)
 [자동] Developer Agent가 다시 수정합니다  ← 사용자 개입 불필요
+    ↓ (Deep 모드라면?)
+[자동] 테스트 + 빌드 + 리뷰 전부 통과할 때까지 반복  ← 절대 대충 넘어가지 않음
     ↓
-최종 결과를 사용자에게 보고합니다
+최종 결과를 사용자에게 보고합니다 (에이전트별 토큰 사용량 포함)
 ```
 
 > **핵심:** 스펙이 모호하면 개발 전에 한 번만 질문하고, 답변 후에는 끝까지 자동입니다.
 > 에이전트들끼리 Master Agent를 통해 자동으로 소통합니다.
-> 개발 중 에러가 나면 Debugger가 자동 호출되고, 리뷰에서 문제가 발견되면
-> Developer가 자동으로 수정합니다. **사용자는 처음에 한 번만 입력하면 됩니다.**
+> **사용자는 처음에 한 번만 입력하면 됩니다.**
 
 ### 3. 개별 명령어 (선택사항)
 
@@ -221,12 +232,12 @@ Claude Code를 다시 열고:
 
 ### 메인 명령어 (보통 이것만 씁니다)
 
-| 입력하는 것 | 무슨 일이 벌어지는지 |
-|------------|-------------------|
-| `/tdc spec.md` | 스펙 파일을 읽고 **기획 → 개발 → 디버깅 → 리뷰까지 전부 자동** 진행 |
-| `/tdc 로그인 기능 추가해줘` | 텍스트로 간단히 지시 (스펙 파일 없이도 전체 자동 진행) |
-| `/tdc deep spec.md` | **Deep 모드** — APPROVE까지 끈질기게 검증 반복 |
-| `/tdc-learn extract` | 현재 세션에서 **문제 해결 패턴을 학습**하여 다음 세션에 자동 적용 |
+| 입력하는 것 | 모드 | 무슨 일이 벌어지는지 |
+|------------|------|-------------------|
+| `/tdc spec.md` | 일반 | 기획 → 개발 → 리뷰까지 **자동 진행** |
+| `/tdc deep spec.md` | Deep | 일반 모드 + **테스트/빌드/리뷰 전부 통과할 때까지 반복** |
+| `/tdc 로그인 기능 추가해줘` | 일반 | 스펙 파일 없이 텍스트로 지시 |
+| `/tdc deep 결제 시스템 구현해줘` | Deep | 텍스트 지시 + 끈질긴 검증 |
 
 ### 개별 명령어 (특정 단계만 따로 하고 싶을 때)
 

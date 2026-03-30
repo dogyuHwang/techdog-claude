@@ -133,10 +133,10 @@ SKILL_PACKS=(
 # Skill pack selection UI
 select_skill_packs() {
     echo ""
-    echo -e "${BOLD}${BLUE}=== Skill Pack Installation ===${NC}"
+    echo -e "${BOLD}${BLUE}=== 개발언어 Skill Pack Installation ===${NC}"
     echo ""
-    echo -e "  tdc에는 프레임워크별 스킬팩이 포함되어 있습니다."
-    echo -e "  에이전트가 해당 프레임워크 프로젝트에서 더 정확하게 작업합니다."
+    echo -e "  tdc에는 개발언어별 스킬팩이 포함되어 있습니다."
+    echo -e "  에이전트가 해당 언어/프레임워크 프로젝트에서 더 정확하게 작업합니다."
     echo ""
     echo -e "  ${BOLD}1)${NC} 전체 설치 (All skill packs)"
     echo -e "  ${BOLD}2)${NC} 선택 설치 (Choose individually)"
@@ -145,7 +145,7 @@ select_skill_packs() {
 
     # Non-interactive mode: install all
     if [ ! -t 0 ]; then
-        echo -e "${BLUE}[tdc]${NC} Non-interactive mode: installing all skill packs"
+        echo -e "${BLUE}[tdc]${NC} Non-interactive mode: installing all 개발언어 skill packs"
         SELECTED_PACKS=("${SKILL_PACKS[@]}")
         return
     fi
@@ -481,7 +481,7 @@ if [ "${#SELECTED_PACKS[@]}" -gt 0 ]; then
         [ -n "$PACK_NAMES" ] && PACK_NAMES="$PACK_NAMES, "
         PACK_NAMES="$PACK_NAMES$display_name"
     done
-    echo -e "    Skill packs: ${#SELECTED_PACKS[@]} ($PACK_NAMES)"
+    echo -e "    개발언어 스킬팩: ${#SELECTED_PACKS[@]}개 ($PACK_NAMES)"
 fi
 if command -v rtk &> /dev/null; then
     echo -e "    rtk: ${GREEN}$(rtk --version 2>/dev/null)${NC} — 토큰 60-90% 절감 활성화"
