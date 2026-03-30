@@ -106,18 +106,21 @@ techdog-claude/
 │   │   ├── debugger.md   # 디버거 — sonnet — 에러 자동 진단/수정 (Master가 자동 호출)
 │   │   ├── reviewer.md   # 리뷰어 — haiku — 자동 코드 리뷰 (구현 후 자동 실행)
 │   │   └── architect.md  # 아키텍트 — opus — 설계 판단 (필요시만 호출)
-│   ├── skills/           # 슬래시 커맨드 정의 (6개, 각각 폴더/SKILL.md 형식)
+│   ├── skills/           # 슬래시 커맨드 정의 (7개, 각각 폴더/SKILL.md 형식)
 │   │   ├── tdc/SKILL.md        # /tdc — 메인 진입점. 자동 파이프라인 실행
 │   │   ├── tdc-plan/SKILL.md   # /tdc-plan — 기획만 따로 (수동 모드)
 │   │   ├── tdc-dev/SKILL.md    # /tdc-dev — 개발만 따로 (수동 모드)
 │   │   ├── tdc-debug/SKILL.md  # /tdc-debug — 디버깅만 따로 (수동 모드)
 │   │   ├── tdc-review/SKILL.md # /tdc-review — 리뷰만 따로 (수동 모드)
-│   │   └── tdc-session/SKILL.md# /tdc-session — 세션 관리
+│   │   ├── tdc-session/SKILL.md# /tdc-session — 세션 관리
+│   │   └── tdc-learn/SKILL.md  # /tdc-learn — 스킬 학습 (세션에서 패턴 추출)
 │   └── hooks/
-│       ├── context-guard.sh  # 도구 호출 횟수 추적 (80: 경고, 120: 자동 저장)
-│       ├── session-save.sh   # 대화 종료 시 오버플로 감지 → 자동 세션 저장
-│       ├── agent-tracker.sh  # SubagentStart/Stop 훅 — 에이전트 시작/완료 추적, 상태 파일 기록
-│       └── tdc-status.sh     # Status Line 스크립트 — .phase + .agent-status 읽어서 한 줄 출력
+│       ├── context-guard.sh     # 도구 호출 횟수 추적 (80: 경고, 120: 자동 저장)
+│       ├── session-save.sh      # 대화 종료 시 오버플로 감지 → 자동 세션 저장
+│       ├── agent-tracker.sh     # SubagentStart/Stop 훅 — 에이전트 시작/완료 추적, 상태 파일 기록
+│       ├── tdc-status.sh        # Status Line 스크립트 — .phase + .agent-status 읽어서 한 줄 출력
+│       ├── smart-read.sh        # Read 훅 — 대용량 파일 읽기 감지 + 경고
+│       └── rate-limit-guard.sh  # PostToolUse 훅 — API rate limit 감지 + 자동 대기 안내
 ├── scripts/
 │   └── setup.sh          # npm install 후처리
 ├── state/
@@ -166,7 +169,39 @@ techdog-claude/
 - **무제한 회귀** — Reviewer가 APPROVE할 때까지 계속. 컨텍스트 오버플로 시 세션 저장/재개로 이어서 진행.
 - 관련 파일: `.claude/agents/master.md` (Regression Loop, Regression Policy), `.claude/agents/reviewer.md` (Issue Severity Classification)
 
-### 0.3. 4중 토큰 최적화 (v1.8.0~)
+### 0.3. Ralph Mode — 끈질긴 검증 (v1.9.0~)
+- `ralph:` 키워드 또는 `/tdc ralph` 서브커맨드로 활성화.
+- 일반 regression loop보다 훨씬 엄격한 검증 루프 실행.
+- 테스트 → 빌드 → Reviewer → 최종검증 4단계 순환. 모두 통과해야 완료.
+- Developer 동일 이슈 3회 실패 시 Architect 에스컬레이션.
+- `.tdc/context/.ralph` 상태 파일로 Ralph 모드 추적.
+- Status line에 `[TDC-RALPH]` 접두사 표시.
+- 관련 파일: `.claude/agents/master.md` (Ralph Mode 섹션), `.claude/hooks/tdc-status.sh`, `.claude/skills/tdc/SKILL.md`
+
+### 0.4. Deep Interview — 가중치 기반 사전 질문 (v1.9.0~)
+- 기존 단순 모호성 체크를 5차원 가중치 명확도 측정으로 업그레이드.
+- 차원: 기술스택(25%), 플랫폼(20%), 기능명세(25%), 비즈니스로직(20%), 범위(10%).
+- 가중 합산 점수 4.0 이상: 질문 없이 시작. 2.5~3.9: 부분 질문. 2.5 미만: 소크라틱 인터뷰.
+- 명확도 점수를 시각적 바 그래프로 사용자에게 표시.
+- 기존 프로젝트 수정 요청은 높은 명확도로 간주 (코드에서 추론).
+- 관련 파일: `.claude/agents/master.md` (Deep Interview 섹션)
+
+### 0.5. Skill Learning — 패턴 자동 학습 (v1.9.0~)
+- `/tdc-learn extract`로 세션에서 문제 해결 패턴 추출.
+- `.tdc/learned-skills/<name>.md`에 마크다운 스킬 파일로 저장.
+- frontmatter에 `triggers` 키워드 정의 → Master가 Phase 시작 시 자동 매칭/주입.
+- 품질 게이트: 재사용 가능성, 구체성, 검증됨 3개 기준 충족 필요.
+- confidence: high만 자동 주입. medium은 수동 apply.
+- 관련 파일: `.claude/skills/tdc-learn/SKILL.md`, `.claude/agents/master.md` (Phase 0.5: Skill Injection)
+
+### 0.6. Rate Limit Guard (v1.9.0~)
+- PostToolUse 훅으로 API rate limit 패턴 자동 감지.
+- rate limit 감지 시 대기 시간 안내 + 에이전트 병렬 실행 감속.
+- 3회 이상 발생 시 세션 저장 제안.
+- Master Agent에 Rate Limit Protocol 추가 (자동 감속 → 재시도 → 에스컬레이션).
+- 관련 파일: `.claude/hooks/rate-limit-guard.sh`, `.claude/agents/master.md` (Rate Limit Protocol)
+
+### 0.7. 4중 토큰 최적화 (v1.8.0~)
 
 **Smart Read Hook** (`smart-read.sh`):
 - PostToolUse(Read) 훅으로 대용량 파일 읽기(>200줄) 감지 + 경고 메시지 출력.
@@ -285,7 +320,9 @@ techdog-claude/
 | `context-guard.sh` | 컨텍스트 임계값 변경 | team-config.json |
 | `agent-tracker.sh` | 에이전트 가시성 변경 | settings.json, master.md |
 | `tdc-status.sh` | Status Line 표시 형식 변경 | agent-tracker.sh |
+| `rate-limit-guard.sh` | Rate limit 감지/대응 변경 | master.md (Rate Limit Protocol) |
 | `reviewer.md` | 리뷰 출력 형식, 심각도 분류 변경 | master.md (Regression Loop) |
+| `tdc-learn/SKILL.md` | 스킬 학습 워크플로우 변경 | master.md (Phase 0.5: Skill Injection) |
 | 개별 에이전트 | 해당 에이전트 동작만 | master.md (Available Agents 테이블) |
 | 개별 스킬 | 해당 수동 모드만 | tdc.md (라우팅) |
 
@@ -309,6 +346,16 @@ techdog-claude/
 ---
 
 ## Version History
+
+- **v1.9.0** (2026-03-30): OMC 영감 기능 4종 추가
+  - **Ralph Mode**: `ralph:` 키워드로 끈질긴 검증 루프 활성화. 테스트+빌드+리뷰+최종검증 4단계 순환, 3회 실패 시 Architect 에스컬레이션
+  - **Skill Learning** (`/tdc-learn`): 세션에서 문제 해결 패턴 자동 추출. `.tdc/learned-skills/`에 저장, trigger 키워드 매칭으로 미래 세션에 자동 주입
+  - **Deep Interview**: 사전 질문을 5차원 가중치 명확도 측정으로 업그레이드. 점수별 차등 대응 (소크라틱 인터뷰 / 부분 질문 / 즉시 시작)
+  - **Rate Limit Guard**: PostToolUse 훅으로 API rate limit 자동 감지. 대기 시간 안내 + 에이전트 감속 + 3회 초과 시 세션 저장 제안
+  - `rate-limit-guard.sh` 신규 훅 + settings.json/install.sh에 등록
+  - `tdc-learn/SKILL.md` 신규 스킬 추가
+  - master.md에 Ralph Mode, Deep Interview, Skill Injection, Rate Limit Protocol 섹션 추가
+  - tdc-status.sh에 Ralph 모드 표시 (`[TDC-RALPH]`) 추가
 
 - **v1.8.0** (2026-03-30): 4중 토큰 최적화 시스템
   - **Smart Read Hook**: PostToolUse(Read) 훅으로 대용량 파일 읽기 감지 + 경고. 에이전트 프롬프트에 Smart Read Protocol 추가 (Grep/Glob 선행, offset/limit 필수)

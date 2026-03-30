@@ -38,6 +38,15 @@
             "command": "bash $HOME/.tdc/hooks/smart-read.sh"
           }
         ]
+      },
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash $HOME/.tdc/hooks/rate-limit-guard.sh"
+          }
+        ]
       }
     ],
     "SubagentStart": [

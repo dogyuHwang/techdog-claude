@@ -53,5 +53,11 @@ fi
 
 # Output with TDC prefix if there's anything to show
 if [ -n "$PARTS" ]; then
-    echo "[TDC] $PARTS"
+    # Check for Ralph mode
+    RALPH_FILE="$CONTEXT_DIR/.ralph"
+    if [ -f "$RALPH_FILE" ]; then
+        echo "[TDC-RALPH] $PARTS"
+    else
+        echo "[TDC] $PARTS"
+    fi
 fi

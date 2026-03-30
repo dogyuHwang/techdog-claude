@@ -4,7 +4,7 @@
 
 set -e
 
-TDC_VERSION="1.8.0"
+TDC_VERSION="1.9.0"
 TDC_HOME="$HOME/.tdc"
 TDC_REPO_URL="${TDC_REPO_URL:-https://github.com/dogyuHwang/techdog-claude}"
 
@@ -23,7 +23,7 @@ cat << 'BANNER'
    | | |  _|| |   | |_| | | | | | | | |  _
    | | | |__| |___|  _  | |_| | |_| | |_| |
    |_| |_____\____|_| |_|____/ \___/ \____|
-         Claude Code Orchestrator v1.8.0
+         Claude Code Orchestrator v1.9.0
 BANNER
 echo -e "${NC}"
 
@@ -236,6 +236,22 @@ existing_smart_read = [h for h in hooks.get("PostToolUse", [])
                        if any("smart-read" in hk.get("command", "") for hk in h.get("hooks", []))]
 if not existing_smart_read:
     hooks["PostToolUse"].append(smart_read_entry)
+
+# Add Rate Limit Guard hook (PostToolUse)
+rate_limit_entry = {
+    "matcher": "",
+    "hooks": [
+        {
+            "type": "command",
+            "command": f"bash {tdc_home}/hooks/rate-limit-guard.sh"
+        }
+    ]
+}
+
+existing_rate_limit = [h for h in hooks.get("PostToolUse", [])
+                       if any("rate-limit-guard" in hk.get("command", "") for hk in h.get("hooks", []))]
+if not existing_rate_limit:
+    hooks["PostToolUse"].append(rate_limit_entry)
 
 # Add Stop hook for session auto-save
 if "Stop" not in hooks:
