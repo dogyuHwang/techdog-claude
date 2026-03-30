@@ -252,6 +252,30 @@ existing_agent_stop = [h for h in hooks.get("SubagentStop", [])
 if not existing_agent_stop:
     hooks["SubagentStop"].append(agent_stop_entry)
 
+# Add PreToolUse hook for rtk (if rtk is installed)
+import shutil
+if shutil.which("rtk"):
+    rtk_hook_path = os.path.expanduser("~/.claude/hooks/rtk-rewrite.sh")
+    if os.path.exists(rtk_hook_path):
+        if "PreToolUse" not in hooks:
+            hooks["PreToolUse"] = []
+
+        rtk_entry = {
+            "matcher": "Bash",
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": rtk_hook_path
+                }
+            ]
+        }
+
+        existing_rtk = [h for h in hooks.get("PreToolUse", [])
+                        if any("rtk-rewrite" in hk.get("command", "") for hk in h.get("hooks", []))]
+        if not existing_rtk:
+            hooks["PreToolUse"].append(rtk_entry)
+            print("[tdc] rtk PreToolUse hook registered in settings.json")
+
 settings["hooks"] = hooks
 
 with open(settings_path, "w") as f:
