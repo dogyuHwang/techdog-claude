@@ -74,10 +74,10 @@ fi
 
 # Output with TDC prefix if there's anything to show
 if [ -n "$PARTS" ]; then
-    # Check for Ralph mode
-    RALPH_FILE="$CONTEXT_DIR/.ralph"
-    if [ -f "$RALPH_FILE" ]; then
-        echo "[TDC-RALPH] $PARTS"
+    # Check for Deep mode
+    DEEP_FILE="$CONTEXT_DIR/.deep"
+    if [ -f "$DEEP_FILE" ]; then
+        echo "[TDC-DEEP] $PARTS"
     else
         echo "[TDC] $PARTS"
     fi

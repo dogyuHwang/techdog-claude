@@ -206,14 +206,14 @@ techdog-claude/
 - rtk 절감량 표시 (실제 rtk gain 또는 60% 기본 추정).
 - 관련 파일: `.claude/hooks/agent-tracker.sh`, `.claude/agents/master.md` (Response Format)
 
-### 0.8. Ralph Mode — 끈질긴 검증 (v1.9.0~)
-- `ralph:` 키워드 또는 `/tdc ralph` 서브커맨드로 활성화.
+### 0.8. Deep Mode — 끈질긴 검증 (v1.9.0~, v2.2.0에서 ralph→deep 리네임)
+- `/tdc deep spec.md` 서브커맨드로 활성화. (ralph: 매직 키워드 제거됨)
 - 일반 regression loop보다 훨씬 엄격한 검증 루프 실행.
 - 테스트 → 빌드 → Reviewer → 최종검증 4단계 순환. 모두 통과해야 완료.
 - Developer 동일 이슈 3회 실패 시 Architect 에스컬레이션.
-- `.tdc/context/.ralph` 상태 파일로 Ralph 모드 추적.
-- Status line에 `[TDC-RALPH]` 접두사 표시.
-- 관련 파일: `.claude/agents/master.md` (Ralph Mode 섹션), `.claude/hooks/tdc-status.sh`, `.claude/skills/tdc/SKILL.md`
+- `.tdc/context/.deep` 상태 파일로 Deep 모드 추적.
+- Status line에 `[TDC-DEEP]` 접두사 표시.
+- 관련 파일: `.claude/agents/master.md` (Deep Mode 섹션), `.claude/hooks/tdc-status.sh`, `.claude/skills/tdc/SKILL.md`
 
 ### 0.4. Deep Interview — 가중치 기반 사전 질문 (v1.9.0~)
 - 기존 단순 모호성 체크를 5차원 가중치 명확도 측정으로 업그레이드.
@@ -384,6 +384,16 @@ techdog-claude/
 
 ## Version History
 
+- **v2.2.0** (2026-03-30): Deep 모드 + 자동 스킬 학습
+  - Ralph → Deep 리네임: `/tdc deep spec.md` 서브커맨드로 통일. `ralph:` 매직 키워드 제거
+  - Auto Skill Extract: Phase 4 완료 시 재사용 가능한 패턴 자동 추출
+  - 전체 파일 ralph→deep 전환 (master.md, SKILL.md, CLAUDE.md, README.md, tdc-status.sh)
+
+- **v2.1.0** (2026-03-30): 실시간 토큰 게이지 + 스킬팩 8종 + 선택적 설치
+  - 실시간 토큰 게이지: Status Line + 에이전트 완료 시 게이지 바 출력
+  - 8 프레임워크 스킬팩: Python/Django, TS/Next.js, Go, Rust, Java, Flutter, Kotlin, React
+  - 선택적 설치: install.sh에서 전체/선택/코어 3가지 모드
+
 - **v2.0.0** (2026-03-30): 경쟁력 강화 5종 + 에이전트 확장
   - **Preemptive Context Compaction**: PreCompact 훅으로 압축 전 상태 자동 저장. notepad.md로 복구
   - **Project Memory**: `.tdc/project-memory.md`에 교차 세션 프로젝트 지식 저장/자동 로드
@@ -397,14 +407,14 @@ techdog-claude/
   - master.md에 Phase 0 (Project Memory + Skill Injection), Phase 2 (worktree), Phase 3 (security + test) 확장
 
 - **v1.9.0** (2026-03-30): OMC 영감 기능 4종 추가
-  - **Ralph Mode**: `ralph:` 키워드로 끈질긴 검증 루프 활성화. 테스트+빌드+리뷰+최종검증 4단계 순환, 3회 실패 시 Architect 에스컬레이션
+  - **Deep Mode** (구 Ralph): `/tdc deep`으로 끈질긴 검증 루프 활성화. 테스트+빌드+리뷰+최종검증 4단계 순환, 3회 실패 시 Architect 에스컬레이션
   - **Skill Learning** (`/tdc-learn`): 세션에서 문제 해결 패턴 자동 추출. `.tdc/learned-skills/`에 저장, trigger 키워드 매칭으로 미래 세션에 자동 주입
   - **Deep Interview**: 사전 질문을 5차원 가중치 명확도 측정으로 업그레이드. 점수별 차등 대응 (소크라틱 인터뷰 / 부분 질문 / 즉시 시작)
   - **Rate Limit Guard**: PostToolUse 훅으로 API rate limit 자동 감지. 대기 시간 안내 + 에이전트 감속 + 3회 초과 시 세션 저장 제안
   - `rate-limit-guard.sh` 신규 훅 + settings.json/install.sh에 등록
   - `tdc-learn/SKILL.md` 신규 스킬 추가
-  - master.md에 Ralph Mode, Deep Interview, Skill Injection, Rate Limit Protocol 섹션 추가
-  - tdc-status.sh에 Ralph 모드 표시 (`[TDC-RALPH]`) 추가
+  - master.md에 Deep Mode, Deep Interview, Skill Injection, Rate Limit Protocol 섹션 추가
+  - tdc-status.sh에 Deep 모드 표시 (`[TDC-DEEP]`) 추가
 
 - **v1.8.0** (2026-03-30): 4중 토큰 최적화 시스템
   - **Smart Read Hook**: PostToolUse(Read) 훅으로 대용량 파일 읽기 감지 + 경고. 에이전트 프롬프트에 Smart Read Protocol 추가 (Grep/Glob 선행, offset/limit 필수)

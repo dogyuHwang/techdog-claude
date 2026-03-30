@@ -16,8 +16,7 @@ Multi-agent development orchestration system for Claude Code.
 
 - `/tdc <file.md>` - 스펙 파일을 읽고 기획→개발 진행. 메인 진입점.
 - `/tdc <설명>` - 텍스트로 간단히 지시
-- `/tdc ralph <file.md|설명>` - Ralph 모드 (끈질긴 검증 루프)
-- `ralph: <설명>` - Ralph 모드 매직 키워드
+- `/tdc deep <file.md|설명>` - Deep 모드 (끈질긴 검증 루프)
 - `/tdc-plan <file|desc>` - 기획만 진행 (스펙 파일 또는 텍스트)
 - `/tdc-dev <file|desc>` - 개발만 진행 (플랜 파일 또는 텍스트)
 - `/tdc-debug <desc>` - 디버깅 워크플로우
@@ -44,9 +43,9 @@ Reviewer 이슈 심각도에 따라 자동 회귀:
 - `critical` → Planner 재기획 + Developer 수정
 - Reviewer가 APPROVE할 때까지 무제한 회귀 (컨텍스트 오버플로 시 세션 저장/재개)
 
-### Ralph Mode (끈질긴 검증)
+### Deep Mode (끈질긴 검증)
 
-`ralph:` 키워드 또는 `/tdc ralph`로 활성화. 일반 모드보다 엄격:
+`/tdc deep spec.md`로 활성화. 일반 모드보다 엄격:
 - 회귀 횟수 제한 없음 (일반: design-level 최대 5회)
 - 테스트 + 빌드 + Reviewer 다중 검증
 - Developer 3회 재시도 실패 시 Architect 에스컬레이션
@@ -61,7 +60,8 @@ Reviewer 이슈 심각도에 따라 자동 회귀:
 
 ## Skill Learning (스킬 학습)
 
-`/tdc-learn extract`로 세션에서 문제 해결 패턴을 추출:
+**자동 추출**: Phase 4 완료 시 Master가 자동으로 재사용 가능한 패턴을 추출.
+**수동 추출**: `/tdc-learn extract`로 현재 세션에서 직접 추출도 가능.
 - `.tdc/learned-skills/<name>.md`에 저장
 - trigger 키워드 매칭으로 미래 세션에 자동 주입
 - Master Agent가 Phase 시작 시 매칭 스킬을 에이전트에 전달
@@ -120,7 +120,7 @@ Reviewer 이슈 심각도에 따라 자동 회귀:
     .agent-status  # Active agent state (status line reads this)
     .agent-events  # Agent start/stop event log
     .agent-tokens  # Per-agent token usage tracking
-    .ralph         # Ralph mode state (when active)
+    .deep         # Deep mode state (when active)
     .rate_limit    # Rate limit tracking
     notepad.md     # Compaction survival data (auto-saved before compaction)
   plans/           # Generated plans

@@ -54,10 +54,10 @@ if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/n
     [ -z "$FILES_MODIFIED" ] && FILES_MODIFIED=$(git diff --name-only HEAD 2>/dev/null | head -10 | tr '\n' ', ')
 fi
 
-# 6. Ralph mode?
-RALPH=""
-if [ -f "$CONTEXT_DIR/.ralph" ]; then
-    RALPH="ACTIVE"
+# 6. Deep mode?
+DEEP_MODE=""
+if [ -f "$CONTEXT_DIR/.deep" ]; then
+    DEEP_MODE="ACTIVE"
 fi
 
 # 7. Agent token stats (if tracked)
@@ -75,7 +75,7 @@ cat > "$NOTEPAD" << EOF
 - **Phase**: ${PHASE:-"unknown"}
 - **Active Agent**: ${AGENT:-"none"} (${AGENT_STATE:-"idle"})
 - **Tool Calls**: $TOOL_COUNT
-- **Ralph Mode**: ${RALPH:-"inactive"}
+- **Deep Mode**: ${DEEP_MODE:-"inactive"}
 
 ## Task Progress
 - **Completed**: ${COMPLETED:-0} tasks
