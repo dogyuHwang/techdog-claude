@@ -6,10 +6,11 @@ Multi-agent development orchestration system for Claude Code.
 
 1. 사용자가 spec 파일(.md)을 작성
 2. `/tdc spec.md` 로 실행
-3. Planner가 스펙을 분석하여 태스크 분해
-4. Developer가 자동 구현 (승인 불필요)
-5. Reviewer가 자동 리뷰 → 이슈 심각도에 따라 회귀 루프 실행
-6. 모든 진행 상황은 Live Dashboard로 실시간 표시
+3. **[사전 질문]** 스펙이 모호하면 개발 전 한 번에 종합 질문 (명확하면 생략)
+4. Planner가 스펙을 분석하여 태스크 분해
+5. Developer가 자동 구현 (승인 불필요)
+6. Reviewer가 자동 리뷰 → 이슈 심각도에 따라 회귀 루프 실행
+7. 모든 진행 상황은 Live Dashboard로 실시간 표시
 
 ## Commands
 
