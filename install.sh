@@ -477,11 +477,21 @@ permissions = settings.get("permissions", {})
 allow_list = permissions.get("allow", [])
 
 tdc_allow_rules = [
+    # Bash: .tdc/ directory operations
     "Bash(mkdir -p .tdc/*)",
-    "Bash(echo *:.tdc/context/*)",
-    "Bash(cat .tdc/context/*)",
-    "Bash(rm -f .tdc/context/*)",
-    "Bash(ls .tdc:*)",
+    "Bash(echo * > .tdc/**)",
+    "Bash(echo * >> .tdc/**)",
+    "Bash(cat .tdc/**)",
+    "Bash(rm -f .tdc/**)",
+    "Bash(ls .tdc*)",
+    # Bash: common tdc pipeline commands (syntax check, git diff, etc.)
+    "Bash(bash -n *)",
+    "Bash(git diff*)",
+    "Bash(git status*)",
+    "Bash(git log*)",
+    "Bash(git add*)",
+    "Bash(git checkout -- *)",
+    # Read/Write: .tdc/ state files
     "Read(.tdc/**)",
     "Write(.tdc/sessions/**)",
     "Write(.tdc/context/**)",
