@@ -23,7 +23,7 @@ cat << 'BANNER'
    | | |  _|| |   | |_| | | | | | | | |  _
    | | | |__| |___|  _  | |_| | |_| | |_| |
    |_| |_____\____|_| |_|____/ \___/ \____|
-         Claude Code Orchestrator v2.5.0
+         Claude Code Orchestrator
 BANNER
 echo -e "${NC}"
 
