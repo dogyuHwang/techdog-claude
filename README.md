@@ -207,9 +207,34 @@ Claude Code 입력창에서:
 /tdc-dev              ← 기획은 이미 했고 개발만 시작하고 싶을 때
 /tdc-debug <에러>     ← 이미 만들어진 코드에서 새 에러를 발견했을 때
 /tdc-review           ← 직접 작성한 코드를 리뷰받고 싶을 때
+/tdc onboard          ← 기존 프로젝트에 tdc 도입할 때 (자동 분석)
+/tdc upgrade          ← tdc를 최신 버전으로 업데이트
 ```
 
-### 4. 작업이 길어질 때 (세션 관리)
+### 4. 프로젝트 온보딩 (기존 프로젝트에 처음 도입할 때)
+
+기존 프로젝트에서 tdc를 처음 쓸 때, 한 번만 실행하면 됩니다:
+
+```
+/tdc onboard
+```
+
+프로젝트의 기술 스택, 코딩 컨벤션, 디렉토리 구조, 빌드 명령을 **자동 분석**하여
+`.tdc/project-memory.md`에 저장합니다.
+
+이후 `/tdc spec.md`를 실행하면 이 정보를 자동으로 활용하여 더 정확한 코드를 생성합니다.
+
+### 5. 업데이트
+
+```
+/tdc upgrade
+```
+
+tdc의 스킬, 에이전트, 훅을 최신 버전으로 업데이트합니다.
+프로젝트별 데이터(세션, 플랜, 메모리)는 보존됩니다.
+새 버전이 있으면 세션 시작 시 자동으로 알려줍니다.
+
+### 6. 작업이 길어질 때 (세션 관리)
 
 오랜 작업 중 "컨텍스트 사용량이 높습니다"라는 경고가 나오면:
 
@@ -247,6 +272,8 @@ Claude Code를 다시 열고:
 | `/tdc-dev` | 기획은 끝났고 개발만 시작할 때 |
 | `/tdc-debug <에러 내용>` | 이미 있는 코드에서 새 버그를 발견했을 때 |
 | `/tdc-review` | 직접 작성한 코드를 리뷰받고 싶을 때 |
+| `/tdc onboard` | 기존 프로젝트에 tdc 도입 시 자동 분석 |
+| `/tdc upgrade` | tdc를 최신 버전으로 업데이트 |
 
 ### 세션 관리
 
@@ -296,6 +323,25 @@ Claude Code를 다시 열고:
     code-level: Developer에게 수정 지시
     design-level: Planner에게 재기획 요청 → Developer 재구현
 ```
+
+### 병렬 개발 (git worktree)
+
+독립적인 태스크가 여러 개 있으면 **git worktree로 병렬 실행**합니다:
+
+```
+[TDC] Phase 2 — Parallel execution (3 independent tasks)
+  [TDC] developer-1 working on Task 1: "DB 모델" (worktree)
+  [TDC] developer-2 working on Task 3: "프론트엔드" (worktree)
+
+[TDC] developer-1 completed Task 1 (15s)
+[TDC] developer-2 completed Task 3 (22s)
+[TDC] Worktrees merged successfully
+[TDC] Continuing with dependent tasks...
+```
+
+Planner가 태스크 간 의존성을 분석하여 독립 태스크를 식별하고,
+각 Developer가 별도 worktree에서 동시에 작업합니다.
+완료 후 자동 merge되며, 충돌 시 Debugger가 해결합니다.
 
 ### 실시간 진행 상황 (3중 가시성)
 

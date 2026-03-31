@@ -4,7 +4,7 @@
 
 set -e
 
-TDC_VERSION="2.8.0"
+TDC_VERSION="2.9.0"
 TDC_HOME="$HOME/.tdc"
 TDC_REPO_URL="${TDC_REPO_URL:-https://github.com/dogyuHwang/techdog-claude}"
 
@@ -231,7 +231,7 @@ install_tdc() {
     mkdir -p "$CLAUDE_DIR/skills" "$CLAUDE_DIR/agents"
 
     # Core skills (always installed)
-    for core_skill in tdc tdc-plan tdc-dev tdc-debug tdc-review tdc-session tdc-learn; do
+    for core_skill in tdc tdc-plan tdc-dev tdc-debug tdc-review tdc-session tdc-learn tdc-onboard; do
         if [ -d "$TDC_HOME/.repo/.claude/skills/$core_skill" ]; then
             cp -r "$TDC_HOME/.repo/.claude/skills/$core_skill" "$CLAUDE_DIR/skills/" 2>/dev/null || true
         fi
@@ -531,7 +531,7 @@ echo -e "    3. Claude Code 안에서 ${BOLD}/tdc spec.md${NC}"
 echo -e ""
 echo -e "  ${BOLD}Installed:${NC}"
 echo -e "    Agents: 8 (master, planner, developer, debugger, reviewer, security-reviewer, test-engineer, architect)"
-echo -e "    Core skills: 7 (/tdc, /tdc-plan, /tdc-dev, /tdc-debug, /tdc-review, /tdc-session, /tdc-learn)"
+echo -e "    Core skills: 8 (/tdc, /tdc-plan, /tdc-dev, /tdc-debug, /tdc-review, /tdc-session, /tdc-learn, /tdc-onboard)"
 if [ "${#SELECTED_PACKS[@]}" -gt 0 ]; then
     PACK_NAMES=""
     for pack in "${SELECTED_PACKS[@]}"; do

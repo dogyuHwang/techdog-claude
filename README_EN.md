@@ -206,9 +206,34 @@ Use these when you want to run a specific stage separately instead of the full p
 /tdc-dev              <-- When planning is done and you just want to start coding
 /tdc-debug <error>    <-- When you find a new error in existing code
 /tdc-review           <-- When you want a review of code you wrote yourself
+/tdc onboard          <-- First time using tdc in an existing project (auto-analyze)
+/tdc upgrade          <-- Update tdc to the latest version
 ```
 
-### 4. When Work Takes Long (Session Management)
+### 4. Project Onboarding (first time using tdc in an existing project)
+
+When using tdc for the first time in an existing project, run this once:
+
+```
+/tdc onboard
+```
+
+This **auto-analyzes** your project's tech stack, coding conventions, directory structure, and build commands,
+saving them to `.tdc/project-memory.md`.
+
+Future `/tdc spec.md` runs will automatically use this information for more accurate code generation.
+
+### 5. Update
+
+```
+/tdc upgrade
+```
+
+Updates tdc's skills, agents, and hooks to the latest version.
+Project-specific data (sessions, plans, memory) is preserved.
+You'll be notified automatically when a new version is available.
+
+### 6. When Work Takes Long (Session Management)
 
 If you see a "context usage is high" warning during a long session:
 
@@ -246,6 +271,8 @@ All commands are used **inside the Claude Code prompt**.
 | `/tdc-dev` | When planning is done and you want to start development |
 | `/tdc-debug <error details>` | When you find a new bug in existing code |
 | `/tdc-review` | When you want a review of code you wrote yourself |
+| `/tdc onboard` | Auto-analyze project when first adopting tdc |
+| `/tdc upgrade` | Update tdc to the latest version |
 
 ### Session Management
 
@@ -295,6 +322,25 @@ Inter-agent communication (shown in real-time via Live Dashboard):
     code-level: Developer instructed to fix
     design-level: Planner asked to re-plan -> Developer re-implements
 ```
+
+### Parallel Development (git worktree)
+
+When there are multiple independent tasks, they run **in parallel via git worktree**:
+
+```
+[TDC] Phase 2 — Parallel execution (3 independent tasks)
+  [TDC] developer-1 working on Task 1: "DB model" (worktree)
+  [TDC] developer-2 working on Task 3: "Frontend" (worktree)
+
+[TDC] developer-1 completed Task 1 (15s)
+[TDC] developer-2 completed Task 3 (22s)
+[TDC] Worktrees merged successfully
+[TDC] Continuing with dependent tasks...
+```
+
+The Planner analyzes task dependencies to identify independent tasks,
+and each Developer works simultaneously in a separate worktree.
+After completion, changes are auto-merged. Conflicts are resolved by the Debugger.
 
 ### Real-time Progress (Triple Visibility)
 

@@ -33,10 +33,12 @@ argument-hint: "[spec.md 또는 설명]"
 2. 스펙이면 → **기획 워크플로우**로 진입
 3. 이미 태스크가 분해된 플랜이면 → **개발 워크플로우**로 진입
 
-**B. 서브커맨드가 있는 경우** (plan, dev, debug, review, session, version, deep, learn)
+**B. 서브커맨드가 있는 경우** (plan, dev, debug, review, session, version, deep, learn, upgrade, onboard)
 - `version` → `~/.tdc/.repo/package.json`에서 버전을 읽어 표시. 없으면 "버전 정보를 찾을 수 없습니다. 재설치를 권장합니다." 출력.
 - `deep` → Deep 모드로 자동 파이프라인 실행 (끈질긴 검증 루프)
 - `learn` → `/tdc-learn` 스킬 워크플로우로 라우팅
+- `upgrade` → 업그레이드 실행 (아래 업그레이드 워크플로우 참조)
+- `onboard` → 프로젝트 온보딩 (`/tdc-onboard` 스킬 워크플로우로 라우팅)
 - 나머지 → 해당 워크플로우로 직접 라우팅
 
 **C. 텍스트만 전달된 경우**
@@ -93,6 +95,45 @@ Reviewer가 문제를 찾으면 심각도에 따라:
 
 **모든 에이전트 활동은 Live Dashboard로 실시간 표시된다.**
 사용자가 중간에 개입할 필요 없다. 에이전트 간 상호작용 로그는 `.tdc/context/agent-log.md`에 기록된다.
+
+### 업그레이드 워크플로우 (`/tdc upgrade`)
+
+Master Agent가 직접 처리한다 (서브 에이전트 불필요):
+
+1. `~/.tdc/.repo`가 있는지 확인. 없으면 "tdc가 설치되어 있지 않습니다." 안내 후 종료.
+2. 현재 버전 확인: `~/.tdc/.repo/package.json`에서 version 읽기
+3. 최신 소스 가져오기:
+   ```bash
+   cd ~/.tdc/.repo && git fetch origin main && git reset --hard origin/main
+   ```
+4. 새 버전 확인: package.json에서 version 다시 읽기
+5. 이미 최신이면 → `[TDC] Already up to date (vX.Y.Z)` 표시 후 종료
+6. 파일 복사:
+   ```bash
+   cp -r ~/.tdc/.repo/.claude/skills/tdc ~/.claude/skills/
+   cp -r ~/.tdc/.repo/.claude/skills/tdc-plan ~/.claude/skills/
+   cp -r ~/.tdc/.repo/.claude/skills/tdc-dev ~/.claude/skills/
+   cp -r ~/.tdc/.repo/.claude/skills/tdc-debug ~/.claude/skills/
+   cp -r ~/.tdc/.repo/.claude/skills/tdc-review ~/.claude/skills/
+   cp -r ~/.tdc/.repo/.claude/skills/tdc-session ~/.claude/skills/
+   cp -r ~/.tdc/.repo/.claude/skills/tdc-learn ~/.claude/skills/
+   cp -r ~/.tdc/.repo/.claude/skills/tdc-onboard ~/.claude/skills/ 2>/dev/null || true
+   cp -r ~/.tdc/.repo/.claude/agents/*.md ~/.claude/agents/
+   cp -r ~/.tdc/.repo/.claude/hooks/* ~/.tdc/hooks/
+   chmod +x ~/.tdc/hooks/*
+   ```
+7. settings.json 패치: install.sh의 setup_claude_settings() Python 블록을 실행
+8. 결과 표시:
+   ```
+   [TDC] Upgraded: vOLD → vNEW
+   [TDC] Skills, agents, and hooks updated for all projects.
+   [TDC] Project-specific data (.tdc/) is preserved.
+   ```
+
+**주의사항:**
+- 스킬팩(tdc-stack-*)은 업그레이드하지 않음 (사용자가 선택 설치한 것)
+- rtk는 건드리지 않음
+- 프로젝트별 .tdc/ 데이터는 건드리지 않음
 
 ## 스펙 파일 형식
 

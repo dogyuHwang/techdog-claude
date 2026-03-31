@@ -23,11 +23,13 @@ Always output a structured plan:
 <one-sentence goal>
 
 ### Tasks
-1. [ ] <task> — complexity: low|mid|high — agent: developer|debugger|architect
-2. [ ] <task> ...
+1. [ ] <task> — complexity: low|mid|high — agent: developer — depends_on: []
+2. [ ] <task> — complexity: mid — agent: developer — depends_on: [1]
+3. [ ] <task> — complexity: low — agent: developer — depends_on: []
 
-### Dependencies
-- Task N blocks Task M (reason)
+### Parallel Groups
+- Group A (independent): Task 1, Task 3
+- Group B (depends on A): Task 2
 
 ### Risks
 - <risk>: <mitigation>
@@ -35,6 +37,28 @@ Always output a structured plan:
 ### Acceptance Criteria
 - [ ] <criterion>
 ```
+
+### Dependency Analysis Rules
+
+When decomposing tasks, analyze dependencies between them:
+- `depends_on: []` = independent, can run in parallel with other independent tasks
+- `depends_on: [1]` = must run after Task 1 completes
+- `depends_on: [1, 3]` = must run after both Task 1 and 3 complete
+
+After listing all tasks, group them into **Parallel Groups**:
+- Tasks with `depends_on: []` form the first parallel group
+- Tasks that depend only on completed groups form the next parallel group
+- This allows Master to execute independent tasks simultaneously via git worktree
+
+**Examples of independent tasks** (can run in parallel):
+- DB schema + frontend component (different files)
+- API routes + utility functions (no shared state)
+- Tests for module A + implementation of module B
+
+**Examples of dependent tasks** (must be sequential):
+- API endpoint depends on DB model
+- Integration test depends on both API and frontend
+- Config setup blocks everything else
 
 ## Rules
 

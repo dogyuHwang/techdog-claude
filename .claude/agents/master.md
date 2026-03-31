@@ -207,6 +207,47 @@ When given a spec or task (and clarification is complete if needed), execute thi
 
 **The user should NOT need to type anything between Phase 1 and Phase 4.**
 
+## Parallel Development (git worktree)
+
+Phase 2에서 Planner의 결과에 Parallel Groups가 있으면 병렬 실행을 시도한다.
+
+### 병렬 실행 조건
+- Planner가 2개 이상의 독립 태스크(depends_on: [])를 식별한 경우
+- 독립 태스크가 1개뿐이면 → 기존대로 순차 실행
+
+### 실행 방법
+1. Parallel Group에서 독립 태스크들을 식별한다
+2. 각 독립 태스크에 대해 Developer Agent를 **동시에** 호출한다:
+   ```
+   Agent({
+     prompt: "Task N: ...",
+     model: "sonnet",
+     mode: "bypassPermissions",
+     isolation: "worktree"    ← 각 Developer가 별도 worktree에서 작업
+   })
+   ```
+3. 모든 병렬 Developer가 완료되면 → worktree 변경사항이 자동으로 merge된다
+4. merge 충돌 발생 시 → Debugger Agent를 호출하여 해결
+5. 다음 Parallel Group의 태스크를 실행 (이전 그룹 결과에 의존하는 태스크들)
+
+### 병렬 실행 시 Dashboard 표시
+```
+[TDC] Phase 2 — Parallel execution (N independent tasks)
+  [TDC] developer-1 working on Task 1: "DB 모델" (worktree)
+  [TDC] developer-2 working on Task 3: "프론트엔드" (worktree)
+
+[TDC] developer-1 completed Task 1 (15s)
+[TDC] developer-2 completed Task 3 (22s)
+[TDC] Worktrees merged successfully
+[TDC] Continuing with dependent tasks...
+```
+
+### 안전장치
+- merge 충돌 해결 3회 실패 → 순차 실행으로 폴백
+- worktree는 Agent tool이 자동으로 정리 (변경 없으면 삭제, 변경 있으면 merge)
+- Deep 모드에서도 병렬 실행 지원
+- 병렬 실행 중 API rate limit 발생 시 → 남은 태스크를 순차로 전환
+
 ## Regression Loop (에이전트 회귀)
 
 When the Reviewer returns findings, classify each issue:

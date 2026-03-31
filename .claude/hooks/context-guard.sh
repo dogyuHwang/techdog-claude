@@ -53,6 +53,23 @@ except: print('false')
     fi
 fi
 
+# --- Version update check (once per session) ---
+VERSION_CHECK_FILE="$CONTEXT_DIR/.version_checked"
+if [ ! -f "$VERSION_CHECK_FILE" ]; then
+    touch "$VERSION_CHECK_FILE"
+    TDC_REPO="$HOME/.tdc/.repo"
+    if [ -d "$TDC_REPO/.git" ]; then
+        CURRENT_VER=$(python3 -c "import json; print(json.load(open('$TDC_REPO/package.json'))['version'])" 2>/dev/null)
+        # Quick check: fetch and compare (timeout 5s to avoid blocking)
+        if timeout 5 git -C "$TDC_REPO" fetch origin main --quiet 2>/dev/null; then
+            REMOTE_VER=$(git -C "$TDC_REPO" show origin/main:package.json 2>/dev/null | python3 -c "import sys,json; print(json.load(sys.stdin)['version'])" 2>/dev/null)
+            if [ -n "$REMOTE_VER" ] && [ -n "$CURRENT_VER" ] && [ "$REMOTE_VER" != "$CURRENT_VER" ]; then
+                echo "[TDC] New version available: v${CURRENT_VER} → v${REMOTE_VER}. Run /tdc upgrade to update."
+            fi
+        fi
+    fi
+fi
+
 # --- Tool call counter ---
 TOOL_COUNT_FILE="$CONTEXT_DIR/.tool_count"
 if [ -f "$TOOL_COUNT_FILE" ]; then
