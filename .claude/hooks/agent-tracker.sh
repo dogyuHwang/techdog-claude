@@ -31,16 +31,19 @@ else
     exit 0
 fi
 
-# Normalize agent names
+# Normalize agent names — maps Claude Code agent_type to tdc canonical names
 AGENT_NAME="$AGENT_TYPE"
 case "$AGENT_TYPE" in
-    *planner*|*Planner*)             AGENT_NAME="planner" ;;
+    *planner*|*Planner*|*Plan*)      AGENT_NAME="planner" ;;
     *developer*|*Developer*)         AGENT_NAME="developer" ;;
     *debugger*|*Debugger*)           AGENT_NAME="debugger" ;;
     *security*|*Security*)           AGENT_NAME="security-reviewer" ;;
     *test-engineer*|*Test*)          AGENT_NAME="test-engineer" ;;
     *reviewer*|*Reviewer*)           AGENT_NAME="reviewer" ;;
     *architect*|*Architect*)         AGENT_NAME="architect" ;;
+    *Explore*|*explore*)             AGENT_NAME="explorer" ;;
+    *general-purpose*|*general*)     AGENT_NAME="worker" ;;
+    *python-developer*|*python*)     AGENT_NAME="developer" ;;
 esac
 
 AGENT_TOKENS_FILE="$CONTEXT_DIR/.agent-tokens"

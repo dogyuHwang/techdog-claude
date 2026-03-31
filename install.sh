@@ -4,7 +4,7 @@
 
 set -e
 
-TDC_VERSION="2.6.0"
+TDC_VERSION="2.7.0"
 TDC_HOME="$HOME/.tdc"
 TDC_REPO_URL="${TDC_REPO_URL:-https://github.com/dogyuHwang/techdog-claude}"
 
@@ -241,20 +241,36 @@ install_tdc() {
     cp -r "$TDC_HOME/.repo/.claude/agents/"* "$CLAUDE_DIR/agents/" 2>/dev/null || true
     echo -e "${GREEN}[tdc]${NC} Core skills & agents installed to $CLAUDE_DIR/"
 
-    # Skill pack selection
-    select_skill_packs
+    # Skill pack selection — skip on upgrade if packs already exist
+    EXISTING_PACKS=$(ls -d "$CLAUDE_DIR/skills/tdc-stack-"* 2>/dev/null | wc -l)
+    if [ "$EXISTING_PACKS" -gt 0 ]; then
+        echo -e "${BLUE}[tdc]${NC} Existing skill packs detected ($EXISTING_PACKS). Updating in-place..."
+        # Update existing packs from repo without re-asking
+        UPDATE_COUNT=0
+        for pack_dir in "$CLAUDE_DIR/skills/tdc-stack-"*; do
+            pack_name=$(basename "$pack_dir")
+            if [ -d "$TDC_HOME/.repo/.claude/skills/$pack_name" ]; then
+                cp -r "$TDC_HOME/.repo/.claude/skills/$pack_name" "$CLAUDE_DIR/skills/" 2>/dev/null || true
+                UPDATE_COUNT=$((UPDATE_COUNT + 1))
+            fi
+        done
+        echo -e "${GREEN}[tdc]${NC} $UPDATE_COUNT skill packs updated"
+    else
+        # Fresh install — show skill pack selection
+        select_skill_packs
 
-    # Install selected skill packs
-    PACK_COUNT=0
-    for pack in "${SELECTED_PACKS[@]}"; do
-        IFS=':' read -r dir_name display_name <<< "$pack"
-        if [ -d "$TDC_HOME/.repo/.claude/skills/$dir_name" ]; then
-            cp -r "$TDC_HOME/.repo/.claude/skills/$dir_name" "$CLAUDE_DIR/skills/" 2>/dev/null || true
-            PACK_COUNT=$((PACK_COUNT + 1))
+        # Install selected skill packs
+        PACK_COUNT=0
+        for pack in "${SELECTED_PACKS[@]}"; do
+            IFS=':' read -r dir_name display_name <<< "$pack"
+            if [ -d "$TDC_HOME/.repo/.claude/skills/$dir_name" ]; then
+                cp -r "$TDC_HOME/.repo/.claude/skills/$dir_name" "$CLAUDE_DIR/skills/" 2>/dev/null || true
+                PACK_COUNT=$((PACK_COUNT + 1))
+            fi
+        done
+        if [ "$PACK_COUNT" -gt 0 ]; then
+            echo -e "${GREEN}[tdc]${NC} $PACK_COUNT skill packs installed"
         fi
-    done
-    if [ "$PACK_COUNT" -gt 0 ]; then
-        echo -e "${GREEN}[tdc]${NC} $PACK_COUNT skill packs installed"
     fi
 
     # Install and configure rtk (BEFORE settings, so hook registration finds rtk)

@@ -384,6 +384,12 @@ techdog-claude/
 
 ## Version History
 
+- **v2.7.0** (2026-03-31): 업그레이드 스킬팩 스킵 + 토큰 대시보드 수정 + 권한 자동 허용
+  - **install.sh 업그레이드 개선**: 기존 스킬팩이 있으면 선택 UI 스킵, 기존 팩만 업데이트
+  - **agent-tracker.sh 정규화 확장**: Explore/general-purpose/Plan/python-developer 등 누락된 에이전트 타입 추가
+  - **settings.local.json 권한 추가**: .tdc/context/ 디렉토리 접근 자동 허용 (bypassPermissions 보완)
+  - rtk v0.34.2 동작 확인 (99.6% 절감률)
+
 - **v2.6.0** (2026-03-31): 사전 질문 임계값 하향 + 에이전트 자율 모드
   - **Deep Interview 임계값 하향**: 4.0→3.5 (질문 생략), 2.5→2.0 (소크라틱 인터뷰). 경계값에서 적극적으로 질문하도록 변경
   - **Agent bypassPermissions 모드**: 모든 서브 에이전트에 `mode: "bypassPermissions"` 적용. 파이프라인 중 사용자 승인 요청 완전 제거
