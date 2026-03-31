@@ -306,20 +306,20 @@ Claude Code를 다시 열고:
 터미널 맨 아래에 현재 상태가 항상 보입니다:
 
 ```
-[TDC] Phase 2/4 — IMPLEMENTATION | developer working | 45 tools
+[TDC] Phase 2/4 — IMPLEMENTATION | developer[sonnet] working | ~14.0k tokens | 45 tools | rtk:ON
 ```
 
-에이전트가 바뀔 때마다 자동 업데이트됩니다.
+에이전트명, **사용 모델**, 누적 토큰, rtk 상태가 실시간 업데이트됩니다.
 
-#### 2. Console Messages (에이전트 시작/완료 알림)
+#### 2. Console Messages (에이전트 시작/완료 알림 + 모델명)
 
-에이전트가 시작하거나 완료될 때 자동으로 메시지가 표시됩니다:
+에이전트가 시작하거나 완료될 때 **모델명과 함께** 자동으로 메시지가 표시됩니다:
 
 ```
-[TDC] planner agent started (14:03:01)
-[TDC] planner agent completed (21s)
-[TDC] developer agent started (14:03:23)
-[TDC] developer agent completed (22s)
+[TDC] planner agent started [sonnet] (14:03:01)
+[TDC] planner [sonnet] completed (21s)
+[TDC] developer agent started [sonnet] (14:03:23)
+[TDC] developer [sonnet] completed (22s)
 ```
 
 #### 3. Dashboard Banners (Phase 전환 시 상세 로그)
@@ -373,11 +373,11 @@ Claude Code를 다시 열고:
 에이전트가 완료될 때마다 **누적 토큰 게이지가 실시간으로 표시**됩니다:
 
 ```
-[TDC] developer completed (22s) — Token Usage:
-       planner    ██░░░░░░░░ ~2.4k (17%)
-       developer  ████████░░ ~8.8k (63%)
-       debugger   ██░░░░░░░░ ~2.8k (20%)
-       ──────────── total: ~14.0k
+[TDC] developer [sonnet] completed (22s) — Token Usage:
+       planner(sonnet)    ██░░░░░░░░ ~2.4k (17%)
+       developer(sonnet)  ████████░░ ~8.8k (63%)
+       debugger(sonnet)   ██░░░░░░░░ ~2.8k (20%)
+       ──────────────────── total: ~14.0k
 ```
 
 Phase 4에서는 전체 요약 + rtk 절감 추정 + 비용 추정이 포함됩니다.

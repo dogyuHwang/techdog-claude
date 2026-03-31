@@ -305,20 +305,20 @@ When you run `/tdc spec.md`, you can monitor agent activity in **3 ways** in rea
 The current status is always shown at the bottom of the terminal:
 
 ```
-[TDC] Phase 2/4 -- IMPLEMENTATION | developer working | 45 tools
+[TDC] Phase 2/4 -- IMPLEMENTATION | developer[sonnet] working | ~14.0k tokens | 45 tools | rtk:ON
 ```
 
-It updates automatically whenever the active agent changes.
+Agent name, **model tier**, cumulative tokens, and rtk status update in real-time.
 
-#### 2. Console Messages (agent start/completion notifications)
+#### 2. Console Messages (agent start/completion with model name)
 
-Messages are displayed automatically when an agent starts or finishes:
+Messages with **model name** are displayed automatically when an agent starts or finishes:
 
 ```
-[TDC] planner agent started (14:03:01)
-[TDC] planner agent completed (21s)
-[TDC] developer agent started (14:03:23)
-[TDC] developer agent completed (22s)
+[TDC] planner agent started [sonnet] (14:03:01)
+[TDC] planner [sonnet] completed (21s)
+[TDC] developer agent started [sonnet] (14:03:23)
+[TDC] developer [sonnet] completed (22s)
 ```
 
 #### 3. Dashboard Banners (detailed logs on phase transitions)
@@ -372,11 +372,11 @@ By matching models to roles, **costs are reduced by 30-50%**.
 A **cumulative token gauge updates in real-time** as each agent completes:
 
 ```
-[TDC] developer completed (22s) — Token Usage:
-       planner    ██░░░░░░░░ ~2.4k (17%)
-       developer  ████████░░ ~8.8k (63%)
-       debugger   ██░░░░░░░░ ~2.8k (20%)
-       ──────────── total: ~14.0k
+[TDC] developer [sonnet] completed (22s) — Token Usage:
+       planner(sonnet)    ██░░░░░░░░ ~2.4k (17%)
+       developer(sonnet)  ████████░░ ~8.8k (63%)
+       debugger(sonnet)   ██░░░░░░░░ ~2.8k (20%)
+       ──────────────────── total: ~14.0k
 ```
 
 Phase 4 includes a full summary with rtk savings estimate and cost estimate.

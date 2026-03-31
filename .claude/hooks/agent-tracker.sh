@@ -45,6 +45,16 @@ esac
 
 AGENT_TOKENS_FILE="$CONTEXT_DIR/.agent-tokens"
 
+# Map agent name → model tier
+get_model_name() {
+    case "$1" in
+        master|architect)            echo "opus" ;;
+        reviewer|security-reviewer)  echo "haiku" ;;
+        *)                           echo "sonnet" ;;
+    esac
+}
+
+AGENT_MODEL=$(get_model_name "$AGENT_NAME")
 TIMESTAMP=$(date +%s)
 TIME_HUMAN=$(date +%H:%M:%S)
 
@@ -53,16 +63,17 @@ if [ "$HOOK_EVENT" = "SubagentStart" ]; then
     cat > "$STATUS_FILE" << EOF
 AGENT=$AGENT_NAME
 AGENT_ID=$AGENT_ID
+MODEL=$AGENT_MODEL
 STATE=working
 START_TIME=$TIMESTAMP
 UPDATED=$TIME_HUMAN
 EOF
 
     # Append to event log
-    echo "$TIME_HUMAN START $AGENT_NAME $AGENT_ID" >> "$LOG_FILE"
+    echo "$TIME_HUMAN START $AGENT_NAME [$AGENT_MODEL] $AGENT_ID" >> "$LOG_FILE"
 
     # Console output for user visibility
-    echo "[TDC] $AGENT_NAME agent started ($TIME_HUMAN)"
+    echo "[TDC] $AGENT_NAME agent started [$AGENT_MODEL] ($TIME_HUMAN)"
 
 elif [ "$HOOK_EVENT" = "SubagentStop" ]; then
     # Calculate elapsed time if we have start time
@@ -85,7 +96,7 @@ UPDATED=$TIME_HUMAN
 EOF
 
     # Append to event log
-    echo "$TIME_HUMAN STOP  $AGENT_NAME $AGENT_ID ${ELAPSED}" >> "$LOG_FILE"
+    echo "$TIME_HUMAN STOP  $AGENT_NAME [$AGENT_MODEL] $AGENT_ID ${ELAPSED}" >> "$LOG_FILE"
 
     # Track agent token usage (estimate based on elapsed time)
     # Rough estimate: ~200 tokens/second for sonnet, ~100 for haiku, ~300 for opus
@@ -128,7 +139,7 @@ EOF
             done < "$AGENT_TOKENS_FILE"
 
             if [ "$GRAND_TOTAL" -gt 0 ]; then
-                # Build gauge bars (10 chars wide)
+                # Build gauge bars (10 chars wide) with model names
                 while IFS='=' read -r aname aval; do
                     [[ "$aval" =~ ^[0-9]+$ ]] || continue
                     if [ "$MAX_TOKENS" -gt 0 ]; then
@@ -147,7 +158,11 @@ EOF
                         TDISP="${aval}"
                     fi
                     PCT=$(( aval * 100 / GRAND_TOTAL ))
-                    GAUGE_LINE="${GAUGE_LINE}       ${aname} ${BAR} ~${TDISP} (${PCT}%)\n"
+                    # Add model tier label
+                    AMODEL=$(get_model_name "$aname")
+                    # Pad agent name to 18 chars for alignment
+                    ALABEL=$(printf "%-18s" "${aname}(${AMODEL})")
+                    GAUGE_LINE="${GAUGE_LINE}       ${ALABEL} ${BAR} ~${TDISP} (${PCT}%)\n"
                 done < "$AGENT_TOKENS_FILE"
                 # Grand total display
                 if [ "$GRAND_TOTAL" -ge 1000 ]; then
@@ -155,17 +170,17 @@ EOF
                 else
                     GT_DISP="$GRAND_TOTAL"
                 fi
-                echo "[TDC] $AGENT_NAME completed (${ELAPSED}) — Token Usage:"
+                echo "[TDC] $AGENT_NAME [$AGENT_MODEL] completed (${ELAPSED}) — Token Usage:"
                 printf '%b' "$GAUGE_LINE"
-                echo "       ──────────── total: ~${GT_DISP}"
+                echo "       ──────────────────── total: ~${GT_DISP}"
             else
-                echo "[TDC] $AGENT_NAME agent completed (${ELAPSED})"
+                echo "[TDC] $AGENT_NAME [$AGENT_MODEL] completed (${ELAPSED})"
             fi
         else
-            echo "[TDC] $AGENT_NAME agent completed (${ELAPSED})"
+            echo "[TDC] $AGENT_NAME [$AGENT_MODEL] completed (${ELAPSED})"
         fi
     else
-        echo "[TDC] $AGENT_NAME agent completed"
+        echo "[TDC] $AGENT_NAME [$AGENT_MODEL] completed"
     fi
 fi
 

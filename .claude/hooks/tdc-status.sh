@@ -26,15 +26,18 @@ if [ -f "$PHASE_FILE" ]; then
     fi
 fi
 
-# 2. Active agent
+# 2. Active agent (with model name)
 if [ -f "$STATUS_FILE" ]; then
     AGENT=$(grep '^AGENT=' "$STATUS_FILE" 2>/dev/null | cut -d= -f2)
     STATE=$(grep '^STATE=' "$STATUS_FILE" 2>/dev/null | cut -d= -f2)
+    MODEL=$(grep '^MODEL=' "$STATUS_FILE" 2>/dev/null | cut -d= -f2)
     if [ "$STATE" = "working" ] && [ -n "$AGENT" ]; then
+        AGENT_LABEL="$AGENT"
+        [ -n "$MODEL" ] && AGENT_LABEL="${AGENT}[${MODEL}]"
         if [ -n "$PARTS" ]; then
-            PARTS="$PARTS | $AGENT working"
+            PARTS="$PARTS | $AGENT_LABEL working"
         else
-            PARTS="$AGENT working"
+            PARTS="$AGENT_LABEL working"
         fi
     fi
 fi
@@ -69,6 +72,25 @@ if [ -f "$TOOL_COUNT_FILE" ]; then
             PARTS="$PARTS | ${TOOLS} tools"
         else
             PARTS="${TOOLS} tools"
+        fi
+    fi
+fi
+
+# 5. rtk status
+RTK_STATUS_FILE="$CONTEXT_DIR/.rtk_status"
+if [ -f "$RTK_STATUS_FILE" ]; then
+    RTK_ST=$(cat "$RTK_STATUS_FILE" 2>/dev/null)
+    case "$RTK_ST" in
+        ok)      RTK_LABEL="rtk:ON" ;;
+        broken)  RTK_LABEL="rtk:ERR" ;;
+        missing) RTK_LABEL="rtk:OFF" ;;
+        *)       RTK_LABEL="" ;;
+    esac
+    if [ -n "$RTK_LABEL" ]; then
+        if [ -n "$PARTS" ]; then
+            PARTS="$PARTS | $RTK_LABEL"
+        else
+            PARTS="$RTK_LABEL"
         fi
     fi
 fi

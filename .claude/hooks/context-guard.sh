@@ -16,7 +16,30 @@ if [ ! -f "$RTK_STATUS_FILE" ]; then
     if command -v rtk >/dev/null 2>&1; then
         # Verify rtk actually works (not just installed)
         if rtk --version >/dev/null 2>&1; then
-            echo "ok" > "$RTK_STATUS_FILE"
+            # Also verify the PreToolUse hook is registered in settings.json
+            RTK_HOOK_REGISTERED=false
+            SETTINGS_FILE="$HOME/.claude/settings.json"
+            if [ -f "$SETTINGS_FILE" ] && command -v python3 >/dev/null 2>&1; then
+                RTK_HOOK_REGISTERED=$(python3 -c "
+import json
+try:
+    with open('$SETTINGS_FILE') as f:
+        s = json.load(f)
+    hooks = s.get('hooks', {}).get('PreToolUse', [])
+    found = any('rtk-rewrite' in hk.get('command', '') for h in hooks for hk in h.get('hooks', []))
+    print('true' if found else 'false')
+except: print('false')
+" 2>/dev/null)
+            fi
+
+            if [ "$RTK_HOOK_REGISTERED" = "true" ]; then
+                echo "ok" > "$RTK_STATUS_FILE"
+                echo "[TDC] rtk active ($(rtk --version 2>/dev/null)) — Bash commands auto-compressed for 60-90% token savings"
+            else
+                echo "broken" > "$RTK_STATUS_FILE"
+                echo "[TDC] WARNING: rtk installed but PreToolUse hook NOT registered in settings.json."
+                echo "[TDC] Fix: reinstall with 'curl -sSL https://raw.githubusercontent.com/dogyuHwang/techdog-claude/main/install.sh | bash'"
+            fi
         else
             echo "broken" > "$RTK_STATUS_FILE"
             echo "[TDC] WARNING: rtk is installed but not working. Token compression disabled. Run 'rtk --version' to diagnose."

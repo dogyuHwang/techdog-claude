@@ -4,7 +4,7 @@
 
 set -e
 
-TDC_VERSION="2.4.0"
+TDC_VERSION="2.5.0"
 TDC_HOME="$HOME/.tdc"
 TDC_REPO_URL="${TDC_REPO_URL:-https://github.com/dogyuHwang/techdog-claude}"
 
@@ -23,7 +23,7 @@ cat << 'BANNER'
    | | |  _|| |   | |_| | | | | | | | |  _
    | | | |__| |___|  _  | |_| | |_| | |_| |
    |_| |_____\____|_| |_|____/ \___/ \____|
-         Claude Code Orchestrator v2.4.0
+         Claude Code Orchestrator v2.5.0
 BANNER
 echo -e "${NC}"
 
@@ -257,12 +257,12 @@ install_tdc() {
         echo -e "${GREEN}[tdc]${NC} $PACK_COUNT skill packs installed"
     fi
 
-    # Configure Claude Code settings
-    setup_claude_settings
-
-    # Install and configure rtk
+    # Install and configure rtk (BEFORE settings, so hook registration finds rtk)
     install_rtk
     setup_rtk
+
+    # Configure Claude Code settings (rtk must be installed first for hook registration)
+    setup_claude_settings
 
     echo -e "${GREEN}[tdc]${NC} Installation complete!"
 }
@@ -431,29 +431,28 @@ existing_agent_stop = [h for h in hooks.get("SubagentStop", [])
 if not existing_agent_stop:
     hooks["SubagentStop"].append(agent_stop_entry)
 
-# Add PreToolUse hook for rtk (if rtk is installed)
-import shutil
-if shutil.which("rtk"):
-    rtk_hook_path = os.path.expanduser("~/.claude/hooks/rtk-rewrite.sh")
-    if os.path.exists(rtk_hook_path):
-        if "PreToolUse" not in hooks:
-            hooks["PreToolUse"] = []
+# Add PreToolUse hook for rtk
+# Register unconditionally — rtk-rewrite.sh handles missing rtk gracefully (exit 0)
+rtk_hook_path = os.path.expanduser("~/.claude/hooks/rtk-rewrite.sh")
+if os.path.exists(rtk_hook_path):
+    if "PreToolUse" not in hooks:
+        hooks["PreToolUse"] = []
 
-        rtk_entry = {
-            "matcher": "Bash",
-            "hooks": [
-                {
-                    "type": "command",
-                    "command": rtk_hook_path
-                }
-            ]
-        }
+    rtk_entry = {
+        "matcher": "Bash",
+        "hooks": [
+            {
+                "type": "command",
+                "command": rtk_hook_path
+            }
+        ]
+    }
 
-        existing_rtk = [h for h in hooks.get("PreToolUse", [])
-                        if any("rtk-rewrite" in hk.get("command", "") for hk in h.get("hooks", []))]
-        if not existing_rtk:
-            hooks["PreToolUse"].append(rtk_entry)
-            print("[tdc] rtk PreToolUse hook registered in settings.json")
+    existing_rtk = [h for h in hooks.get("PreToolUse", [])
+                    if any("rtk-rewrite" in hk.get("command", "") for hk in h.get("hooks", []))]
+    if not existing_rtk:
+        hooks["PreToolUse"].append(rtk_entry)
+        print("[tdc] rtk PreToolUse hook registered in settings.json")
 
 settings["hooks"] = hooks
 
