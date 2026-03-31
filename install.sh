@@ -4,7 +4,7 @@
 
 set -e
 
-TDC_VERSION="2.7.0"
+TDC_VERSION="2.8.0"
 TDC_HOME="$HOME/.tdc"
 TDC_REPO_URL="${TDC_REPO_URL:-https://github.com/dogyuHwang/techdog-claude}"
 
@@ -472,9 +472,9 @@ if os.path.exists(rtk_hook_path):
 
 settings["hooks"] = hooks
 
-# Add permissions for tdc context directory access (prevents mid-pipeline prompts)
+# Add .tdc/ auto-allow permission rules
 permissions = settings.get("permissions", {})
-allow = permissions.get("allow", [])
+allow_list = permissions.get("allow", [])
 
 tdc_allow_rules = [
     "Bash(mkdir -p .tdc/*)",
@@ -486,13 +486,15 @@ tdc_allow_rules = [
     "Write(.tdc/sessions/**)",
     "Write(.tdc/context/**)",
     "Write(.tdc/plans/**)",
+    "Write(.tdc/learned-skills/**)",
+    "Write(.tdc/project-memory.md)",
 ]
 
 for rule in tdc_allow_rules:
-    if rule not in allow:
-        allow.append(rule)
+    if rule not in allow_list:
+        allow_list.append(rule)
 
-permissions["allow"] = allow
+permissions["allow"] = allow_list
 settings["permissions"] = permissions
 
 with open(settings_path, "w") as f:

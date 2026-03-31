@@ -75,8 +75,22 @@ EOF
     # Append to event log
     echo "$TIME_HUMAN START $AGENT_NAME [$AGENT_MODEL] $AGENT_ID" >> "$LOG_FILE"
 
-    # Console output for user visibility
-    echo "[TDC] $AGENT_NAME agent started [$AGENT_MODEL] ($TIME_HUMAN)"
+    # Console output for user visibility with cumulative token info
+    if [ -f "$AGENT_TOKENS_FILE" ]; then
+        RUNNING_TOTAL=0
+        while IFS='=' read -r _name _val; do
+            [ -z "$_val" ] && continue
+            RUNNING_TOTAL=$(( RUNNING_TOTAL + _val ))
+        done < "$AGENT_TOKENS_FILE"
+        if [ "$RUNNING_TOTAL" -ge 1000 ]; then
+            RT_DISP="$(( RUNNING_TOTAL / 1000 )).$(( (RUNNING_TOTAL % 1000) / 100 ))k"
+        else
+            RT_DISP="$RUNNING_TOTAL"
+        fi
+        echo "[TDC] $AGENT_NAME agent started [$AGENT_MODEL] ($TIME_HUMAN) — cumulative: ~${RT_DISP} tokens"
+    else
+        echo "[TDC] $AGENT_NAME agent started [$AGENT_MODEL] ($TIME_HUMAN)"
+    fi
 
 elif [ "$HOOK_EVENT" = "SubagentStop" ]; then
     # Calculate elapsed time if we have start time

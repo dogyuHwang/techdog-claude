@@ -677,6 +677,32 @@ Always use the Live Dashboard format above. At the final report, include:
 rm -f .tdc/context/.phase .tdc/context/.agent-status .tdc/context/.agent-events .tdc/context/.read_tokens .tdc/context/.compaction_done .tdc/context/.budget_warned .tdc/context/.deep .tdc/context/.rate_limit .tdc/context/notepad.md .tdc/context/.agent-tokens
 ```
 
+## Direct Handling Visibility (단순 작업 가시성)
+
+When Master handles a task directly without spawning sub-agents:
+
+1. **Start banner**: Output at the beginning:
+   ```
+   [TDC] Processing directly — no sub-agents needed for this task
+   ```
+
+2. **Phase file**: Write phase status even for direct handling:
+   ```bash
+   echo "PHASE=DIRECT" > .tdc/context/.phase
+   ```
+
+3. **Completion banner**: Output at the end with a mini summary:
+   ```
+   [TDC] Complete — X files modified, Y lines changed
+   ```
+
+4. **Clean up**: Remove phase file after completion:
+   ```bash
+   rm -f .tdc/context/.phase
+   ```
+
+This ensures the user always sees tdc activity regardless of task complexity.
+
 ## Critical Rules
 
 - **Run the full pipeline automatically** — this is the #1 rule

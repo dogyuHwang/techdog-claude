@@ -33,8 +33,11 @@ except: print('false')
             fi
 
             if [ "$RTK_HOOK_REGISTERED" = "true" ]; then
-                echo "ok" > "$RTK_STATUS_FILE"
-                echo "[TDC] rtk active ($(rtk --version 2>/dev/null)) — Bash commands auto-compressed for 60-90% token savings"
+                # Extract actual savings percentage from rtk gain
+                RTK_SAVINGS=$(rtk gain 2>/dev/null | sed -n 's/.*Tokens saved:.*(\([0-9.]*\)%.*/\1/p' | head -1)
+                RTK_SAVINGS="${RTK_SAVINGS:-N/A}"
+                echo "ok:${RTK_SAVINGS}" > "$RTK_STATUS_FILE"
+                echo "[TDC] rtk active ($(rtk --version 2>/dev/null)) — token savings: ${RTK_SAVINGS}%"
             else
                 echo "broken" > "$RTK_STATUS_FILE"
                 echo "[TDC] WARNING: rtk installed but PreToolUse hook NOT registered in settings.json."

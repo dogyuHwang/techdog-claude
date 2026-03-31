@@ -306,7 +306,7 @@ Claude Code를 다시 열고:
 터미널 맨 아래에 현재 상태가 항상 보입니다:
 
 ```
-[TDC] Phase 2/4 — IMPLEMENTATION | developer[sonnet] working | ~14.0k tokens | 45 tools | rtk:ON
+[TDC] Phase 2/4 — IMPLEMENTATION | developer[sonnet] working | ~14.0k tokens | 45 tools | rtk:99.7%
 ```
 
 에이전트명, **사용 모델**, 누적 토큰, rtk 상태가 실시간 업데이트됩니다.
@@ -317,9 +317,14 @@ Claude Code를 다시 열고:
 
 ```
 [TDC] planner agent started [sonnet] (14:03:01)
-[TDC] planner [sonnet] completed (21s)
-[TDC] developer agent started [sonnet] (14:03:23)
-[TDC] developer [sonnet] completed (22s)
+[TDC] planner [sonnet] completed (21s) — Token Usage:
+       planner    ██████████ ~2.4k (100%)
+       ──────────── total: ~2.4k
+[TDC] developer agent started [sonnet] (14:03:23) — cumulative: ~2.4k tokens
+[TDC] developer [sonnet] completed (22s) — Token Usage:
+       planner    ██░░░░░░░░ ~2.4k (17%)
+       developer  ██████████ ~8.8k (63%)
+       ──────────── total: ~11.2k
 ```
 
 #### 3. Dashboard Banners (Phase 전환 시 상세 로그)

@@ -305,7 +305,7 @@ When you run `/tdc spec.md`, you can monitor agent activity in **3 ways** in rea
 The current status is always shown at the bottom of the terminal:
 
 ```
-[TDC] Phase 2/4 -- IMPLEMENTATION | developer[sonnet] working | ~14.0k tokens | 45 tools | rtk:ON
+[TDC] Phase 2/4 -- IMPLEMENTATION | developer[sonnet] working | ~14.0k tokens | 45 tools | rtk:99.7%
 ```
 
 Agent name, **model tier**, cumulative tokens, and rtk status update in real-time.
@@ -316,9 +316,14 @@ Messages with **model name** are displayed automatically when an agent starts or
 
 ```
 [TDC] planner agent started [sonnet] (14:03:01)
-[TDC] planner [sonnet] completed (21s)
-[TDC] developer agent started [sonnet] (14:03:23)
-[TDC] developer [sonnet] completed (22s)
+[TDC] planner [sonnet] completed (21s) — Token Usage:
+       planner    ██████████ ~2.4k (100%)
+       ──────────── total: ~2.4k
+[TDC] developer agent started [sonnet] (14:03:23) — cumulative: ~2.4k tokens
+[TDC] developer [sonnet] completed (22s) — Token Usage:
+       planner    ██░░░░░░░░ ~2.4k (17%)
+       developer  ██████████ ~8.8k (63%)
+       ──────────── total: ~11.2k
 ```
 
 #### 3. Dashboard Banners (detailed logs on phase transitions)

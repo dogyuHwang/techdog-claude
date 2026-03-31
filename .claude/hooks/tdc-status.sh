@@ -81,6 +81,7 @@ RTK_STATUS_FILE="$CONTEXT_DIR/.rtk_status"
 if [ -f "$RTK_STATUS_FILE" ]; then
     RTK_ST=$(cat "$RTK_STATUS_FILE" 2>/dev/null)
     case "$RTK_ST" in
+        ok:*)    RTK_PCT="${RTK_ST#ok:}"; RTK_LABEL="rtk:${RTK_PCT}%" ;;
         ok)      RTK_LABEL="rtk:ON" ;;
         broken)  RTK_LABEL="rtk:ERR" ;;
         missing) RTK_LABEL="rtk:OFF" ;;
