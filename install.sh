@@ -472,10 +472,33 @@ if os.path.exists(rtk_hook_path):
 
 settings["hooks"] = hooks
 
+# Add permissions for tdc context directory access (prevents mid-pipeline prompts)
+permissions = settings.get("permissions", {})
+allow = permissions.get("allow", [])
+
+tdc_allow_rules = [
+    "Bash(mkdir -p .tdc/*)",
+    "Bash(echo *:.tdc/context/*)",
+    "Bash(cat .tdc/context/*)",
+    "Bash(rm -f .tdc/context/*)",
+    "Bash(ls .tdc:*)",
+    "Read(.tdc/**)",
+    "Write(.tdc/sessions/**)",
+    "Write(.tdc/context/**)",
+    "Write(.tdc/plans/**)",
+]
+
+for rule in tdc_allow_rules:
+    if rule not in allow:
+        allow.append(rule)
+
+permissions["allow"] = allow
+settings["permissions"] = permissions
+
 with open(settings_path, "w") as f:
     json.dump(settings, f, indent=2)
 
-print("[tdc] Claude Code settings updated")
+print("[tdc] Claude Code settings updated (hooks + permissions)")
 PYEOF
 }
 
