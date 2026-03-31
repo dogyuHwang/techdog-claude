@@ -4,7 +4,7 @@
 
 set -e
 
-TDC_VERSION="2.5.0"
+TDC_VERSION="2.6.0"
 TDC_HOME="$HOME/.tdc"
 TDC_REPO_URL="${TDC_REPO_URL:-https://github.com/dogyuHwang/techdog-claude}"
 

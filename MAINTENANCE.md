@@ -218,7 +218,7 @@ techdog-claude/
 ### 0.4. Deep Interview — 가중치 기반 사전 질문 (v1.9.0~)
 - 기존 단순 모호성 체크를 5차원 가중치 명확도 측정으로 업그레이드.
 - 차원: 기술스택(25%), 플랫폼(20%), 기능명세(25%), 비즈니스로직(20%), 범위(10%).
-- 가중 합산 점수 4.0 이상: 질문 없이 시작. 2.5~3.9: 부분 질문. 2.5 미만: 소크라틱 인터뷰.
+- 가중 합산 점수 3.5 이상: 질문 없이 시작. 2.0~3.4: 부분 질문. 2.0 미만: 소크라틱 인터뷰. (v2.6.0에서 임계값 하향)
 - 명확도 점수를 시각적 바 그래프로 사용자에게 표시.
 - 기존 프로젝트 수정 요청은 높은 명확도로 간주 (코드에서 추론).
 - 관련 파일: `.claude/agents/master.md` (Deep Interview 섹션)
@@ -383,6 +383,12 @@ techdog-claude/
 ---
 
 ## Version History
+
+- **v2.6.0** (2026-03-31): 사전 질문 임계값 하향 + 에이전트 자율 모드
+  - **Deep Interview 임계값 하향**: 4.0→3.5 (질문 생략), 2.5→2.0 (소크라틱 인터뷰). 경계값에서 적극적으로 질문하도록 변경
+  - **Agent bypassPermissions 모드**: 모든 서브 에이전트에 `mode: "bypassPermissions"` 적용. 파이프라인 중 사용자 승인 요청 완전 제거
+  - 안전장치: git 복구 + Reviewer/Security Reviewer 사후 검증
+  - master.md, CLAUDE.md, MAINTENANCE.md, README.md, README_EN.md 업데이트
 
 - **v2.2.0** (2026-03-30): Deep 모드 + 자동 스킬 학습
   - Ralph → Deep 리네임: `/tdc deep spec.md` 서브커맨드로 통일. `ralph:` 매직 키워드 제거

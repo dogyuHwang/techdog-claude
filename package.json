@@ -1,6 +1,6 @@
 {
   "name": "techdog-claude",
-  "version": "2.5.0",
+  "version": "2.6.0",
   "description": "Claude Code multi-agent development orchestration with token optimization",
   "scripts": {
     "install": "bash scripts/setup.sh"

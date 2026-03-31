@@ -35,6 +35,12 @@ Multi-agent development orchestration system for Claude Code.
 - **Test Engineer** (sonnet): 테스트 커버리지 분석 + 테스트 자동 생성
 - **Architect** (opus): 시스템 설계 (필요시만)
 
+## Agent Permission Mode
+
+- 모든 서브 에이전트는 `mode: "bypassPermissions"`로 호출.
+- 파이프라인 진행 중 사용자에게 승인을 묻지 않음 (완전 자동).
+- 안전장치: git 복구 가능 + Reviewer/Security Reviewer 사후 검증.
+
 ## Regression Loop (회귀 루프)
 
 Reviewer 이슈 심각도에 따라 자동 회귀:
@@ -55,7 +61,8 @@ Reviewer 이슈 심각도에 따라 자동 회귀:
 
 가중치 기반 명확도 측정 시스템:
 - 5개 차원 (기술스택/플랫폼/기능/비즈니스/범위) × 0~5점 × 가중치
-- 4.0 이상: 질문 없이 시작 | 2.5~3.9: 부족한 차원만 질문 | 2.5 미만: 소크라틱 인터뷰
+- 3.5 이상: 질문 없이 시작 | 2.0~3.4: 부족한 차원만 질문 | 2.0 미만: 소크라틱 인터뷰
+- 경계값(3.5)에서는 적극적으로 질문 (조금이라도 궁금하면 질문하는 쪽 택)
 - 기존 프로젝트 수정 요청은 코드에서 기술스택 추론 → 높은 점수
 
 ## Skill Learning (스킬 학습)
