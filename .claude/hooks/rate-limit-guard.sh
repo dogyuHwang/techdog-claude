@@ -37,7 +37,8 @@ if [ "$RATE_LIMITED" = "true" ]; then
     # Check if we recently warned (within 30s) to avoid spam
     if [ -f "$RATE_LIMIT_FILE" ]; then
         LAST_WARN=$(grep '^LAST_WARN=' "$RATE_LIMIT_FILE" 2>/dev/null | cut -d= -f2)
-        if [ -n "$LAST_WARN" ]; then
+        [[ "$LAST_WARN" =~ ^[0-9]+$ ]] || LAST_WARN=0
+        if [ "$LAST_WARN" -gt 0 ]; then
             DIFF=$(( NOW_EPOCH - LAST_WARN ))
             if [ "$DIFF" -lt 30 ]; then
                 exit 0
@@ -50,6 +51,7 @@ if [ "$RATE_LIMITED" = "true" ]; then
     if [ -f "$RATE_LIMIT_FILE" ]; then
         HIT_COUNT=$(grep '^HIT_COUNT=' "$RATE_LIMIT_FILE" 2>/dev/null | cut -d= -f2)
         HIT_COUNT=${HIT_COUNT:-0}
+        [[ "$HIT_COUNT" =~ ^[0-9]+$ ]] || HIT_COUNT=0
     fi
     HIT_COUNT=$((HIT_COUNT + 1))
 

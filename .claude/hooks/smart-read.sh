@@ -10,8 +10,8 @@ mkdir -p "$CONTEXT_DIR"
 # Read hook event from stdin (JSON with tool_name, tool_input)
 EVENT=$(cat 2>/dev/null)
 FILE_PATH=$(echo "$EVENT" | jq -r '.tool_input.file_path // empty' 2>/dev/null)
-HAS_OFFSET=$(echo "$EVENT" | jq -r '.tool_input.offset // empty' 2>/dev/null)
-HAS_LIMIT=$(echo "$EVENT" | jq -r '.tool_input.limit // empty' 2>/dev/null)
+HAS_OFFSET=$(echo "$EVENT" | jq -r 'if .tool_input | has("offset") then "yes" else "" end' 2>/dev/null)
+HAS_LIMIT=$(echo "$EVENT" | jq -r 'if .tool_input | has("limit") then "yes" else "" end' 2>/dev/null)
 
 # If no file path detected, try to extract from simple format
 if [ -z "$FILE_PATH" ]; then
@@ -24,13 +24,15 @@ if [ ! -f "$FILE_PATH" ]; then
 fi
 
 LINE_COUNT=$(wc -l < "$FILE_PATH" 2>/dev/null || echo 0)
+[[ "$LINE_COUNT" =~ ^[0-9]+$ ]] || LINE_COUNT=0
 # Approximate tokens: ~10 tokens per line average for code
 APPROX_TOKENS=$((LINE_COUNT * 10))
 
 # Track cumulative read tokens for this session
 READ_TOKEN_FILE="$CONTEXT_DIR/.read_tokens"
 if [ -f "$READ_TOKEN_FILE" ]; then
-    CUMULATIVE=$(cat "$READ_TOKEN_FILE")
+    CUMULATIVE=$(cat "$READ_TOKEN_FILE" 2>/dev/null)
+    [[ "$CUMULATIVE" =~ ^[0-9]+$ ]] || CUMULATIVE=0
 else
     CUMULATIVE=0
 fi

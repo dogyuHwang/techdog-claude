@@ -1,7 +1,7 @@
 #!/bin/bash
 # TechDog Claude (tdc) — Uninstaller
 # Usage: bash uninstall.sh
-#   or:  curl -sSL https://raw.githubusercontent.com/dogyuHwang/techdog-claude/main/uninstall.sh | bash
+#   or:  curl -sSL ... -o /tmp/tdc-uninstall.sh && bash /tmp/tdc-uninstall.sh
 
 set -e
 
@@ -22,16 +22,17 @@ elif [ -e /dev/tty ]; then
     TTY_INPUT="/dev/tty"
 fi
 
-# Confirm (skip when no terminal available)
+# Confirm — always require explicit 'y' + Enter
 if [ -n "$TTY_INPUT" ]; then
-    read -p "tdc를 삭제하시겠습니까? (y/N) " -n 1 -r < "$TTY_INPUT"
-    echo ""
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    read -r -p "tdc를 삭제하시겠습니까? 'y'를 입력하고 Enter를 누르세요: " REPLY < "$TTY_INPUT"
+    if [[ ! "$REPLY" =~ ^[Yy]$ ]]; then
         echo -e "${YELLOW}[tdc]${NC} 삭제를 취소했습니다."
         exit 0
     fi
 else
-    echo -e "${YELLOW}[tdc]${NC} 파이프 실행 감지 — 확인 없이 진행합니다."
+    echo -e "${RED}[tdc]${NC} 터미널이 감지되지 않아 삭제를 진행할 수 없습니다."
+    echo -e "${RED}[tdc]${NC} 직접 실행해 주세요: bash uninstall.sh"
+    exit 1
 fi
 
 # 1. Remove core skills
@@ -144,11 +145,10 @@ REMOVE_RTK="n"
 if command -v rtk &> /dev/null; then
     echo ""
     if [ -n "$TTY_INPUT" ]; then
-        read -p "rtk(토큰 절감 도구)도 함께 삭제하시겠습니까? (y/N) " -n 1 -r REMOVE_RTK < "$TTY_INPUT"
-        echo ""
+        read -r -p "rtk(토큰 절감 도구)도 함께 삭제하시겠습니까? (y/N): " REMOVE_RTK < "$TTY_INPUT"
     else
-        REMOVE_RTK="y"
-        echo -e "${YELLOW}[tdc]${NC} 파이프 실행 — rtk도 함께 삭제합니다."
+        echo -e "${YELLOW}[tdc]${NC} 터미널 없음 — rtk는 유지합니다."
+        REMOVE_RTK="n"
     fi
 
     if [[ "$REMOVE_RTK" =~ ^[Yy]$ ]]; then

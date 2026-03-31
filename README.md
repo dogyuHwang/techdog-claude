@@ -474,12 +474,14 @@ A: 네. 기존 프로젝트 폴더에서 `claude`를 실행하고 `/tdc spec.md`
 ## 삭제 (Uninstall)
 
 ```bash
-# 한 줄로 삭제 (권장)
-curl -sSL https://raw.githubusercontent.com/dogyuHwang/techdog-claude/main/uninstall.sh | bash
-
-# 또는 클론한 폴더에서
+# 방법 A: 클론한 폴더에서 (권장)
 bash uninstall.sh
+
+# 방법 B: 원격 스크립트 다운로드 후 실행
+curl -sSL https://raw.githubusercontent.com/dogyuHwang/techdog-claude/main/uninstall.sh -o /tmp/tdc-uninstall.sh && bash /tmp/tdc-uninstall.sh
 ```
+
+> **안전 장치:** 삭제 시 반드시 `y`를 입력하고 Enter를 눌러야 진행됩니다.
 
 스킬, 에이전트, 스킬팩, 글로벌 파일(`~/.tdc/`), settings.json 훅 설정까지 전부 자동 정리됩니다.
 rtk(토큰 절감 도구)도 삭제할지 물어봅니다.

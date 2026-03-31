@@ -17,10 +17,19 @@ if [ ! -t 0 ]; then
     INPUT=$(cat)
 fi
 
-# Extract fields from JSON input
-HOOK_EVENT=$(echo "$INPUT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('hook_event_name',''))" 2>/dev/null)
-AGENT_TYPE=$(echo "$INPUT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('agent_type','unknown'))" 2>/dev/null)
-AGENT_ID=$(echo "$INPUT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('agent_id',''))" 2>/dev/null)
+# Extract fields from JSON input (use jq if available, fallback to python3)
+if command -v jq >/dev/null 2>&1; then
+    HOOK_EVENT=$(echo "$INPUT" | jq -r '.hook_event_name // empty' 2>/dev/null)
+    AGENT_TYPE=$(echo "$INPUT" | jq -r '.agent_type // "unknown"' 2>/dev/null)
+    AGENT_ID=$(echo "$INPUT" | jq -r '.agent_id // empty' 2>/dev/null)
+elif command -v python3 >/dev/null 2>&1; then
+    HOOK_EVENT=$(echo "$INPUT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('hook_event_name',''))" 2>/dev/null)
+    AGENT_TYPE=$(echo "$INPUT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('agent_type','unknown'))" 2>/dev/null)
+    AGENT_ID=$(echo "$INPUT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('agent_id',''))" 2>/dev/null)
+else
+    echo '{"decision": "continue"}'
+    exit 0
+fi
 
 # Normalize agent names
 AGENT_NAME="$AGENT_TYPE"
@@ -81,7 +90,8 @@ EOF
     # Track agent token usage (estimate based on elapsed time)
     # Rough estimate: ~200 tokens/second for sonnet, ~100 for haiku, ~300 for opus
     ELAPSED_NUM=$(echo "$ELAPSED" | tr -d 's')
-    if [ -n "$ELAPSED_NUM" ] && [ "$ELAPSED_NUM" -gt 0 ] 2>/dev/null; then
+    [[ "$ELAPSED_NUM" =~ ^[0-9]+$ ]] || ELAPSED_NUM=0
+    if [ "$ELAPSED_NUM" -gt 0 ]; then
         case "$AGENT_NAME" in
             reviewer|security-reviewer) TOKEN_RATE=100 ;;
             architect)                  TOKEN_RATE=300 ;;
@@ -93,6 +103,7 @@ EOF
         if [ -f "$AGENT_TOKENS_FILE" ]; then
             PREV=$(grep "^${AGENT_NAME}=" "$AGENT_TOKENS_FILE" 2>/dev/null | cut -d= -f2)
             PREV=${PREV:-0}
+            [[ "$PREV" =~ ^[0-9]+$ ]] || PREV=0
             NEW_TOTAL=$(( PREV + EST_TOKENS ))
             # Update in place: remove old line and add new
             grep -v "^${AGENT_NAME}=" "$AGENT_TOKENS_FILE" > "${AGENT_TOKENS_FILE}.tmp" 2>/dev/null || true
@@ -111,7 +122,7 @@ EOF
             GRAND_TOTAL=0
             MAX_TOKENS=0
             while IFS='=' read -r aname aval; do
-                [ -z "$aval" ] && continue
+                [[ "$aval" =~ ^[0-9]+$ ]] || continue
                 GRAND_TOTAL=$(( GRAND_TOTAL + aval ))
                 [ "$aval" -gt "$MAX_TOKENS" ] && MAX_TOKENS="$aval"
             done < "$AGENT_TOKENS_FILE"
@@ -119,7 +130,7 @@ EOF
             if [ "$GRAND_TOTAL" -gt 0 ]; then
                 # Build gauge bars (10 chars wide)
                 while IFS='=' read -r aname aval; do
-                    [ -z "$aval" ] && continue
+                    [[ "$aval" =~ ^[0-9]+$ ]] || continue
                     if [ "$MAX_TOKENS" -gt 0 ]; then
                         FILLED=$(( aval * 10 / MAX_TOKENS ))
                     else

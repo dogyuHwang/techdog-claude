@@ -470,12 +470,14 @@ A: Yes. Run `claude` in your existing project folder and type `/tdc spec.md`.
 ## Uninstall
 
 ```bash
-# One-liner uninstall (recommended)
-curl -sSL https://raw.githubusercontent.com/dogyuHwang/techdog-claude/main/uninstall.sh | bash
-
-# Or from the cloned folder
+# Option A: From the cloned folder (recommended)
 bash uninstall.sh
+
+# Option B: Download and run remote script
+curl -sSL https://raw.githubusercontent.com/dogyuHwang/techdog-claude/main/uninstall.sh -o /tmp/tdc-uninstall.sh && bash /tmp/tdc-uninstall.sh
 ```
+
+> **Safety:** You must type `y` and press Enter to confirm deletion.
 
 This automatically cleans up skills, agents, skill packs, global files (`~/.tdc/`), and settings.json hook configurations.
 You will be prompted whether to also remove rtk (token optimizer).

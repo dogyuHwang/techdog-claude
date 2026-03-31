@@ -32,7 +32,8 @@ fi
 # 3. Tool call count
 TOOL_COUNT=0
 if [ -f "$CONTEXT_DIR/.tool_count" ]; then
-    TOOL_COUNT=$(cat "$CONTEXT_DIR/.tool_count")
+    TOOL_COUNT=$(cat "$CONTEXT_DIR/.tool_count" 2>/dev/null)
+    [[ "$TOOL_COUNT" =~ ^[0-9]+$ ]] || TOOL_COUNT=0
 fi
 
 # 4. Latest plan tasks (completed / pending)
@@ -50,8 +51,8 @@ fi
 # 5. Modified files
 FILES_MODIFIED=""
 if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-    FILES_MODIFIED=$(git diff --name-only 2>/dev/null | head -10 | tr '\n' ', ')
-    [ -z "$FILES_MODIFIED" ] && FILES_MODIFIED=$(git diff --name-only HEAD 2>/dev/null | head -10 | tr '\n' ', ')
+    FILES_MODIFIED=$(git diff --name-only 2>/dev/null | head -10 | paste -sd ', ' -)
+    [ -z "$FILES_MODIFIED" ] && FILES_MODIFIED=$(git diff --name-only HEAD 2>/dev/null | head -10 | paste -sd ', ' -)
 fi
 
 # 6. Deep mode?

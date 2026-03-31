@@ -44,9 +44,9 @@ AGENT_TOKENS_FILE="$CONTEXT_DIR/.agent-tokens"
 if [ -f "$AGENT_TOKENS_FILE" ]; then
     TOTAL_TOKENS=0
     while IFS='=' read -r name val; do
-        [ -n "$val" ] && TOTAL_TOKENS=$(( TOTAL_TOKENS + val )) 2>/dev/null
+        [[ "$val" =~ ^[0-9]+$ ]] && TOTAL_TOKENS=$(( TOTAL_TOKENS + val ))
     done < "$AGENT_TOKENS_FILE"
-    if [ "$TOTAL_TOKENS" -gt 0 ] 2>/dev/null; then
+    if [ "$TOTAL_TOKENS" -gt 0 ]; then
         if [ "$TOTAL_TOKENS" -ge 1000 ]; then
             TOKEN_DISPLAY="$(( TOTAL_TOKENS / 1000 )).$(( (TOTAL_TOKENS % 1000) / 100 ))k"
         else
@@ -63,7 +63,8 @@ fi
 # 4. Tool count
 if [ -f "$TOOL_COUNT_FILE" ]; then
     TOOLS=$(cat "$TOOL_COUNT_FILE" 2>/dev/null)
-    if [ -n "$TOOLS" ] && [ "$TOOLS" -gt 0 ] 2>/dev/null; then
+    [[ "$TOOLS" =~ ^[0-9]+$ ]] || TOOLS=0
+    if [ "$TOOLS" -gt 0 ]; then
         if [ -n "$PARTS" ]; then
             PARTS="$PARTS | ${TOOLS} tools"
         else

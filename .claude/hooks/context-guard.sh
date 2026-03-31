@@ -30,7 +30,8 @@ fi
 # --- Tool call counter ---
 TOOL_COUNT_FILE="$CONTEXT_DIR/.tool_count"
 if [ -f "$TOOL_COUNT_FILE" ]; then
-    COUNT=$(cat "$TOOL_COUNT_FILE")
+    COUNT=$(cat "$TOOL_COUNT_FILE" 2>/dev/null)
+    [[ "$COUNT" =~ ^[0-9]+$ ]] || COUNT=0
 else
     COUNT=0
 fi
@@ -52,7 +53,8 @@ fi
 READ_TOKEN_FILE="$CONTEXT_DIR/.read_tokens"
 READ_TOKENS=0
 if [ -f "$READ_TOKEN_FILE" ]; then
-    READ_TOKENS=$(cat "$READ_TOKEN_FILE")
+    READ_TOKENS=$(cat "$READ_TOKEN_FILE" 2>/dev/null)
+    [[ "$READ_TOKENS" =~ ^[0-9]+$ ]] || READ_TOKENS=0
 fi
 # Estimate total context: ~500 tokens per tool call (avg) + read tokens
 ESTIMATED_TOTAL=$(( (COUNT * 500) + READ_TOKENS ))

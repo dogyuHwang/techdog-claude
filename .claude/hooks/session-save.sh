@@ -40,7 +40,8 @@ if [ -f "$CONTEXT_DIR/.overflow_flag" ]; then
     # 3. Tool call count at save time
     TOOL_CALLS=0
     if [ -f "$CONTEXT_DIR/.tool_count" ]; then
-        TOOL_CALLS=$(cat "$CONTEXT_DIR/.tool_count")
+        TOOL_CALLS=$(cat "$CONTEXT_DIR/.tool_count" 2>/dev/null)
+        [[ "$TOOL_CALLS" =~ ^[0-9]+$ ]] || TOOL_CALLS=0
     fi
 
     # 4. Extract completed/pending tasks from latest plan ([ ] and [x] markers)
@@ -55,13 +56,40 @@ if [ -f "$CONTEXT_DIR/.overflow_flag" ]; then
             awk 'BEGIN{printf "["} NR>1{printf ","} {gsub(/"/, "\\\""); printf "\"%s\"", $0} END{printf "]"}')
     fi
 
-    cat > "$SESSION_FILE" << SESSIONEOF
+    # Build JSON safely (escape special characters in paths)
+    if command -v jq >/dev/null 2>&1; then
+        jq -n \
+            --arg sid "$TIMESTAMP" \
+            --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --arg proj "$TDC_PROJECT_DIR" \
+            --arg plan "$PLAN_NAME" \
+            --argjson tc "$TOOL_CALLS" \
+            --argjson completed "$COMPLETED" \
+            --argjson pending "$PENDING" \
+            --argjson files "$FILES_MODIFIED" \
+            '{
+              session_id: $sid,
+              type: "auto_save",
+              reason: "context_overflow",
+              timestamp: $ts,
+              project: $proj,
+              plan_file: $plan,
+              tool_calls_at_save: $tc,
+              completed: $completed,
+              pending: $pending,
+              files_modified: $files,
+              note: "Session auto-saved due to context overflow. Resume with /tdc-session resume"
+            }' > "$SESSION_FILE"
+    else
+        # Fallback: escape project dir for JSON safety
+        SAFE_PROJECT=$(echo "$TDC_PROJECT_DIR" | sed 's/\\/\\\\/g; s/"/\\"/g')
+        cat > "$SESSION_FILE" << SESSIONEOF
 {
   "session_id": "$TIMESTAMP",
   "type": "auto_save",
   "reason": "context_overflow",
   "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-  "project": "$TDC_PROJECT_DIR",
+  "project": "$SAFE_PROJECT",
   "plan_file": "$PLAN_NAME",
   "tool_calls_at_save": $TOOL_CALLS,
   "completed": $COMPLETED,
@@ -70,6 +98,7 @@ if [ -f "$CONTEXT_DIR/.overflow_flag" ]; then
   "note": "Session auto-saved due to context overflow. Resume with /tdc-session resume"
 }
 SESSIONEOF
+    fi
 
     echo "[TDC] Session auto-saved to $SESSION_FILE (with task state)"
 
