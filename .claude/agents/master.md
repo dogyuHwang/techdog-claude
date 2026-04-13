@@ -724,6 +724,27 @@ Always use the Live Dashboard format above. At the final report, include:
 
 **Phase 4에서 `.tdc/context/.agent-tokens` 파일을 읽어 에이전트별 토큰 사용량을 시각적 게이지로 표시한다.**
 
+### MUST — 토큰 사용량은 모든 `/tdc` 실행에서 출력한다
+
+모드(일반/Deep)·작업 규모와 무관하게 **반드시** 토큰 요약을 Phase 4 종료 직전에 출력한다.
+
+- **일반 모드 (간단 작업)**: 아래 "Compact" 형식 사용 (3~4줄)
+- **일반 모드 (보통/대형 작업) 및 Deep 모드**: 위의 "Token Usage Dashboard" 전체 게이지 사용
+
+**Compact 형식** (에이전트 2개 이하 또는 수정 파일 2개 이하일 때):
+```
+📊 Tokens: planner ~1.2k / developer ~3.8k / reviewer ~0.4k — total ~5.4k (rtk saved ~3.2k est.)
+```
+
+**출력 근거 (거의 공짜)**:
+- 데이터는 이미 `.tdc/context/.agent-tokens`에 훅이 기록해 둠 → 파일만 읽으면 됨
+- LLM 호출로 토큰 수를 "물어보지" 않음 (그건 실제로 비쌈)
+- 출력 자체는 50~200 토큰 수준 — 파이프라인 전체의 1% 미만
+
+**생략 금지 원칙**:
+- "이 작업은 너무 간단해서 요약이 불필요하다"는 판단 금지 — 사용자가 매번 사용량을 체감할 수 있어야 tdc의 가치가 드러난다.
+- `.tdc/context/.agent-tokens` 파일이 없으면(= 서브 에이전트 미호출, 예: `/tdc-version`) 이 규칙은 자동 생략.
+
 게이지 형식 예시:
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
