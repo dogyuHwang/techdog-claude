@@ -225,7 +225,6 @@ install_tdc() {
             SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
             mkdir -p "$TDC_HOME/.repo"
             cp -r "$SCRIPT_DIR"/* "$TDC_HOME/.repo/" 2>/dev/null || true
-            cp -r "$SCRIPT_DIR"/.claude "$TDC_HOME/.repo/" 2>/dev/null || true
             cp -r "$SCRIPT_DIR"/.gitignore "$TDC_HOME/.repo/" 2>/dev/null || true
         fi
     fi
@@ -240,7 +239,7 @@ install_tdc() {
     fi
 
     # Copy hooks to TDC home
-    cp -r "$TDC_HOME/.repo/.claude/hooks/"* "$TDC_HOME/hooks/" 2>/dev/null || true
+    cp -r "$TDC_HOME/.repo/hooks/"* "$TDC_HOME/hooks/" 2>/dev/null || true
     chmod +x "$TDC_HOME/hooks/"* 2>/dev/null || true
 
     # Install core skills & agents to Claude Code global path (~/.claude/)
@@ -250,8 +249,8 @@ install_tdc() {
     # Core skills (always installed)
     for core_skill in tdc tdc-plan tdc-dev tdc-debug tdc-review tdc-deep tdc-learn \
                       tdc-save tdc-resume tdc-clean tdc-upgrade tdc-version; do
-        if [ -d "$TDC_HOME/.repo/.claude/skills/$core_skill" ]; then
-            cp -r "$TDC_HOME/.repo/.claude/skills/$core_skill" "$CLAUDE_DIR/skills/" 2>/dev/null || true
+        if [ -d "$TDC_HOME/.repo/skills/$core_skill" ]; then
+            cp -r "$TDC_HOME/.repo/skills/$core_skill" "$CLAUDE_DIR/skills/" 2>/dev/null || true
         fi
     done
 
@@ -259,7 +258,7 @@ install_tdc() {
     rm -rf "$CLAUDE_DIR/skills/tdc-onboard" "$CLAUDE_DIR/skills/tdc-session" 2>/dev/null || true
 
     # Agents (always installed)
-    cp -r "$TDC_HOME/.repo/.claude/agents/"* "$CLAUDE_DIR/agents/" 2>/dev/null || true
+    cp -r "$TDC_HOME/.repo/agents/"* "$CLAUDE_DIR/agents/" 2>/dev/null || true
     echo -e "${GREEN}[tdc]${NC} Core skills & agents installed to $CLAUDE_DIR/"
 
     # Skill pack selection — skip on upgrade if packs already exist
@@ -270,8 +269,8 @@ install_tdc() {
         UPDATE_COUNT=0
         for pack_dir in "$CLAUDE_DIR/skills/tdc-stack-"*; do
             pack_name=$(basename "$pack_dir")
-            if [ -d "$TDC_HOME/.repo/.claude/skills/$pack_name" ]; then
-                cp -r "$TDC_HOME/.repo/.claude/skills/$pack_name" "$CLAUDE_DIR/skills/" 2>/dev/null || true
+            if [ -d "$TDC_HOME/.repo/skills/$pack_name" ]; then
+                cp -r "$TDC_HOME/.repo/skills/$pack_name" "$CLAUDE_DIR/skills/" 2>/dev/null || true
                 UPDATE_COUNT=$((UPDATE_COUNT + 1))
             fi
         done
@@ -284,8 +283,8 @@ install_tdc() {
         PACK_COUNT=0
         for pack in "${SELECTED_PACKS[@]}"; do
             IFS=':' read -r dir_name display_name <<< "$pack"
-            if [ -d "$TDC_HOME/.repo/.claude/skills/$dir_name" ]; then
-                cp -r "$TDC_HOME/.repo/.claude/skills/$dir_name" "$CLAUDE_DIR/skills/" 2>/dev/null || true
+            if [ -d "$TDC_HOME/.repo/skills/$dir_name" ]; then
+                cp -r "$TDC_HOME/.repo/skills/$dir_name" "$CLAUDE_DIR/skills/" 2>/dev/null || true
                 PACK_COUNT=$((PACK_COUNT + 1))
             fi
         done
