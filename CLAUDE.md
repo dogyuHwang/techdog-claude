@@ -16,13 +16,15 @@ Multi-agent development orchestration system for Claude Code.
 
 - `/tdc <file.md>` - 스펙 파일을 읽고 기획→개발 진행. 메인 진입점.
 - `/tdc <설명>` - 텍스트로 간단히 지시
-- `/tdc deep <file.md|설명>` - Deep 모드 (끈질긴 검증 루프)
+- `/tdc-deep <file.md|설명>` - Deep 모드 (끈질긴 검증 + 배너·요약·리뷰 강제)
 - `/tdc-plan <file|desc>` - 기획만 진행 (스펙 파일 또는 텍스트)
 - `/tdc-dev <file|desc>` - 개발만 진행 (플랜 파일 또는 텍스트)
 - `/tdc-debug <desc>` - 디버깅 워크플로우
 - `/tdc-review [files]` - 코드 리뷰
-- `/tdc-session <save|resume|list|clean>` - 세션 관리
-- `/tdc-learn <extract|list|apply>` - 스킬 학습 (세션에서 패턴 추출)
+- `/tdc-learn [patterns ...]` - 프로젝트 자동 학습(project-memory.md) + 세션 패턴 추출
+- `/tdc-save [메모]` / `/tdc-resume [list|ID]` - 세션 저장/재개
+- `/tdc-clean [--days N]` - 오래된 세션 정리
+- `/tdc-upgrade` / `/tdc-version` - 업그레이드/버전 확인
 
 ## Agents (model tier)
 

@@ -78,7 +78,7 @@ if [ -f "$CONTEXT_DIR/.overflow_flag" ]; then
               completed: $completed,
               pending: $pending,
               files_modified: $files,
-              note: "Session auto-saved due to context overflow. Resume with /tdc-session resume"
+              note: "Session auto-saved due to context overflow. Resume with /tdc-resume"
             }' > "$SESSION_FILE"
     else
         # Fallback: escape project dir for JSON safety
@@ -95,7 +95,7 @@ if [ -f "$CONTEXT_DIR/.overflow_flag" ]; then
   "completed": $COMPLETED,
   "pending": $PENDING,
   "files_modified": $FILES_MODIFIED,
-  "note": "Session auto-saved due to context overflow. Resume with /tdc-session resume"
+  "note": "Session auto-saved due to context overflow. Resume with /tdc-resume"
 }
 SESSIONEOF
     fi

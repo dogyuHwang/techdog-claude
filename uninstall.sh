@@ -36,7 +36,7 @@ else
 fi
 
 # 1. Remove core skills
-SKILLS=(tdc tdc-plan tdc-dev tdc-debug tdc-review tdc-session tdc-learn tdc-onboard)
+SKILLS=(tdc tdc-plan tdc-dev tdc-debug tdc-review tdc-deep tdc-learn tdc-save tdc-resume tdc-clean tdc-upgrade tdc-version tdc-session tdc-onboard)
 for skill in "${SKILLS[@]}"; do
     if [ -d "$HOME/.claude/skills/$skill" ]; then
         rm -rf "$HOME/.claude/skills/$skill"

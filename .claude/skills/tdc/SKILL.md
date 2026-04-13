@@ -13,15 +13,34 @@ argument-hint: "[spec.md 또는 설명]"
 
 ## 사용법
 
+### 메인
+
 ```
 /tdc <파일.md>              스펙 파일을 읽고 기획 → 개발까지 진행
 /tdc <설명>                 텍스트로 간단히 지시
-/tdc plan <파일.md|설명>    기획만 진행
-/tdc dev <파일.md|설명>     개발만 진행
-/tdc debug <설명>           디버깅
-/tdc review [파일들]        코드 리뷰
-/tdc session <명령>         세션 관리
-/tdc version               버전 정보 표시
+```
+
+### 단독 스킬 (권장)
+
+```
+/tdc-plan    <파일|설명>    기획만
+/tdc-dev     <파일|설명>    개발만
+/tdc-debug   <설명>         디버깅
+/tdc-review  [파일들]       코드 리뷰
+/tdc-deep    <파일|설명>    Deep 모드 (배너·요약·리뷰 강제)
+/tdc-learn   [patterns …]   프로젝트 자동 학습 (project-memory.md)
+/tdc-save    [메모]         현재 세션 저장
+/tdc-resume  [list|ID]      저장된 세션 재개/목록
+/tdc-clean   [--days N]     오래된 세션 정리
+/tdc-upgrade                최신 버전으로 업데이트
+/tdc-version                버전 정보
+```
+
+### 서브커맨드 (하위호환)
+
+```
+/tdc plan|dev|debug|review|deep|learn|save|resume|clean|upgrade|version
+     → 동일한 단독 스킬로 라우팅
 ```
 
 ## 실행 흐름
@@ -33,13 +52,10 @@ argument-hint: "[spec.md 또는 설명]"
 2. 스펙이면 → **기획 워크플로우**로 진입
 3. 이미 태스크가 분해된 플랜이면 → **개발 워크플로우**로 진입
 
-**B. 서브커맨드가 있는 경우** (plan, dev, debug, review, session, version, deep, learn, upgrade, onboard)
-- `version` → `~/.tdc/.repo/package.json`에서 버전을 읽어 표시. 없으면 "버전 정보를 찾을 수 없습니다. 재설치를 권장합니다." 출력.
-- `deep` → Deep 모드로 자동 파이프라인 실행 (끈질긴 검증 루프)
-- `learn` → `/tdc-learn` 스킬 워크플로우로 라우팅
-- `upgrade` → 업그레이드 실행 (아래 업그레이드 워크플로우 참조)
-- `onboard` → 프로젝트 온보딩 (`/tdc-onboard` 스킬 워크플로우로 라우팅)
-- 나머지 → 해당 워크플로우로 직접 라우팅
+**B. 서브커맨드가 있는 경우**
+- `plan|dev|debug|review|deep|learn|save|resume|clean|upgrade|version` → 해당 단독 스킬로 라우팅
+- `session` (하위호환) → save/resume/clean 중 적절한 스킬로 안내
+- `onboard` (하위호환) → `/tdc-learn`으로 라우팅
 
 **C. 텍스트만 전달된 경우**
 - 의도를 분석하여 적절한 에이전트 선택
@@ -70,7 +86,6 @@ mkdir -p .tdc/{sessions,context,plans}
 ### 4단계: 자동 파이프라인 실행
 
 Master Agent가 전체 파이프라인을 **사용자 개입 없이 자동으로** 실행한다.
-사용자는 `/tdc spec.md` 한 번만 입력하면 된다.
 
 ```
 스펙 파일 읽기
@@ -86,54 +101,8 @@ Master Agent가 전체 파이프라인을 **사용자 개입 없이 자동으로
 [Phase 4] COMPLETE — 최종 결과 보고 + agent-log.md 기록
 ```
 
-**에이전트 간 통신은 Master를 통해 자동으로 이루어진다.**
-Developer가 에러를 만나면 Master가 Debugger를 호출하고,
-Reviewer가 문제를 찾으면 심각도에 따라:
-- `code-level` → Developer가 직접 수정
-- `design-level` → Planner에게 재기획 요청 후 Developer가 재구현
-- `critical` → Planner 재기획 + Developer 수정
-
-**모든 에이전트 활동은 Live Dashboard로 실시간 표시된다.**
-사용자가 중간에 개입할 필요 없다. 에이전트 간 상호작용 로그는 `.tdc/context/agent-log.md`에 기록된다.
-
-### 업그레이드 워크플로우 (`/tdc upgrade`)
-
-Master Agent가 직접 처리한다 (서브 에이전트 불필요):
-
-1. `~/.tdc/.repo`가 있는지 확인. 없으면 "tdc가 설치되어 있지 않습니다." 안내 후 종료.
-2. 현재 버전 확인: `~/.tdc/.repo/package.json`에서 version 읽기
-3. 최신 소스 가져오기:
-   ```bash
-   cd ~/.tdc/.repo && git fetch origin main && git reset --hard origin/main
-   ```
-4. 새 버전 확인: package.json에서 version 다시 읽기
-5. 이미 최신이면 → `[TDC] Already up to date (vX.Y.Z)` 표시 후 종료
-6. 파일 복사:
-   ```bash
-   cp -r ~/.tdc/.repo/.claude/skills/tdc ~/.claude/skills/
-   cp -r ~/.tdc/.repo/.claude/skills/tdc-plan ~/.claude/skills/
-   cp -r ~/.tdc/.repo/.claude/skills/tdc-dev ~/.claude/skills/
-   cp -r ~/.tdc/.repo/.claude/skills/tdc-debug ~/.claude/skills/
-   cp -r ~/.tdc/.repo/.claude/skills/tdc-review ~/.claude/skills/
-   cp -r ~/.tdc/.repo/.claude/skills/tdc-session ~/.claude/skills/
-   cp -r ~/.tdc/.repo/.claude/skills/tdc-learn ~/.claude/skills/
-   cp -r ~/.tdc/.repo/.claude/skills/tdc-onboard ~/.claude/skills/ 2>/dev/null || true
-   cp -r ~/.tdc/.repo/.claude/agents/*.md ~/.claude/agents/
-   cp -r ~/.tdc/.repo/.claude/hooks/* ~/.tdc/hooks/
-   chmod +x ~/.tdc/hooks/*
-   ```
-7. settings.json 패치: install.sh의 setup_claude_settings() Python 블록을 실행
-8. 결과 표시:
-   ```
-   [TDC] Upgraded: vOLD → vNEW
-   [TDC] Skills, agents, and hooks updated for all projects.
-   [TDC] Project-specific data (.tdc/) is preserved.
-   ```
-
-**주의사항:**
-- 스킬팩(tdc-stack-*)은 업그레이드하지 않음 (사용자가 선택 설치한 것)
-- rtk는 건드리지 않음
-- 프로젝트별 .tdc/ 데이터는 건드리지 않음
+일반 모드에서 Phase 배너·완료 요약이 체감되지 않으면 **`/tdc-deep`** 을 사용하세요
+— 배너·Reviewer·완료 요약이 항상 강제 출력됩니다.
 
 ## 스펙 파일 형식
 

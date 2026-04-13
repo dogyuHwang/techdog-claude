@@ -206,27 +206,28 @@ Use these when you want to run a specific stage separately instead of the full p
 /tdc-dev              <-- When planning is done and you just want to start coding
 /tdc-debug <error>    <-- When you find a new error in existing code
 /tdc-review           <-- When you want a review of code you wrote yourself
-/tdc onboard          <-- First time using tdc in an existing project (auto-analyze)
-/tdc upgrade          <-- Update tdc to the latest version
+/tdc-learn            <-- First time using tdc in an existing project (auto-analyze)
+/tdc-upgrade          <-- Update tdc to the latest version
 ```
 
-### 4. Project Onboarding (first time using tdc in an existing project)
+### 4. Project Learning (first time using tdc in an existing project)
 
 When using tdc for the first time in an existing project, run this once:
 
 ```
-/tdc onboard
+/tdc-learn
 ```
 
 This **auto-analyzes** your project's tech stack, coding conventions, directory structure, and build commands,
 saving them to `.tdc/project-memory.md`.
 
 Future `/tdc spec.md` runs will automatically use this information for more accurate code generation.
+To extract reusable patterns from a session, use `/tdc-learn patterns extract`.
 
 ### 5. Update
 
 ```
-/tdc upgrade
+/tdc-upgrade
 ```
 
 Updates tdc's skills, agents, and hooks to the latest version.
@@ -238,13 +239,15 @@ You'll be notified automatically when a new version is available.
 If you see a "context usage is high" warning during a long session:
 
 ```
-/tdc-session save      # Save your progress so far
+/tdc-save              # Save your progress so far
 ```
 
 Reopen Claude Code and:
 
 ```
-/tdc-session resume    # Continue from where you left off
+/tdc-resume            # Continue from the latest saved session
+/tdc-resume list       # List all saved sessions
+/tdc-resume <ID>       # Continue a specific session
 ```
 
 ---
@@ -259,9 +262,9 @@ All commands are used **inside the Claude Code prompt**.
 | What you type | Mode | What happens |
 |---------------|------|-------------|
 | `/tdc spec.md` | Normal | **Auto pipeline**: planning -> development -> review |
-| `/tdc deep spec.md` | Deep | Normal + **repeats until all tests/build/review pass** |
+| `/tdc-deep spec.md` | Deep | Normal + **enforced banners/summary/review + test/build verify loop** |
 | `/tdc Add a login feature` | Normal | Text instructions without a spec file |
-| `/tdc deep Build a payment system` | Deep | Text instructions + thorough verification |
+| `/tdc-deep Build a payment system` | Deep | Text instructions + thorough verification |
 
 ### Individual Commands (when you want a specific stage only)
 
@@ -271,17 +274,19 @@ All commands are used **inside the Claude Code prompt**.
 | `/tdc-dev` | When planning is done and you want to start development |
 | `/tdc-debug <error details>` | When you find a new bug in existing code |
 | `/tdc-review` | When you want a review of code you wrote yourself |
-| `/tdc onboard` | Auto-analyze project when first adopting tdc |
-| `/tdc upgrade` | Update tdc to the latest version |
+| `/tdc-learn` | Auto-analyze project when first adopting tdc |
+| `/tdc-upgrade` | Update tdc to the latest version |
+| `/tdc-version` | Show installed tdc version |
 
 ### Session Management
 
 | What you type | What happens |
 |---------------|-------------|
-| `/tdc-session save` | Saves current progress to a file |
-| `/tdc-session resume` | Resumes work from a saved session |
-| `/tdc-session list` | Lists saved sessions |
-| `/tdc-session clean` | Deletes sessions older than 7 days |
+| `/tdc-save` | Saves current progress to a file |
+| `/tdc-resume` | Resumes the latest saved session |
+| `/tdc-resume list` | Lists saved sessions |
+| `/tdc-resume <ID>` | Resumes a specific session |
+| `/tdc-clean` | Deletes sessions older than 7 days (`--days N`, `--all` options) |
 
 ---
 
@@ -455,7 +460,7 @@ Chatting...
   | (80 tool calls) -> "Context is high" warning
   | (120 tool calls) -> Progress auto-saved (including completed/pending tasks and changed files)
   |
-/tdc-session resume  ->  Loads previous context and continues
+/tdc-resume          ->  Loads previous context and continues
 ```
 
 ---

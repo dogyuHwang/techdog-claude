@@ -286,17 +286,59 @@ Master: [Developer → Master] 재구현 완료
 - 회귀마다 로그에 `[REGRESSION #N]` 태그 추가 (사용자가 몇 번째 회귀인지 볼 수 있도록).
 - **자연스러운 종료 조건:**
   1. Reviewer가 APPROVE → 정상 완료
-  2. 컨텍스트 오버플로 → 세션 저장 후 `/tdc-session resume`으로 이어서 진행
+  2. 컨텍스트 오버플로 → 세션 저장 후 `/tdc-resume`으로 이어서 진행
 - 매 회귀 시 이전 회귀에서 수정한 내용과 남은 이슈를 요약하여 컨텍스트 효율 유지.
 
 ## Deep Mode (끈질긴 검증 모드)
 
-사용자가 `/tdc deep spec.md` 서브커맨드로 실행하면 Deep 모드가 활성화된다. 일반 모드보다 **훨씬 엄격한 검증 루프**를 실행한다.
+사용자가 `/tdc-deep` (또는 `/tdc deep spec.md` 서브커맨드)로 실행하면 Deep 모드가 활성화된다. 일반 모드보다 **훨씬 엄격한 검증 루프**를 실행하고, **가시성(배너·요약·리뷰)도 강제 출력**한다.
 
 ### Deep 모드 활성화
 
-- `/tdc deep <spec.md>` — Deep 모드로 자동 파이프라인 실행
-- `/tdc deep <설명>` — 텍스트 지시도 가능
+- `/tdc-deep <spec.md>` — 권장 (단독 스킬)
+- `/tdc deep <spec.md>` — 서브커맨드 (하위호환)
+- `/tdc-deep <설명>` — 텍스트 지시도 가능
+
+### Deep 모드 출력 계약 (MUST — 어기지 말 것)
+
+`.tdc/context/.deep` 파일이 존재하는 동안 아래 출력을 **반드시** 수행한다. 일반 모드에서 생략 가능한 것도 Deep 모드에서는 예외 없이 출력한다.
+
+1. **Phase 배너** — 각 Phase 진입 시 `[DEEP] Phase N/4 — NAME` 배너 + 타임스탬프 항상 출력 (에이전트 호출 수, 태스크 규모 무관).
+2. **Reviewer 강제 호출** — 아무리 작은 변경(파일 1개, 1줄 수정)이라도 Phase 3에서 Reviewer Agent를 반드시 호출한다. Reviewer가 APPROVE해야 Phase 4로 진입.
+3. **테스트/빌드 검증** — 프로젝트에 테스트/빌드 명령이 있으면 반드시 실행하여 PASS 확인. 없으면 그 사실을 완료 요약에 명시 (`테스트: N/A`).
+4. **완료 요약 블록** — 파이프라인 종료 시 아래 형식을 **반드시** 출력한다:
+
+   ```
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     [DEEP] COMPLETE — 검증 통과
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+     ✓ 테스트:    {pass}/{total}  (또는 N/A)
+     ✓ 빌드:      {success|skipped}
+     ✓ Reviewer:  APPROVE (critical {C} / design {D} / code {CL})
+     ✓ 회귀 루프: {N}회
+
+     📁 수정된 파일 ({N}개):
+        - path/to/file.ext (+{add} / -{del})
+
+     📊 토큰 사용:
+        planner:    {K}
+        developer:  {K}
+        reviewer:   {K}
+        TOTAL:      {K}  (RTK 절감 {saved})
+
+     📝 에이전트 로그: .tdc/context/agent-log.md
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   ```
+
+5. **간단 작업 무예외** — "그냥 한 줄 수정"이라도 위 4가지를 빠짐없이 수행. Deep 모드는 "체감 가능한 오케스트레이션"을 목적으로 하므로 생략하면 기능 자체가 무의미해진다.
+
+### Deep 모드 종료 시 정리
+
+```bash
+rm -f .tdc/context/.deep
+```
+(Phase 4 완료 요약 출력 이후 삭제)
 
 ### Deep 모드 vs 일반 모드
 
@@ -642,7 +684,7 @@ When you detect the conversation is getting long (many tool calls, large outputs
 
 2. **Instruct Continuation** - Tell the user:
    ```
-   컨텍스트가 가득 찼습니다. 새 세션에서 /tdc-session resume 을 실행해주세요.
+   컨텍스트가 가득 찼습니다. 새 세션에서 /tdc-resume 을 실행해주세요.
    ```
 
 ## Response Format

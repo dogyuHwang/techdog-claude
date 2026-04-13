@@ -231,11 +231,15 @@ install_tdc() {
     mkdir -p "$CLAUDE_DIR/skills" "$CLAUDE_DIR/agents"
 
     # Core skills (always installed)
-    for core_skill in tdc tdc-plan tdc-dev tdc-debug tdc-review tdc-session tdc-learn tdc-onboard; do
+    for core_skill in tdc tdc-plan tdc-dev tdc-debug tdc-review tdc-deep tdc-learn \
+                      tdc-save tdc-resume tdc-clean tdc-upgrade tdc-version; do
         if [ -d "$TDC_HOME/.repo/.claude/skills/$core_skill" ]; then
             cp -r "$TDC_HOME/.repo/.claude/skills/$core_skill" "$CLAUDE_DIR/skills/" 2>/dev/null || true
         fi
     done
+
+    # Remove deprecated skills (tdc-onboard merged into tdc-learn; tdc-session split)
+    rm -rf "$CLAUDE_DIR/skills/tdc-onboard" "$CLAUDE_DIR/skills/tdc-session" 2>/dev/null || true
 
     # Agents (always installed)
     cp -r "$TDC_HOME/.repo/.claude/agents/"* "$CLAUDE_DIR/agents/" 2>/dev/null || true
@@ -531,7 +535,7 @@ echo -e "    3. Claude Code 안에서 ${BOLD}/tdc spec.md${NC}"
 echo -e ""
 echo -e "  ${BOLD}Installed:${NC}"
 echo -e "    Agents: 8 (master, planner, developer, debugger, reviewer, security-reviewer, test-engineer, architect)"
-echo -e "    Core skills: 8 (/tdc, /tdc-plan, /tdc-dev, /tdc-debug, /tdc-review, /tdc-session, /tdc-learn, /tdc-onboard)"
+echo -e "    Core skills: 13 (/tdc, /tdc-plan, /tdc-dev, /tdc-debug, /tdc-review, /tdc-deep, /tdc-learn, /tdc-save, /tdc-resume, /tdc-clean, /tdc-upgrade, /tdc-version)"
 if [ "${#SELECTED_PACKS[@]}" -gt 0 ]; then
     PACK_NAMES=""
     for pack in "${SELECTED_PACKS[@]}"; do

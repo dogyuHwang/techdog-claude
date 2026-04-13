@@ -76,6 +76,6 @@ EOF
     # If hit 3+ times, suggest session save
     if [ "$HIT_COUNT" -ge 3 ]; then
         echo "[TDC-RATE-LIMIT] WARNING: Rate limited $HIT_COUNT times this session."
-        echo "[TDC-RATE-LIMIT] Consider: /tdc-session save, then resume after cooldown."
+        echo "[TDC-RATE-LIMIT] Consider: /tdc-save, then /tdc-resume after cooldown."
     fi
 fi

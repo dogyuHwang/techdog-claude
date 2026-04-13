@@ -114,5 +114,5 @@ if [ "$COUNT" -ge 120 ]; then
     echo "[TDC] CRITICAL: Context limit approaching ($COUNT tool calls, ~${ESTIMATED_TOTAL} est. tokens). Auto-saving session..."
     printf '{"warning": "context_overflow", "tool_calls": %d, "estimated_tokens": %d, "timestamp": "%s"}\n' "$COUNT" "$ESTIMATED_TOTAL" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$CONTEXT_DIR/.overflow_flag"
 elif [ "$COUNT" -ge 80 ]; then
-    echo "[TDC] WARNING: High context usage ($COUNT tool calls, ~${ESTIMATED_TOTAL} est. tokens). Consider saving session with /tdc-session save"
+    echo "[TDC] WARNING: High context usage ($COUNT tool calls, ~${ESTIMATED_TOTAL} est. tokens). Consider saving session with /tdc-save"
 fi
