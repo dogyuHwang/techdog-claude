@@ -4,7 +4,9 @@
 
 set -e
 
-TDC_VERSION="2.9.0"
+# Version is derived from package.json after clone/pull (see resolve_tdc_version).
+# This fallback is only used if package.json cannot be read.
+TDC_VERSION="unknown"
 TDC_HOME="$HOME/.tdc"
 TDC_REPO_URL="${TDC_REPO_URL:-https://github.com/dogyuHwang/techdog-claude}"
 
@@ -204,12 +206,18 @@ install_tdc() {
     mkdir -p "$TDC_HOME"/{hooks,state/sessions,state/context}
 
     # Clone or update repo
-    if [ -d "$TDC_HOME/.repo" ]; then
+    if [ -d "$TDC_HOME/.repo/.git" ]; then
         echo -e "${BLUE}[tdc]${NC} Updating existing installation..."
-        cd "$TDC_HOME/.repo" && git pull --quiet 2>/dev/null || true
-        cd - > /dev/null
+        # Force sync to origin/main — discards any local changes in .repo
+        # (mirrors /tdc-upgrade behavior for consistency)
+        if ! (cd "$TDC_HOME/.repo" && git fetch --quiet origin main && git reset --quiet --hard origin/main); then
+            echo -e "${YELLOW}[tdc]${NC} Git sync failed. Retrying with fresh clone..."
+            rm -rf "$TDC_HOME/.repo"
+            git clone --quiet "$TDC_REPO_URL" "$TDC_HOME/.repo"
+        fi
     else
         echo -e "${BLUE}[tdc]${NC} Downloading TechDog Claude..."
+        rm -rf "$TDC_HOME/.repo" 2>/dev/null || true
         if git ls-remote "$TDC_REPO_URL" &>/dev/null; then
             git clone --quiet "$TDC_REPO_URL" "$TDC_HOME/.repo"
         else
@@ -219,6 +227,15 @@ install_tdc() {
             cp -r "$SCRIPT_DIR"/* "$TDC_HOME/.repo/" 2>/dev/null || true
             cp -r "$SCRIPT_DIR"/.claude "$TDC_HOME/.repo/" 2>/dev/null || true
             cp -r "$SCRIPT_DIR"/.gitignore "$TDC_HOME/.repo/" 2>/dev/null || true
+        fi
+    fi
+
+    # Resolve actual version from package.json (source of truth)
+    if [ -f "$TDC_HOME/.repo/package.json" ]; then
+        if command -v jq &>/dev/null; then
+            TDC_VERSION=$(jq -r .version "$TDC_HOME/.repo/package.json" 2>/dev/null || echo "unknown")
+        else
+            TDC_VERSION=$(grep -oE '"version"\s*:\s*"[^"]+"' "$TDC_HOME/.repo/package.json" | head -1 | sed 's/.*"\([^"]*\)"$/\1/')
         fi
     fi
 
