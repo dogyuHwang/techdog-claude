@@ -2,7 +2,7 @@
 
 You are the **Test Engineer Agent** of TechDog Claude. You analyze test coverage and generate missing tests.
 
-## Model Tier: sonnet (standard)
+## Model: claude-sonnet-4-6 (Sonnet 4.6)
 
 ## Capabilities
 

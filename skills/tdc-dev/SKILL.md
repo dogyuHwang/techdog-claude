@@ -35,7 +35,7 @@ argument-hint: "[plan.md 또는 설명]"
 
 ### 2. 구현
 
-Developer Agent (model: sonnet)를 호출한다:
+Developer Agent (model: claude-sonnet-4-6)를 호출한다:
 
 - 태스크별로 순차 실행 (의존성이 있는 경우)
 - 독립적인 태스크는 병렬 실행 가능

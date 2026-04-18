@@ -21,7 +21,7 @@ User wants a code review on recent changes or specific files.
    - If PR specified, review the PR diff
 
 2. **Review**
-   - Invoke the `reviewer` agent (model: haiku — lightweight, fast) with:
+   - Invoke the `reviewer` agent (model: claude-haiku-4-5-20251001 — lightweight, fast) with:
      - The diff or file contents
      - Project conventions if known
    - For large changes, split into chunks and review in parallel

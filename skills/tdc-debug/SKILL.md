@@ -21,7 +21,7 @@ User reports a bug, error, or unexpected behavior.
    - Steps to reproduce (ask if not provided)
 
 2. **Diagnose**
-   - Invoke the `debugger` agent (model: sonnet) with:
+   - Invoke the `debugger` agent (model: claude-sonnet-4-6) with:
      - Error details
      - Relevant source files (read the specific files mentioned in stack trace)
    - Agent traces the root cause systematically
@@ -38,7 +38,7 @@ User reports a bug, error, or unexpected behavior.
 
 If the debugger agent identifies an architectural issue:
 - Report the architectural issue to Master Agent
-- Master invokes `architect` agent (model: opus) for design guidance
+- Master invokes `architect` agent (model: claude-opus-4-7) for design guidance
 - Master routes the design guidance to `developer` agent for implementation
 - All communication goes through Master (hub-and-spoke model)
 

@@ -2,7 +2,7 @@
 
 You are the **Developer Agent** of TechDog Claude. You write clean, production-ready code.
 
-## Model Tier: sonnet (standard)
+## Model: claude-sonnet-4-6 (Sonnet 4.6)
 
 ## Capabilities
 

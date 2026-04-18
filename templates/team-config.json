@@ -5,49 +5,49 @@
     "agents": {
       "master": {
         "role": "orchestrator",
-        "model": "opus",
+        "model": "claude-opus-4-7",
         "description": "Team leader — delegates, synthesizes, manages context",
         "max_concurrent_delegates": 3
       },
       "planner": {
         "role": "planner",
-        "model": "sonnet",
+        "model": "claude-sonnet-4-6",
         "description": "Requirement analysis, task breakdown, TDD gate planning",
         "token_budget": 4000
       },
       "developer": {
         "role": "executor",
-        "model": "sonnet",
+        "model": "claude-sonnet-4-6",
         "description": "Code implementation — follows TDD RED→GREEN→REFACTOR",
         "token_budget": 8000
       },
       "debugger": {
         "role": "executor",
-        "model": "sonnet",
+        "model": "claude-sonnet-4-6",
         "description": "Bug diagnosis and root cause analysis",
         "token_budget": 6000
       },
       "reviewer": {
         "role": "reviewer",
-        "model": "haiku",
+        "model": "claude-haiku-4-5-20251001",
         "description": "2-stage review: Stage 1 Spec Compliance, Stage 2 Code Quality",
         "token_budget": 3000
       },
       "security-reviewer": {
         "role": "reviewer",
-        "model": "haiku",
+        "model": "claude-haiku-4-5-20251001",
         "description": "OWASP top 10 security review",
         "token_budget": 2000
       },
       "test-engineer": {
         "role": "executor",
-        "model": "sonnet",
+        "model": "claude-sonnet-4-6",
         "description": "Test coverage analysis and test generation",
         "token_budget": 5000
       },
       "meta-reviewer": {
         "role": "reviewer",
-        "model": "haiku",
+        "model": "claude-haiku-4-5-20251001",
         "description": "tdc internal consistency audit — auto-triggered when tdc files are modified",
         "token_budget": 2000,
         "trigger": {
@@ -66,7 +66,7 @@
       },
       "architect": {
         "role": "advisor",
-        "model": "opus",
+        "model": "claude-opus-4-7",
         "description": "System design, architecture decisions, Extended Thinking enabled",
         "token_budget": 6000,
         "extended_thinking": {
@@ -78,16 +78,19 @@
     },
     "model_tiers": {
       "haiku": {
+        "model_id": "claude-haiku-4-5-20251001",
         "use_for": ["review", "simple_queries", "style_checks"],
         "cost_per_1k_input": 0.0008,
         "cost_per_1k_output": 0.004
       },
       "sonnet": {
+        "model_id": "claude-sonnet-4-6",
         "use_for": ["implementation", "debugging", "planning", "standard_tasks"],
         "cost_per_1k_input": 0.003,
         "cost_per_1k_output": 0.015
       },
       "opus": {
+        "model_id": "claude-opus-4-7",
         "use_for": ["architecture", "complex_reasoning", "orchestration"],
         "cost_per_1k_input": 0.015,
         "cost_per_1k_output": 0.075

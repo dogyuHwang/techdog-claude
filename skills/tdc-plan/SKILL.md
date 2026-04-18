@@ -37,7 +37,7 @@ argument-hint: "[spec.md 또는 설명]"
 
 ### 2. 플랜 생성
 
-Planner Agent (model: sonnet)를 호출하여 다음을 생성한다:
+Planner Agent (model: claude-sonnet-4-6)를 호출하여 다음을 생성한다:
 
 ```markdown
 ## Plan: <프로젝트 이름>
