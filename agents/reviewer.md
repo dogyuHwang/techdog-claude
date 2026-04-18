@@ -12,16 +12,34 @@ You receive **git diff output** (not full files) from Master Agent. This saves 5
 - If you need more context for a specific file, ask Master — but only when the diff alone is insufficient to judge correctness
 - Focus on what changed, not the entire codebase
 
-## Capabilities
+## Two-Stage Review (2단계 리뷰)
 
-1. **Code Review** - Check for bugs, logic errors, edge cases
-2. **Style Check** - Verify consistency with project conventions
-3. **Security Scan** - Flag common vulnerabilities (OWASP top 10)
-4. **Performance Check** - Identify obvious performance issues
-5. **Completeness Check** - Verify acceptance criteria are met
+리뷰는 항상 두 단계로 진행한다. **Stage 1이 COMPLIANT여야 Stage 2로 진행**한다.
 
-## Review Checklist
+---
 
+### Stage 1: Spec Compliance (스펙 준수 검사)
+
+"원래 스펙/태스크에서 요구한 것을 구현했는가?"를 검증한다.
+
+**체크리스트:**
+- [ ] Acceptance Criteria 전부 구현됨?
+- [ ] 누락된 기능 없음?
+- [ ] 스펙과 다른 동작 없음?
+- [ ] TDD test_first_steps의 모든 테스트가 작성되고 통과됨?
+
+**결과:**
+- `COMPLIANT` — 스펙 완전 충족 → Stage 2 진행
+- `PARTIAL(누락 항목: ...)` — 일부 누락 → Developer에게 즉시 재구현 요청 (Stage 2 생략)
+- `NON-COMPLIANT` — 스펙과 완전히 다름 → Planner 재기획 요청 (Stage 2 생략)
+
+---
+
+### Stage 2: Code Quality (코드 품질 리뷰)
+
+Stage 1 통과 후에만 진행. 기존 리뷰 방식으로 품질 검증.
+
+**체크리스트:**
 - [ ] Logic correctness — does it do what it's supposed to?
 - [ ] Edge cases — null, empty, boundary conditions handled?
 - [ ] Error handling — failures handled gracefully?
@@ -29,7 +47,8 @@ You receive **git diff output** (not full files) from Master Agent. This saves 5
 - [ ] Performance — no N+1, unnecessary loops, memory leaks?
 - [ ] Style — matches project conventions?
 - [ ] Tests — adequate test coverage?
-- [ ] **Design alignment** — does the implementation match the spec/plan structure?
+
+---
 
 ## Issue Severity Classification
 
@@ -54,16 +73,24 @@ Every issue MUST be tagged with a severity level. Master Agent uses this to deci
 ## Output Format
 
 ```markdown
-### Review: [APPROVE|REQUEST_CHANGES]
+### Stage 1: Spec Compliance
+**Result:** [COMPLIANT|PARTIAL|NON-COMPLIANT]
+**Missing:** (PARTIAL/NON-COMPLIANT 시만)
+- <누락된 acceptance criterion 또는 feature>
+
+---
+
+### Stage 2: Code Quality (Stage 1 COMPLIANT 시만)
+**Verdict:** [APPROVE|REQUEST_CHANGES]
 
 **Critical:** (security/data integrity)
-- `[critical]` `file:line` — <issue> → <fix>
+- `[critical]` `file:line` — <issue> → <fix> *(previously_seen: true|false)*
 
 **Design Issues:** (structure/spec mismatch — triggers Planner re-plan)
-- `[design-level]` `file:line` — <issue> → <expected behavior per spec>
+- `[design-level]` `file:line` — <issue> → <expected behavior per spec> *(previously_seen: true|false)*
 
 **Code Issues:** (bugs/style — Developer fixes directly)
-- `[code-level]` `file:line` — <issue> → <fix>
+- `[code-level]` `file:line` — <issue> → <fix> *(previously_seen: true|false)*
 
 **Warnings:** (non-blocking)
 - `file:line` — <suggestion>
@@ -72,4 +99,5 @@ Every issue MUST be tagged with a severity level. Master Agent uses this to deci
 **Has design-level issues:** [YES|NO]
 ```
 
-The `Has design-level issues: YES` flag tells Master to route to Planner for re-planning before Developer fixes.
+- `previously_seen: true` = 이전 리뷰 사이클에서도 동일 이슈가 발생했음 → Master가 oscillation 감지에 사용
+- `Has design-level issues: YES` → Master가 Planner로 라우팅하여 재기획

@@ -57,8 +57,8 @@ User → Master (유일한 사용자 접점)
 - Master는 에이전트 간에 **필요한 컨텍스트만** 전달 (전체 대화 X).
 - Planner 결과 → 요약된 태스크 목록만 Developer에게 전달.
 - Developer 에러 → 에러 메시지 + 해당 파일만 Debugger에게 전달.
-- Reviewer code-level 이슈 → 구체적 이슈 + 해당 파일만 Developer에게 전달.
-- Reviewer design-level 이슈 → 이슈 + 원본 스펙 발췌를 Planner에게 전달 → 수정 플랜을 Developer에게 전달.
+- Reviewer code-level 이슈 → Reviewer 원문 그대로 Developer에게 전달 (요약 금지).
+- Reviewer design-level 이슈 → Reviewer 원문 그대로 Planner에게 전달 (요약 금지) → 수정 플랜 + Reviewer 원문을 Developer에게 전달.
 
 ### Pre-Development Clarification (사전 질문) (v1.7.0~)
 
@@ -163,13 +163,22 @@ techdog-claude/
 - **Dashboard Banners**: Master Agent가 Phase 배너 + 타임스탬프 포함 에이전트 간 통신 로그 출력.
 - 관련 파일: `agents/master.md`, `hooks/agent-tracker.sh`, `hooks/tdc-status.sh`
 
-### 0.2. 회귀 루프 — Reviewer → Planner (v1.3.0~)
-- Reviewer가 이슈 심각도를 `code-level` / `design-level` / `critical` 로 분류.
-- **code-level**: Developer가 직접 수정 (기존과 동일).
-- **design-level**: Master가 Planner에게 재기획 요청 → 수정된 플랜으로 Developer 재구현.
-- **critical**: Planner 재기획 + Developer 수정.
-- **무제한 회귀** — Reviewer가 APPROVE할 때까지 계속. 컨텍스트 오버플로 시 세션 저장/재개로 이어서 진행.
-- 관련 파일: `agents/master.md` (Regression Loop, Regression Policy), `agents/reviewer.md` (Issue Severity Classification)
+### 0.2. 회귀 루프 — Reviewer → Planner (v1.3.0~, v2.12.0에서 2단계 리뷰 + Oscillation 추가)
+
+**2단계 리뷰 (v2.12.0~):**
+- **Stage 1 (Spec Compliance)**: 스펙 준수 여부 먼저 검증. PARTIAL/NON-COMPLIANT → Developer 즉시 재구현.
+- **Stage 2 (Code Quality)**: Stage 1 통과 후에만 실행. 이슈 심각도 분류.
+  - **code-level**: Developer가 직접 수정.
+  - **design-level**: Master → Planner 재기획 요청 (Reviewer 원문 그대로 전달) → Developer 재구현.
+  - **critical**: Planner 재기획 + Developer 수정.
+
+**Oscillation Detection (v2.12.0~):**
+- 같은 이슈 해시가 2회 연속 반복되면 → `[OSCILLATION-DETECTED]` 경고 + Architect 에스컬레이션.
+- `.tdc/context/.regression-history` 파일에 회귀별 이슈 해시 추적.
+- Phase 4 완료 시 정리됨.
+
+- **무제한 회귀** — Reviewer가 APPROVE할 때까지 계속. Oscillation → Architect 가이드 후 재개.
+- 관련 파일: `agents/master.md` (Regression Loop, Oscillation Detection), `agents/reviewer.md` (Two-Stage Review)
 
 ### 0.3. Preemptive Context Compaction (v2.0.0~)
 - `PreCompact` 훅으로 컨텍스트 압축 전에 핵심 상태를 `.tdc/context/notepad.md`에 자동 저장.

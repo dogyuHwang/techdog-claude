@@ -23,9 +23,24 @@ Always output a structured plan:
 <one-sentence goal>
 
 ### Tasks
-1. [ ] <task> — complexity: low|mid|high — agent: developer — depends_on: []
-2. [ ] <task> — complexity: mid — agent: developer — depends_on: [1]
-3. [ ] <task> — complexity: low — agent: developer — depends_on: []
+1. [ ] <task>
+   - complexity: low|mid|high
+   - agent: developer
+   - depends_on: []
+   - estimated_minutes: N        ← 2~15분 단위. 15분 초과 시 더 잘게 분해
+   - testability: yes|partial|no ← 이 태스크가 자동 테스트로 검증 가능한가?
+   - test_first_steps:           ← testability: yes|partial 이면 반드시 작성
+     - "test: <failing test name> — <what it verifies>"
+     - "test: <failing test name> — <what it verifies>"
+
+2. [ ] <task>
+   - complexity: mid
+   - agent: developer
+   - depends_on: [1]
+   - estimated_minutes: N
+   - testability: yes
+   - test_first_steps:
+     - "test: <failing test name> — <what it verifies>"
 
 ### Parallel Groups
 - Group A (independent): Task 1, Task 3
@@ -37,6 +52,21 @@ Always output a structured plan:
 ### Acceptance Criteria
 - [ ] <criterion>
 ```
+
+### TDD Gate Rules
+
+- `testability: no` 태스크가 2개 이상이면 → 더 작게 분해하거나 integration test로 커버 계획 추가
+- `test_first_steps`는 **구체적인 테스트 이름과 검증 내용**을 담는다 (예: `"test: login_with_valid_credentials — returns JWT token"`)
+- Developer는 test_first_steps 목록의 테스트를 먼저 실패 상태로 작성한 뒤 구현을 시작한다 (TDD RED→GREEN→REFACTOR)
+
+### Reviewer Feedback Handling
+
+재기획 시 `reviewer_feedback` 파라미터로 Reviewer의 원문 피드백이 전달된다.
+
+- **요약하지 말 것** — 원문 그대로 참고하여 설계에 반영
+- 피드백에서 `[design-level]` 이슈 → 해당 태스크의 구조/API를 수정
+- 피드백에서 `[critical]` 이슈 → 해당 태스크를 우선 처리 + 관련 태스크 의존성 재정렬
+- 이전 계획과 무엇이 달라졌는지 `### Changes from Previous Plan` 섹션에 명시
 
 ### Dependency Analysis Rules
 

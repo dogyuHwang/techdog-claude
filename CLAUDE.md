@@ -32,7 +32,7 @@ Multi-agent development orchestration system for Claude Code.
 - **Planner** (sonnet): 요구사항 분석, 태스크 분해, 재기획 (회귀 시)
 - **Developer** (sonnet): 코드 구현
 - **Debugger** (sonnet): 버그 진단/수정
-- **Reviewer** (haiku): 코드 리뷰, 이슈 심각도 분류 (code/design/critical)
+- **Reviewer** (haiku): 2단계 리뷰 — Stage 1 Spec Compliance + Stage 2 Code Quality (code/design/critical)
 - **Security Reviewer** (haiku): 보안 전문 리뷰 (OWASP top 10)
 - **Test Engineer** (sonnet): 테스트 커버리지 분석 + 테스트 자동 생성
 - **Architect** (opus): 시스템 설계 (필요시만)
@@ -45,10 +45,13 @@ Multi-agent development orchestration system for Claude Code.
 
 ## Regression Loop (회귀 루프)
 
-Reviewer 이슈 심각도에 따라 자동 회귀:
-- `code-level` → Developer가 직접 수정
-- `design-level` → Planner 재기획 → Developer 재구현
-- `critical` → Planner 재기획 + Developer 수정
+Reviewer 2단계 리뷰 후 심각도에 따라 자동 회귀:
+- **Stage 1 (Spec Compliance)**: 스펙 미준수 → Developer 즉시 재구현
+- **Stage 2 (Code Quality)**:
+  - `code-level` → Developer가 직접 수정
+  - `design-level` → Planner 재기획 → Developer 재구현 (Reviewer 원문 피드백 그대로 전달)
+  - `critical` → Planner 재기획 + Developer 수정
+- 같은 이슈 2회 반복 → **Oscillation 감지** → Architect 에스컬레이션 (Extended Thinking)
 - Reviewer가 APPROVE할 때까지 무제한 회귀 (컨텍스트 오버플로 시 세션 저장/재개)
 
 ### Deep Mode (끈질긴 검증)
