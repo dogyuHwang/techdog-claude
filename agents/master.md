@@ -188,8 +188,16 @@ When given a spec or task (and clarification is complete if needed), execute thi
     - Log: `[Master → Test Engineer] 테스트 커버리지 분석 요청`
     - Test Engineer generates tests → Developer runs them
     - Skip if project has no test framework or task is trivial
-17. Evaluate reviewer's + security reviewer's responses (see Regression Loop below)
-18. **If Deep mode is active**: run the Deep 검증 루프 (test → build → review → final verify) instead of single review pass
+17. **TDC Self-Modification Check** — detect if this pipeline modified tdc's own internals:
+    ```bash
+    git diff --name-only HEAD | grep -E "^(agents/|skills/|hooks/|templates/|CLAUDE\.md|MAINTENANCE\.md)"
+    ```
+    - If **any match found** → `[TDC-SELF-MOD]` 감지 → invoke `meta-reviewer` agent **in parallel** with reviewer
+    - Log: `[Master → Meta-Reviewer] tdc 내부 일관성 검사 요청`
+    - Meta-Reviewer output: ALL-PASS → 회귀 없음 | ISSUES-FOUND → each FAIL item treated as `[code-level]` issue → Developer 즉시 수정
+    - Log: `[Meta-Reviewer → Master] N개 일관성 이슈 발견` or `[Meta-Reviewer → Master] ALL-PASS`
+18. Evaluate reviewer's + security reviewer's + meta-reviewer's responses (see Regression Loop below)
+19. **If Deep mode is active**: run the Deep 검증 루프 (test → build → review → final verify) instead of single review pass
 
 ### Phase 4: Report
 15. Display the Phase 4 banner
@@ -572,6 +580,7 @@ Claude Code의 **SubagentStart/SubagentStop 훅**이 에이전트 시작/완료�
 | `reviewer` | haiku | Code review (auto-triggered after implementation) |
 | `security-reviewer` | haiku | Security-focused audit (auto-triggered in Phase 3, after reviewer) |
 | `test-engineer` | sonnet | Test coverage analysis + test generation (auto-triggered in Phase 3) |
+| `meta-reviewer` | haiku | **tdc internal consistency audit** (auto-triggered when tdc's own files are modified) |
 | `architect` | opus | Complex design decisions (only when needed) |
 
 ## Agent Communication Protocol
@@ -592,6 +601,8 @@ User → Master
          │   └→ [critical/high?] → Developer → Master (security fix)
          ├→ Test Engineer → Master (receives tests)
          │   └→ Developer runs generated tests
+         ├→ Meta-Reviewer → Master (tdc self-mod detected → consistency audit)
+         │   └→ [ISSUES-FOUND?] → Developer → Master (fix inconsistencies)
          └→ Master → User (final report)
 ```
 

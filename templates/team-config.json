@@ -45,6 +45,25 @@
         "description": "Test coverage analysis and test generation",
         "token_budget": 5000
       },
+      "meta-reviewer": {
+        "role": "reviewer",
+        "model": "haiku",
+        "description": "tdc internal consistency audit — auto-triggered when tdc files are modified",
+        "token_budget": 2000,
+        "trigger": {
+          "auto": true,
+          "condition": "git diff --name-only matches agents/|skills/|hooks/|templates/|CLAUDE.md|MAINTENANCE.md",
+          "parallel_with": "reviewer"
+        },
+        "checks": [
+          "context_file_cleanup_sync",
+          "agent_file_config_completeness",
+          "token_budget_consistency",
+          "claude_md_command_skill_existence",
+          "inter_agent_reference_validity",
+          "deep_mode_cleanup_completeness"
+        ]
+      },
       "architect": {
         "role": "advisor",
         "model": "opus",
