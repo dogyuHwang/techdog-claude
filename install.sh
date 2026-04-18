@@ -550,8 +550,8 @@ echo -e "    2. 터미널에서 ${BOLD}claude${NC} 입력"
 echo -e "    3. Claude Code 안에서 ${BOLD}/tdc spec.md${NC}"
 echo -e ""
 echo -e "  ${BOLD}Installed:${NC}"
-echo -e "    Agents: 8 (master, planner, developer, debugger, reviewer, security-reviewer, test-engineer, architect)"
-echo -e "    Core skills: 13 (/tdc, /tdc-plan, /tdc-dev, /tdc-debug, /tdc-review, /tdc-deep, /tdc-learn, /tdc-save, /tdc-resume, /tdc-clean, /tdc-upgrade, /tdc-version)"
+echo -e "    Agents: 9 (master, planner, developer, debugger, reviewer, security-reviewer, test-engineer, architect, meta-reviewer)"
+echo -e "    Core skills: 12 (/tdc, /tdc-plan, /tdc-dev, /tdc-debug, /tdc-review, /tdc-deep, /tdc-learn, /tdc-save, /tdc-resume, /tdc-clean, /tdc-upgrade, /tdc-version)"
 if [ "${#SELECTED_PACKS[@]}" -gt 0 ]; then
     PACK_NAMES=""
     for pack in "${SELECTED_PACKS[@]}"; do

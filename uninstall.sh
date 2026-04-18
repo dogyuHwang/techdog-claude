@@ -54,7 +54,7 @@ for pack in "${SKILL_PACKS[@]}"; do
 done
 
 # 3. Remove agents
-AGENTS=(master planner developer debugger reviewer security-reviewer test-engineer architect)
+AGENTS=(master planner developer debugger reviewer security-reviewer test-engineer architect meta-reviewer)
 for agent in "${AGENTS[@]}"; do
     if [ -f "$HOME/.claude/agents/$agent.md" ]; then
         rm -f "$HOME/.claude/agents/$agent.md"
