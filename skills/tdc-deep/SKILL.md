@@ -120,7 +120,7 @@ rm -f .tdc/context/.deep
 
 - Developer가 같은 태스크에서 **3회 연속 실패** 시 → Architect Agent(opus) 자동 호출
 - Reviewer `critical` 이슈가 **2회 연속 반복** 시 → Planner 재기획 + Architect 설계 검토
-- 회귀 총 횟수 무제한이나, 토큰 누적 200k 초과 시 → 자동 세션 저장 + 사용자 확인
+- 회귀 총 횟수 무제한이나, 토큰 누적 200k 초과 시 → 자동 세션 저장 + 재개 안내 배너 출력
 
 ## 토큰 최적화
 

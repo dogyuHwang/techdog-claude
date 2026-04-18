@@ -120,21 +120,19 @@ When given a spec or task (and clarification is complete if needed), execute thi
 ```bash
 cat .tdc/sessions/.pending 2>/dev/null
 ```
-- `.pending` 파일이 존재하면 → 미완료 세션 배너 표시:
+- `.pending` 파일이 존재하고 사용자가 새 spec/task를 함께 입력하지 않은 경우 → **확인 없이 자동으로 `/tdc-resume` 실행**:
   ```
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    [TDC] 미완료 세션 감지
+    [TDC] 미완료 세션 자동 재개
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     세션:  <session_id>
     작업:  <task>
     단계:  <phase>
     저장:  <saved_at>
-    → /tdc-resume 으로 이어서 진행하시겠습니까? (y/n)
+    → 자동으로 이어서 진행합니다...
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   ```
-  - 사용자가 `y` 또는 입력 없이 Enter → `/tdc-resume` 자동 실행
-  - 사용자가 `n` → `.pending` 파일 삭제 후 새 작업 시작
-  - 단, 사용자가 이미 새 spec/task를 함께 입력했으면 → 새 작업 우선 진행 (`.pending` 삭제)
+- 사용자가 새 spec/task를 함께 입력했으면 → 새 작업 우선 진행 (`.pending` 삭제)
 
 **0-B. Project Memory 로드**:
 - `.tdc/project-memory.md`가 있으면 읽어서 프로젝트 컨텍스트로 사용한다.
@@ -142,7 +140,7 @@ cat .tdc/sessions/.pending 2>/dev/null
 
 **0-C. Skill Injection**: `.tdc/learned-skills/*.md`에서 매칭 스킬을 스캔한다.
 - Compare spec/task keywords against each skill's `triggers` field
-- Only inject `confidence: high` skills (max 3)
+- Inject `confidence: high` first, then `confidence: medium` to fill up to 3 slots
 - Log: `[SKILL-INJECTED] <skill-name>` for each matched skill
 - Pass matched skill's Problem + Solution to relevant agents as context
 
@@ -451,7 +449,7 @@ Developer가 동일 이슈를 3회 수정 시도 후에도 해결 못할 경우:
 1. `[DEEP-ESCALATE]` 태그로 로그 기록
 2. `Architect` 에이전트에게 근본 원인 분석 요청
 3. Architect의 설계 가이드를 받아 Developer가 재시도
-4. 그래도 실패 시 사용자에게 수동 개입 요청
+4. 그래도 실패 시 → **자동 세션 저장 + 재개 안내 배너 출력** (수동 개입 불필요)
 
 ### Deep 상태 파일
 
@@ -642,9 +640,11 @@ User → Master
 
 ### 개발 중 (Pipeline 진행 중)
 
-파이프라인이 시작된 후에는 다음 경우에만 **예외적으로** 질문한다:
-- An unrecoverable error occurs after debugger retry
-- Context overflow requires session save
+파이프라인이 시작된 후에는 **어떤 경우에도 중간에 질문하지 않는다.** 모든 상황이 자동 처리된다:
+- 에러 → Debugger 자동 호출
+- Context overflow → 자동 세션 저장 + 재개 안내
+- Rate limit → 자동 대기 + 재시도 (3회 실패 시 자동 세션 저장)
+- Deep 에스컬레이션 → Architect 자동 호출 → 해결 불가 시 자동 세션 저장
 
 **파이프라인 진행 중 절대 질문하지 않는 것:**
 - Plan approval (just proceed)
@@ -716,7 +716,7 @@ At 60 tool calls, `context-guard.sh` triggers a compaction reminder:
 1. **자동 감속**: 병렬 에이전트 실행을 중지하고 순차 실행으로 전환
 2. **대기**: `.rate_limit` 파일의 `RETRY_AFTER` 값만큼 대기 후 재시도
 3. **재시도**: 대기 후 마지막 실패한 작업부터 재개
-4. **에스컬레이션**: 3회 이상 rate limit 발생 시 사용자에게 세션 저장 제안
+4. **에스컬레이션**: 3회 이상 rate limit 발생 시 **자동으로 세션 저장** + 재개 안내 배너 출력
 
 ```
 Rate limit 감지
@@ -725,7 +725,7 @@ Rate limit 감지
     ↓ (또 rate limit?)
 [2회차] 대기 시간 2배 → 재시도
     ↓ (또 rate limit?)
-[3회차] 세션 저장 제안 → 사용자 판단
+[3회차] 자동 세션 저장 → /tdc-resume 안내 배너 출력
 ```
 
 ### Pipeline 중 Rate Limit

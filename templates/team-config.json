@@ -118,6 +118,12 @@
       "require_test_first_steps_for_complex_tasks": true,
       "complexity_threshold": "mid",
       "fail_fast_on_red_stage_skip": true
+    },
+    "skill_injection": {
+      "auto_inject_high_confidence": true,
+      "auto_inject_medium_confidence": true,
+      "max_injected_skills": 3,
+      "priority": "high first, then medium to fill remaining slots"
     }
   }
 }
