@@ -109,10 +109,31 @@ if [ "$ESTIMATED_TOTAL" -gt 150000 ] && [ ! -f "$BUDGET_WARN_FILE" ]; then
     echo "[TDC-BUDGET] Token budget is high. Agents should minimize output verbosity."
 fi
 
-# Threshold: warn at 80 tool calls, critical at 120
+# Tiered overflow handling:
+#   80 calls  → proactive auto-save + .pending pointer (pipeline can continue)
+#   100 calls → update saved session (refresh)
+#   120 calls → hard overflow flag (pipeline must stop and tell user)
+PROACTIVE_SAVE_FLAG="$CONTEXT_DIR/.proactive_saved"
+
 if [ "$COUNT" -ge 120 ]; then
-    echo "[TDC] CRITICAL: Context limit approaching ($COUNT tool calls, ~${ESTIMATED_TOTAL} est. tokens). Auto-saving session..."
-    printf '{"warning": "context_overflow", "tool_calls": %d, "estimated_tokens": %d, "timestamp": "%s"}\n' "$COUNT" "$ESTIMATED_TOTAL" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$CONTEXT_DIR/.overflow_flag"
-elif [ "$COUNT" -ge 80 ]; then
-    echo "[TDC] WARNING: High context usage ($COUNT tool calls, ~${ESTIMATED_TOTAL} est. tokens). Consider saving session with /tdc-save"
+    echo "[TDC] CRITICAL: Context limit reached ($COUNT tool calls, ~${ESTIMATED_TOTAL} est. tokens). Saving session..."
+    printf '{"warning": "context_overflow", "tool_calls": %d, "estimated_tokens": %d, "timestamp": "%s"}\n' \
+        "$COUNT" "$ESTIMATED_TOTAL" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$CONTEXT_DIR/.overflow_flag"
+    echo "[TDC] → 새 대화에서 /tdc-resume 으로 이어서 진행하세요."
+elif [ "$COUNT" -eq 100 ] && [ -f "$PROACTIVE_SAVE_FLAG" ]; then
+    # Refresh the proactive save with updated state
+    printf '{"warning": "context_high", "tool_calls": %d, "timestamp": "%s"}\n' \
+        "$COUNT" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$CONTEXT_DIR/.overflow_flag"
+    bash "$(dirname "$0")/session-save.sh" 2>/dev/null
+    rm -f "$CONTEXT_DIR/.overflow_flag"
+    echo "[TDC] Session refreshed at $COUNT tool calls."
+elif [ "$COUNT" -eq 80 ] && [ ! -f "$PROACTIVE_SAVE_FLAG" ]; then
+    touch "$PROACTIVE_SAVE_FLAG"
+    # Trigger session-save.sh by setting a soft overflow flag
+    printf '{"warning": "context_high", "tool_calls": %d, "timestamp": "%s"}\n' \
+        "$COUNT" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$CONTEXT_DIR/.overflow_flag"
+    # Run session-save (it reads .overflow_flag OR .phase file)
+    bash "$(dirname "$0")/session-save.sh" 2>/dev/null
+    rm -f "$CONTEXT_DIR/.overflow_flag"
+    echo "[TDC] Proactive session save at $COUNT tool calls. Resume: /tdc-resume"
 fi

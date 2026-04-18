@@ -1,6 +1,6 @@
 #!/bin/bash
-# session-save.sh — Auto-save session state on conversation stop
-# Called as a Claude Code hook on conversation end events
+# session-save.sh — Auto-save session state on conversation stop or overflow
+# Called as a Claude Code hook on Stop/conversation end events
 
 TDC_PROJECT_DIR="${TDC_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
 TDC_DIR="$TDC_PROJECT_DIR/.tdc"
@@ -10,98 +10,163 @@ PLANS_DIR="$TDC_DIR/plans"
 
 mkdir -p "$SESSION_DIR" "$CONTEXT_DIR"
 
-# Check if there's an overflow flag
-if [ -f "$CONTEXT_DIR/.overflow_flag" ]; then
-    TIMESTAMP=$(date -u +%Y%m%d_%H%M%S)
-    SESSION_FILE="$SESSION_DIR/auto_${TIMESTAMP}.json"
+OVERFLOW_FLAG="$CONTEXT_DIR/.overflow_flag"
+PHASE_FILE="$CONTEXT_DIR/.phase"
+DEEP_FILE="$CONTEXT_DIR/.deep"
 
-    # --- Gather state from project artifacts ---
+SHOULD_SAVE=false
+SAVE_REASON="manual"
 
-    # 1. Latest plan file (if any)
-    LATEST_PLAN=""
-    if [ -d "$PLANS_DIR" ]; then
-        LATEST_PLAN=$(ls -t "$PLANS_DIR"/*.md 2>/dev/null | head -1)
-    fi
-    PLAN_NAME=""
-    if [ -n "$LATEST_PLAN" ]; then
-        PLAN_NAME=$(basename "$LATEST_PLAN")
-    fi
+if [ -f "$OVERFLOW_FLAG" ]; then
+    SHOULD_SAVE=true
+    SAVE_REASON="context_overflow"
+elif [ -f "$PHASE_FILE" ]; then
+    SHOULD_SAVE=true
+    SAVE_REASON="pipeline_interrupted"
+fi
 
-    # 2. Modified files (git tracked)
-    FILES_MODIFIED="[]"
-    if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-        FILES_MODIFIED=$(git diff --name-only HEAD 2>/dev/null | head -20 | \
+[ "$SHOULD_SAVE" = "false" ] && exit 0
+
+TIMESTAMP=$(date -u +%Y%m%dT%H%M%S)
+SESSION_FILE="$SESSION_DIR/${TIMESTAMP}.json"
+
+# ── Phase state ──────────────────────────────────────────────
+PHASE=""
+[ -f "$PHASE_FILE" ] && PHASE=$(cat "$PHASE_FILE" 2>/dev/null | head -1)
+
+# ── Agent state ──────────────────────────────────────────────
+AGENT=""
+AGENT_STATE=""
+if [ -f "$CONTEXT_DIR/.agent-status" ]; then
+    AGENT=$(grep '^AGENT=' "$CONTEXT_DIR/.agent-status" 2>/dev/null | cut -d= -f2)
+    AGENT_STATE=$(grep '^STATE=' "$CONTEXT_DIR/.agent-status" 2>/dev/null | cut -d= -f2)
+fi
+
+# ── Tool call count ──────────────────────────────────────────
+TOOL_CALLS=0
+if [ -f "$CONTEXT_DIR/.tool_count" ]; then
+    TOOL_CALLS=$(cat "$CONTEXT_DIR/.tool_count" 2>/dev/null)
+    [[ "$TOOL_CALLS" =~ ^[0-9]+$ ]] || TOOL_CALLS=0
+fi
+
+# ── Latest plan tasks ────────────────────────────────────────
+LATEST_PLAN=""
+[ -d "$PLANS_DIR" ] && LATEST_PLAN=$(ls -t "$PLANS_DIR"/*.md 2>/dev/null | head -1)
+PLAN_NAME=""
+[ -n "$LATEST_PLAN" ] && PLAN_NAME=$(basename "$LATEST_PLAN")
+
+COMPLETED="[]"
+PENDING="[]"
+if [ -n "$LATEST_PLAN" ] && [ -f "$LATEST_PLAN" ]; then
+    COMPLETED=$(grep -E '^\s*-\s*\[x\]' "$LATEST_PLAN" 2>/dev/null | \
+        sed 's/.*\[x\]\s*//' | head -20 | \
+        awk 'BEGIN{printf "["} NR>1{printf ","} {gsub(/"/, "\\\""); printf "\"%s\"", $0} END{printf "]"}')
+    PENDING=$(grep -E '^\s*-\s*\[ \]' "$LATEST_PLAN" 2>/dev/null | \
+        sed 's/.*\[ \]\s*//' | head -20 | \
+        awk 'BEGIN{printf "["} NR>1{printf ","} {gsub(/"/, "\\\""); printf "\"%s\"", $0} END{printf "]"}')
+fi
+
+# ── Modified files + git state ───────────────────────────────
+FILES_MODIFIED="[]"
+GIT_SHA=""
+GIT_BRANCH=""
+if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    GIT_SHA=$(git rev-parse HEAD 2>/dev/null | cut -c1-8)
+    GIT_BRANCH=$(git branch --show-current 2>/dev/null)
+    _FILES=$(git diff --name-only HEAD 2>/dev/null | head -20)
+    [ -z "$_FILES" ] && _FILES=$(git diff --name-only 2>/dev/null | head -20)
+    if [ -n "$_FILES" ]; then
+        FILES_MODIFIED=$(echo "$_FILES" | \
             awk 'BEGIN{printf "["} NR>1{printf ","} {gsub(/\\/, "\\\\"); gsub(/"/, "\\\""); printf "\"%s\"", $0} END{printf "]"}')
-        [ "$FILES_MODIFIED" = "[]" ] && \
-            FILES_MODIFIED=$(git diff --name-only 2>/dev/null | head -20 | \
-                awk 'BEGIN{printf "["} NR>1{printf ","} {gsub(/\\/, "\\\\"); gsub(/"/, "\\\""); printf "\"%s\"", $0} END{printf "]"}')
     fi
+fi
 
-    # 3. Tool call count at save time
-    TOOL_CALLS=0
-    if [ -f "$CONTEXT_DIR/.tool_count" ]; then
-        TOOL_CALLS=$(cat "$CONTEXT_DIR/.tool_count" 2>/dev/null)
-        [[ "$TOOL_CALLS" =~ ^[0-9]+$ ]] || TOOL_CALLS=0
-    fi
+# ── Deep mode state ──────────────────────────────────────────
+DEEP_ACTIVE="false"
+DEEP_RETRY=0
+DEEP_VERIFY=0
+DEEP_REGRESSIONS=0
+if [ -f "$DEEP_FILE" ]; then
+    DEEP_ACTIVE="true"
+    DEEP_RETRY=$(grep '^RETRY_COUNT=' "$DEEP_FILE" 2>/dev/null | cut -d= -f2)
+    DEEP_VERIFY=$(grep '^VERIFY_PASS=' "$DEEP_FILE" 2>/dev/null | cut -d= -f2)
+    DEEP_REGRESSIONS=$(grep '^TOTAL_REGRESSIONS=' "$DEEP_FILE" 2>/dev/null | cut -d= -f2)
+    [[ "$DEEP_RETRY" =~ ^[0-9]+$ ]] || DEEP_RETRY=0
+    [[ "$DEEP_VERIFY" =~ ^[0-9]+$ ]] || DEEP_VERIFY=0
+    [[ "$DEEP_REGRESSIONS" =~ ^[0-9]+$ ]] || DEEP_REGRESSIONS=0
+fi
 
-    # 4. Extract completed/pending tasks from latest plan ([ ] and [x] markers)
-    COMPLETED="[]"
-    PENDING="[]"
-    if [ -n "$LATEST_PLAN" ] && [ -f "$LATEST_PLAN" ]; then
-        COMPLETED=$(grep -E '^\s*-\s*\[x\]' "$LATEST_PLAN" 2>/dev/null | \
-            sed 's/.*\[x\]\s*//' | head -20 | \
-            awk 'BEGIN{printf "["} NR>1{printf ","} {gsub(/"/, "\\\""); printf "\"%s\"", $0} END{printf "]"}')
-        PENDING=$(grep -E '^\s*-\s*\[ \]' "$LATEST_PLAN" 2>/dev/null | \
-            sed 's/.*\[ \]\s*//' | head -20 | \
-            awk 'BEGIN{printf "["} NR>1{printf ","} {gsub(/"/, "\\\""); printf "\"%s\"", $0} END{printf "]"}')
-    fi
+# ── Regression history (last 3 entries) ─────────────────────
+REGRESSION_HISTORY=""
+if [ -f "$CONTEXT_DIR/.regression-history" ]; then
+    REGRESSION_HISTORY=$(tail -3 "$CONTEXT_DIR/.regression-history" 2>/dev/null | \
+        awk '{gsub(/"/, "\\\""); gsub(/\\n/, "\\\\n")} 1' | paste -sd '|' -)
+fi
 
-    # Build JSON safely (escape special characters in paths)
-    if command -v jq >/dev/null 2>&1; then
-        jq -n \
-            --arg sid "$TIMESTAMP" \
-            --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-            --arg proj "$TDC_PROJECT_DIR" \
-            --arg plan "$PLAN_NAME" \
-            --argjson tc "$TOOL_CALLS" \
-            --argjson completed "$COMPLETED" \
-            --argjson pending "$PENDING" \
-            --argjson files "$FILES_MODIFIED" \
-            '{
-              session_id: $sid,
-              type: "auto_save",
-              reason: "context_overflow",
-              timestamp: $ts,
-              project: $proj,
-              plan_file: $plan,
-              tool_calls_at_save: $tc,
-              completed: $completed,
-              pending: $pending,
-              files_modified: $files,
-              note: "Session auto-saved due to context overflow. Resume with /tdc-resume"
-            }' > "$SESSION_FILE"
-    else
-        # Fallback: escape project dir for JSON safety
-        SAFE_PROJECT=$(echo "$TDC_PROJECT_DIR" | sed 's/\\/\\\\/g; s/"/\\"/g')
-        cat > "$SESSION_FILE" << SESSIONEOF
+# ── Token usage ──────────────────────────────────────────────
+TOKEN_TOTAL=0
+TOKEN_BY_AGENT="{}"
+if [ -f "$CONTEXT_DIR/.agent-tokens" ]; then
+    BY={}
+    while IFS= read -r line; do
+        _A=$(echo "$line" | grep -oE 'AGENT=[^:]+' | cut -d= -f2)
+        _T=$(echo "$line" | grep -oE 'TOKENS=[0-9]+' | cut -d= -f2)
+        [ -n "$_A" ] && [ -n "$_T" ] && TOKEN_TOTAL=$((TOKEN_TOTAL + _T))
+    done < "$CONTEXT_DIR/.agent-tokens"
+fi
+
+# ── Notepad snapshot (first 20 lines) ───────────────────────
+NOTEPAD_SNAPSHOT=""
+if [ -f "$CONTEXT_DIR/notepad.md" ]; then
+    NOTEPAD_SNAPSHOT=$(head -20 "$CONTEXT_DIR/notepad.md" 2>/dev/null | \
+        awk '{gsub(/"/, "\\\""); gsub(/\\/, "\\\\")} 1' | tr '\n' '|')
+fi
+
+# ── Write JSON ───────────────────────────────────────────────
+SAFE_PROJ=$(echo "$TDC_PROJECT_DIR" | sed 's/\\/\\\\/g; s/"/\\"/g')
+SAFE_NOTEPAD=$(echo "$NOTEPAD_SNAPSHOT" | sed 's/\\/\\\\/g; s/"/\\"/g')
+SAFE_REGHIST=$(echo "$REGRESSION_HISTORY" | sed 's/\\/\\\\/g; s/"/\\"/g')
+
+cat > "$SESSION_FILE" << SESSIONEOF
 {
-  "session_id": "$TIMESTAMP",
-  "type": "auto_save",
-  "reason": "context_overflow",
-  "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-  "project": "$SAFE_PROJECT",
-  "plan_file": "$PLAN_NAME",
-  "tool_calls_at_save": $TOOL_CALLS,
-  "completed": $COMPLETED,
-  "pending": $PENDING,
-  "files_modified": $FILES_MODIFIED,
-  "note": "Session auto-saved due to context overflow. Resume with /tdc-resume"
+  "session_id": "${TIMESTAMP}",
+  "saved_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "save_reason": "${SAVE_REASON}",
+  "project": "${SAFE_PROJ}",
+  "git_branch": "${GIT_BRANCH}",
+  "git_head_sha": "${GIT_SHA}",
+  "task": "(auto-saved — add description with /tdc-save [memo])",
+  "phase": "${PHASE}",
+  "active_agent": "${AGENT}",
+  "active_agent_state": "${AGENT_STATE}",
+  "plan_file": "${PLAN_NAME}",
+  "tool_calls_at_save": ${TOOL_CALLS},
+  "completed": ${COMPLETED},
+  "in_progress": [],
+  "pending": ${PENDING},
+  "decisions": [],
+  "files_modified": ${FILES_MODIFIED},
+  "deep_mode": {
+    "active": ${DEEP_ACTIVE},
+    "retry_count": ${DEEP_RETRY},
+    "verify_pass": ${DEEP_VERIFY},
+    "total_regressions": ${DEEP_REGRESSIONS}
+  },
+  "regression_history": "${SAFE_REGHIST}",
+  "token_usage": { "total_estimated": ${TOKEN_TOTAL} },
+  "notepad_snapshot": "${SAFE_NOTEPAD}",
+  "context_summary": "(auto-saved — no summary available)",
+  "resume_hint": "/tdc-resume to continue from ${PHASE}"
 }
 SESSIONEOF
-    fi
 
-    echo "[TDC] Session auto-saved to $SESSION_FILE (with task state)"
+# ── Write .pending pointer ───────────────────────────────────
+echo "$TIMESTAMP" > "$SESSION_DIR/.pending"
 
-    # Clean up flags and counter
-    rm -f "$CONTEXT_DIR/.overflow_flag" "$CONTEXT_DIR/.tool_count" "$CONTEXT_DIR/.rtk_status" "$CONTEXT_DIR/.read_tokens" "$CONTEXT_DIR/.compaction_done" "$CONTEXT_DIR/.budget_warned"
-fi
+echo "[TDC] Session saved → $SESSION_FILE (${SAVE_REASON})"
+echo "[TDC] Resume: /tdc-resume  |  Phase: ${PHASE:-unknown}  |  Tools: $TOOL_CALLS"
+
+# ── Cleanup runtime flags ────────────────────────────────────
+rm -f "$OVERFLOW_FLAG" "$CONTEXT_DIR/.rtk_status" "$CONTEXT_DIR/.version_checked" \
+      "$CONTEXT_DIR/.compaction_done" "$CONTEXT_DIR/.budget_warned"
+# Note: .phase, .deep, .agent-status are cleaned by master.md Phase 4 on normal completion
