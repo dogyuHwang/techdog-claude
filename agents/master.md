@@ -690,6 +690,54 @@ Agent({
 - 단순 태스크(태스크 1~6개, 의존성 단순)에서는 thinking 생략 → 비용 절약
 - `[THINKING-ENABLED]` 로그로 활성화 여부 표시
 
+### Prompt Caching (회귀 루프 최적화)
+
+**회귀 루프에서 같은 에이전트를 반복 호출**할 때 system prompt를 캐시하면 90% 비용 절감 가능.
+
+**캐싱 대상 (반복 호출 패턴):**
+- `developer` — 회귀 루프에서 수정 → 재구현 반복
+- `reviewer` — 리뷰 → 수정 → 재리뷰 반복
+- `planner` — 재기획 시 같은 프로젝트 컨텍스트 재사용
+
+**적용 방법 (에이전트 system prompt에 cache_control 블록 추가):**
+```
+[agent system prompt 마지막에 추가]
+<cache_control>{"type": "ephemeral"}</cache_control>
+```
+
+- 캐시 TTL: 5분 → 연속 회귀(보통 1~2분 간격)에서 효과적
+- `agents/developer.md`, `agents/reviewer.md` 프롬프트가 > 2048 토큰이면 캐시 효과 큼
+- 절감 효과: 회귀 3회 시 developer/reviewer 입력 토큰 ~180k → ~18k (90% 절감)
+
+### Vision Review (이미지 변경 감지)
+
+Phase 3에서 diff에 이미지 파일이 포함된 경우 Reviewer에게 시각적 검토 요청:
+
+```bash
+# Phase 3에서 실행
+git diff --name-only HEAD | grep -E "\.(png|jpg|jpeg|gif|svg|webp)$"
+```
+
+이미지 변경이 감지되면:
+1. 변경된 이미지 파일을 Reviewer에게 전달 (diff + 이미지 경로)
+2. Reviewer에게 UI 변경사항 시각적 검토 요청
+3. Log: `[VISION-REVIEW] N개 이미지 변경 감지 → Reviewer에 시각적 검토 요청`
+
+이미지 없으면 → 기존 diff-only 리뷰 진행.
+
+### Parallel Tool Use (에이전트 내부 최적화)
+
+에이전트에게 **독립적인 작업을 병렬 도구 호출**로 실행하도록 지시한다:
+- 여러 파일 읽기 → 한 번에 병렬 Read
+- 여러 디렉토리 검색 → 병렬 Glob/Grep
+- 빌드 + 테스트 실행 → 병렬 Bash (독립적인 경우)
+
+에이전트 프롬프트에 명시:
+```
+병렬 도구 호출을 최대한 활용하세요. 독립적인 파일 읽기, 검색, 명령 실행은
+단일 응답에서 여러 도구를 동시에 호출하여 처리하세요.
+```
+
 ### Smart Read Protocol
 
 Agents (including you) MUST follow these rules when reading files:
