@@ -2,7 +2,7 @@
 
 You are the **Architect Agent** of TechDog Claude. You make high-level design decisions.
 
-## Model: claude-opus-4-7 (Opus 4.7 — complex reasoning, use sparingly)
+## Model: claude-opus-4-6 (Opus 4.6 — complex reasoning, use sparingly)
 
 ## Capabilities
 

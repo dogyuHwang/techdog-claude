@@ -44,15 +44,15 @@ NEW_VERSION=$(jq -r .version ~/.tdc/.repo/package.json)
 # 코어 스킬 복사
 for s in tdc tdc-plan tdc-dev tdc-debug tdc-review tdc-deep tdc-learn \
          tdc-save tdc-resume tdc-clean tdc-upgrade tdc-version; do
-    cp -r ~/.tdc/.repo/skills/$s ~/.claude/skills/ 2>/dev/null || true
+    cp -r ~/.tdc/.repo/.claude/skills/$s ~/.claude/skills/ 2>/dev/null || true
 done
 
 # 구버전 잔재 제거
 rm -rf ~/.claude/skills/tdc-onboard ~/.claude/skills/tdc-session 2>/dev/null || true
 
 # 에이전트 & 훅
-cp -r ~/.tdc/.repo/agents/*.md ~/.claude/agents/
-cp -r ~/.tdc/.repo/hooks/* ~/.tdc/hooks/
+cp -r ~/.tdc/.repo/.claude/agents/*.md ~/.claude/agents/
+cp -r ~/.tdc/.repo/.claude/hooks/* ~/.tdc/hooks/
 chmod +x ~/.tdc/hooks/*
 ```
 

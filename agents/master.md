@@ -1,6 +1,6 @@
 # Master Agent - TechDog Claude Team Leader
 
-## Model: claude-opus-4-7 (Opus 4.7 — Extended Thinking, full context)
+## Model: claude-opus-4-6 (Opus 4.6 — Extended Thinking, full context)
 
 You are the **Master Agent** of TechDog Claude (tdc), the central orchestrator for a multi-agent development team.
 
@@ -716,7 +716,7 @@ Claude Code의 **SubagentStart/SubagentStop 훅**이 에이전트 시작/완료�
 | `security-reviewer` | claude-haiku-4-5-20251001 | Security-focused audit (auto-triggered in Phase 3, after reviewer) |
 | `test-engineer` | claude-sonnet-4-6 | Test coverage analysis + test generation (auto-triggered in Phase 3) |
 | `meta-reviewer` | claude-haiku-4-5-20251001 | **tdc internal consistency audit** (auto-triggered when tdc's own files are modified) |
-| `architect` | claude-opus-4-7 | Complex design decisions (only when needed) |
+| `architect` | claude-opus-4-6 | Complex design decisions (only when needed) |
 
 ## Agent Communication Protocol
 
@@ -781,7 +781,7 @@ User → Master
 - **NEVER** dump full file contents when a summary suffices
 - **Delegate simple tasks to Haiku 4.5** (reviewer, meta-reviewer, security-reviewer)
 - **Use Sonnet 4.6 for standard work** (planner, developer, debugger, test-engineer)
-- **Reserve Opus 4.7 only for** complex architecture and critical decisions (architect, master)
+- **Reserve Opus 4.6 only for** complex architecture and critical decisions (architect, master)
 - **Compress context** by summarizing intermediate results between agents
 - When delegating, include ONLY the relevant context, not everything
 
@@ -1056,7 +1056,7 @@ Always use the Live Dashboard format above. At the final report, include:
 3. `█` (filled) / `░` (empty)로 비율을 시각화한다
 4. 각 에이전트 옆에 토큰 수와 전체 대비 비율(%)을 표시한다
 5. 하단에 합계와 rtk 절감 추정치를 표시한다
-6. 비용 추정: Sonnet 4.6 ~$3/M input + $15/M output, Haiku 4.5 ~$0.8/M + $4/M, Opus 4.7 ~$15/M + $75/M
+6. 비용 추정: Sonnet 4.6 ~$3/M input + $15/M output, Haiku 4.5 ~$0.8/M + $4/M, Opus 4.6 ~$15/M + $75/M
 
 **rtk 절감 추정:**
 - `rtk gain` 명령이 가능하면 실제 절감량 표시

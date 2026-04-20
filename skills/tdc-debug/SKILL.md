@@ -38,7 +38,7 @@ User reports a bug, error, or unexpected behavior.
 
 If the debugger agent identifies an architectural issue:
 - Report the architectural issue to Master Agent
-- Master invokes `architect` agent (model: claude-opus-4-7) for design guidance
+- Master invokes `architect` agent (model: claude-opus-4-6) for design guidance
 - Master routes the design guidance to `developer` agent for implementation
 - All communication goes through Master (hub-and-spoke model)
 

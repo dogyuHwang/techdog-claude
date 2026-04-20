@@ -47,13 +47,16 @@ case "$AGENT_TYPE" in
 esac
 
 AGENT_TOKENS_FILE="$CONTEXT_DIR/.agent-tokens"
+LOGS_DIR="$TDC_DIR/logs"
+NDJSON_LOG="$LOGS_DIR/events.ndjson"
+DASHBOARD_FILE="$CONTEXT_DIR/agent-dashboard.json"
 
 # Map agent name → model tier
 get_model_name() {
     case "$1" in
-        master|architect)            echo "opus" ;;
-        reviewer|security-reviewer)  echo "haiku" ;;
-        *)                           echo "sonnet" ;;
+        master|architect)                             echo "opus" ;;
+        reviewer|security-reviewer|meta-reviewer)     echo "haiku" ;;
+        *)                                            echo "sonnet" ;;
     esac
 }
 
@@ -74,6 +77,12 @@ EOF
 
     # Append to event log
     echo "$TIME_HUMAN START $AGENT_NAME [$AGENT_MODEL] $AGENT_ID" >> "$LOG_FILE"
+
+    # NDJSON structured event log
+    mkdir -p "$LOGS_DIR"
+    ISO_TS=$(date -u +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null || date +"%Y-%m-%dT%H:%M:%SZ")
+    SAFE_ID=$(echo "$AGENT_ID" | tr -d '"\\' | head -c 64)
+    echo "{\"ts\":\"${ISO_TS}\",\"agent\":\"${AGENT_NAME}\",\"model\":\"${AGENT_MODEL}\",\"action\":\"start\",\"agent_id\":\"${SAFE_ID}\"}" >> "$NDJSON_LOG"
 
     # Console output for user visibility with cumulative token info
     if [ -f "$AGENT_TOKENS_FILE" ]; then
@@ -114,6 +123,14 @@ EOF
 
     # Append to event log
     echo "$TIME_HUMAN STOP  $AGENT_NAME [$AGENT_MODEL] $AGENT_ID ${ELAPSED}" >> "$LOG_FILE"
+
+    # NDJSON structured event log
+    mkdir -p "$LOGS_DIR"
+    ISO_TS=$(date -u +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null || date +"%Y-%m-%dT%H:%M:%SZ")
+    ELAPSED_NUM_LOG=$(echo "$ELAPSED" | tr -d 's')
+    [[ "$ELAPSED_NUM_LOG" =~ ^[0-9]+$ ]] || ELAPSED_NUM_LOG=0
+    SAFE_ID=$(echo "$AGENT_ID" | tr -d '"\\' | head -c 64)
+    echo "{\"ts\":\"${ISO_TS}\",\"agent\":\"${AGENT_NAME}\",\"model\":\"${AGENT_MODEL}\",\"action\":\"stop\",\"duration_s\":${ELAPSED_NUM_LOG},\"agent_id\":\"${SAFE_ID}\"}" >> "$NDJSON_LOG"
 
     # Track agent token usage (estimate based on elapsed time)
     # Rough estimate: ~200 tokens/second for sonnet, ~100 for haiku, ~300 for opus
@@ -199,6 +216,26 @@ EOF
     else
         echo "[TDC] $AGENT_NAME [$AGENT_MODEL] completed"
     fi
+
+    # JSON agent dashboard export (for external monitoring)
+    PHASE_VAL=""
+    [ -f "$CONTEXT_DIR/.phase" ] && PHASE_VAL=$(cat "$CONTEXT_DIR/.phase" 2>/dev/null | tr -d '\n' | sed 's/"/\\"/g')
+    GT_JSON=0
+    AGENTS_JSON=""
+    if [ -f "$AGENT_TOKENS_FILE" ]; then
+        while IFS='=' read -r aname aval; do
+            [[ "$aval" =~ ^[0-9]+$ ]] || continue
+            GT_JSON=$(( GT_JSON + aval ))
+            AMODEL_J=$(get_model_name "$aname")
+            AGENTS_JSON="${AGENTS_JSON}\"${aname}\":{\"model\":\"${AMODEL_J}\",\"tokens_est\":${aval}},"
+        done < "$AGENT_TOKENS_FILE"
+        AGENTS_JSON="${AGENTS_JSON%,}"
+    fi
+    ISO_TS2=$(date -u +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null || date +"%Y-%m-%dT%H:%M:%SZ")
+    cat > "${DASHBOARD_FILE}.tmp" << DASHEOF
+{"ts":"${ISO_TS2}","phase":"${PHASE_VAL}","last_agent":{"name":"${AGENT_NAME}","model":"${AGENT_MODEL}","duration_s":${ELAPSED_NUM:-0}},"agents":{${AGENTS_JSON}},"tokens_total_est":${GT_JSON}}
+DASHEOF
+    mv "${DASHBOARD_FILE}.tmp" "$DASHBOARD_FILE"
 fi
 
 # Output valid JSON for Claude Code hook protocol

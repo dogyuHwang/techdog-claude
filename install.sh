@@ -429,6 +429,23 @@ existing_session = [h for h in hooks.get("Stop", [])
 if not existing_session:
     hooks["Stop"].append(session_hook_entry)
 
+# Add Stop hook for token display summary (fires after every response)
+token_display_entry = {
+    "matcher": "",
+    "hooks": [
+        {
+            "type": "command",
+            "command": f"bash {tdc_home}/hooks/token-display.sh"
+        }
+    ]
+}
+
+existing_token_display = [h for h in hooks.get("Stop", [])
+                          if any("token-display" in hk.get("command", "") for hk in h.get("hooks", []))]
+if not existing_token_display:
+    hooks["Stop"].append(token_display_entry)
+    print("[tdc] token-display Stop hook registered")
+
 # Add SubagentStart hook for agent tracking
 if "SubagentStart" not in hooks:
     hooks["SubagentStart"] = []

@@ -105,13 +105,11 @@ fi
 
 # ── Token usage ──────────────────────────────────────────────
 TOKEN_TOTAL=0
-TOKEN_BY_AGENT="{}"
 if [ -f "$CONTEXT_DIR/.agent-tokens" ]; then
-    BY={}
-    while IFS= read -r line; do
-        _A=$(echo "$line" | grep -oE 'AGENT=[^:]+' | cut -d= -f2)
-        _T=$(echo "$line" | grep -oE 'TOKENS=[0-9]+' | cut -d= -f2)
-        [ -n "$_A" ] && [ -n "$_T" ] && TOKEN_TOTAL=$((TOKEN_TOTAL + _T))
+    while IFS='=' read -r _A _T; do
+        [[ "$_A" =~ ^[a-z] ]] || continue
+        [[ "$_T" =~ ^[0-9]+$ ]] || continue
+        TOKEN_TOTAL=$(( TOKEN_TOTAL + _T ))
     done < "$CONTEXT_DIR/.agent-tokens"
 fi
 
