@@ -47,6 +47,15 @@
             "command": "bash $HOME/.tdc/hooks/rate-limit-guard.sh"
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash $HOME/.tdc/hooks/rtk-tee-recovery.sh"
+          }
+        ]
       }
     ],
     "SubagentStart": [
@@ -117,7 +126,8 @@
       "Bash(bash $HOME/.tdc/hooks/smart-read.sh)",
       "Bash(bash $HOME/.tdc/hooks/pre-compact.sh)",
       "Bash(bash $HOME/.tdc/hooks/rate-limit-guard.sh)",
-      "Bash(bash $HOME/.tdc/hooks/token-display.sh)"
+      "Bash(bash $HOME/.tdc/hooks/token-display.sh)",
+      "Bash(bash $HOME/.tdc/hooks/rtk-tee-recovery.sh)"
     ]
   }
 }

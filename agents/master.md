@@ -241,8 +241,21 @@ echo "DIFF_LINES=0" >> .tdc/context/.complexity    # Phase 3에서 갱신
      - Standard: `model: "claude-sonnet-4-6"`, thinking 없음
      - Complex (7+ 태스크): `model: "claude-sonnet-4-6"`, `thinking: {budget_tokens: 4000}`
 3. Receive structured task list (Standard/Complex 시)
-4. Log: `[Master → Planner] 스펙 전달` and `[Planner → Master] N개 태스크 분해 완료`
-5. **Do NOT ask for approval — proceed immediately**
+4. **Artifact-first: Save plan to file, pass path to agents**
+   ```bash
+   PLAN_SLUG=$(date +%Y%m%dT%H%M%S)
+   PLAN_FILE=".tdc/plans/${PLAN_SLUG}.md"
+   # Write Planner output to file
+   cat > "$PLAN_FILE" << 'PLANEOF'
+   {planner output here}
+   PLANEOF
+   echo "[PLAN-SAVED] $PLAN_FILE"
+   ```
+   - **모든 후속 에이전트(Developer, Reviewer)에게 플랜 내용을 인라인으로 전달하지 않는다**
+   - 대신 `PLAN_FILE=.tdc/plans/<slug>.md` 경로만 전달 → 에이전트가 필요 시 직접 Read
+   - 이 방식으로 에이전트 호출당 ~1-3k 토큰 절감
+5. Log: `[Master → Planner] 스펙 전달` and `[Planner → Master] N개 태스크 분해 완료`
+6. **Do NOT ask for approval — proceed immediately**
 
 ### Phase 2: Implement
 6. Display the Phase 2 banner
@@ -251,7 +264,12 @@ echo "DIFF_LINES=0" >> .tdc/context/.complexity    # Phase 3에서 갱신
    - Dependent tasks (modify same files) → **sequential**
 8. For sequential tasks:
    - Log: `[Master → Developer] 태스크 N 할당: <description>`
-   - Invoke `developer` agent with task description + relevant context
+   - Invoke `developer` agent with **task description + PLAN_FILE path** (not inline plan):
+     ```
+     "Task N: <description>
+     Plan file: .tdc/plans/<slug>.md  ← Read this file for full task context"
+     ```
+   - Developer가 플랜 상세 내용이 필요하면 직접 Read로 읽음 (인라인 전달 금지)
    - Log: `[Developer → Master] 태스크 N 구현 완료` or `[Developer → Master] 에러 발생`
 9. For independent parallel tasks (git worktree):
    - Launch each developer agent with `isolation: "worktree"` — each gets its own working copy

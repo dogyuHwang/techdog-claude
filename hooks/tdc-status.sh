@@ -10,6 +10,10 @@ STATUS_FILE="$CONTEXT_DIR/.agent-status"
 PHASE_FILE="$CONTEXT_DIR/.phase"
 TOOL_COUNT_FILE="$CONTEXT_DIR/.tool_count"
 
+# Read Claude Code context JSON from stdin (provided periodically by the harness)
+STDIN_JSON=""
+[ ! -t 0 ] && STDIN_JSON=$(cat 2>/dev/null)
+
 # If .tdc doesn't exist, TDC is not active — output nothing
 if [ ! -d "$TDC_DIR" ]; then
     exit 0
@@ -93,6 +97,44 @@ if [ -f "$RTK_STATUS_FILE" ]; then
         else
             PARTS="$RTK_LABEL"
         fi
+    fi
+fi
+
+# 6. Rate limit burn rate (from Claude Code session JSON via stdin)
+if [ -n "$STDIN_JSON" ]; then
+    RL_PCT="" RL_RESET=""
+    if command -v jq >/dev/null 2>&1; then
+        RL_PCT=$(echo "$STDIN_JSON"   | jq -r '.rate_limits.five_hour.used_percentage // ""' 2>/dev/null)
+        RL_RESET=$(echo "$STDIN_JSON" | jq -r '.rate_limits.five_hour.resets_at       // ""' 2>/dev/null)
+    elif command -v python3 >/dev/null 2>&1; then
+        RL_PCT=$(echo "$STDIN_JSON"   | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('rate_limits',{}).get('five_hour',{}).get('used_percentage',''))" 2>/dev/null)
+        RL_RESET=$(echo "$STDIN_JSON" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('rate_limits',{}).get('five_hour',{}).get('resets_at',''))" 2>/dev/null)
+    fi
+
+    if [ -n "$RL_PCT" ] && [ "$RL_PCT" != "null" ]; then
+        RL_INT=$(echo "$RL_PCT" | cut -d. -f1)
+        [[ "$RL_INT" =~ ^[0-9]+$ ]] || RL_INT=0
+
+        RESET_DISP=""
+        if [ -n "$RL_RESET" ] && [ "$RL_RESET" != "null" ]; then
+            # Parse ISO 8601 → epoch (Linux date)
+            RESET_EPOCH=$(date -d "$RL_RESET" +%s 2>/dev/null)
+            # macOS fallback
+            [ -z "$RESET_EPOCH" ] && RESET_EPOCH=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$RL_RESET" +%s 2>/dev/null)
+            NOW_EPOCH=$(date +%s)
+            if [[ "$RESET_EPOCH" =~ ^[0-9]+$ ]] && [ "$RESET_EPOCH" -gt "$NOW_EPOCH" ]; then
+                REM=$(( (RESET_EPOCH - NOW_EPOCH) / 60 ))
+                if [ "$REM" -ge 60 ]; then
+                    RESET_DISP=" ⏰$(( REM / 60 ))h$(( REM % 60 ))m"
+                else
+                    RESET_DISP=" ⏰${REM}m"
+                fi
+            fi
+        fi
+
+        [ "$RL_INT" -ge 80 ] && RL_LABEL="⚠5h:${RL_INT}%${RESET_DISP}" || RL_LABEL="5h:${RL_INT}%${RESET_DISP}"
+
+        [ -n "$PARTS" ] && PARTS="$PARTS | $RL_LABEL" || PARTS="$RL_LABEL"
     fi
 fi
 

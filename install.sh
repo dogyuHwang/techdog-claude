@@ -391,6 +391,22 @@ existing_rate_limit = [h for h in hooks.get("PostToolUse", [])
 if not existing_rate_limit:
     hooks["PostToolUse"].append(rate_limit_entry)
 
+# Add PostToolUse hook for rtk tee recovery (Bash-only)
+rtk_tee_entry = {
+    "matcher": "Bash",
+    "hooks": [
+        {
+            "type": "command",
+            "command": f"bash {tdc_home}/hooks/rtk-tee-recovery.sh"
+        }
+    ]
+}
+existing_rtk_tee = [h for h in hooks.get("PostToolUse", [])
+                    if any("rtk-tee-recovery" in hk.get("command", "") for hk in h.get("hooks", []))]
+if not existing_rtk_tee:
+    hooks["PostToolUse"].append(rtk_tee_entry)
+    print("[tdc] rtk-tee-recovery PostToolUse hook registered")
+
 # Add PreCompact hook for context compaction survival
 if "PreCompact" not in hooks:
     hooks["PreCompact"] = []

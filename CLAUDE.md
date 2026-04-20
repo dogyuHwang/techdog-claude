@@ -83,9 +83,9 @@ Reviewer 2단계 리뷰 후 심각도에 따라 자동 회귀:
 
 에이전트 활동을 **3중 가시성**으로 실시간 표시:
 
-1. **Status Line** (터미널 하단 상시): `[TDC] Phase 2/4 — IMPLEMENTATION | developer working | 45 tools`
+1. **Status Line** (터미널 하단 상시): `[TDC] Phase 2/4 — IMPLEMENTATION | developer working | 45 tools | 5h:42% ⏰1h23m`
    - `.tdc/context/.phase` + `.tdc/context/.agent-status` 파일 기반
-   - `tdc-status.sh` 스크립트가 읽어서 표시
+   - `tdc-status.sh` 스크립트가 읽어서 표시 (stdin으로 rate limit 정보 수신 → 5시간 버킷 소진율 + 리셋 시간 표시)
 2. **Console Messages** (대화 흐름 중): `[TDC] developer agent started (14:03:23)`
    - SubagentStart/SubagentStop 훅 (`agent-tracker.sh`)이 자동 출력
 3. **Dashboard Banners** (Phase 전환 시): 타임스탬프 포함 상세 로그
@@ -109,6 +109,7 @@ Reviewer 2단계 리뷰 후 심각도에 따라 자동 회귀:
 - **Conversation Compaction**: 60 tool calls에서 컨텍스트 압축 트리거 (중간 결과 요약).
 - **Response Budget**: 누적 토큰 ~150k 초과 시 에이전트 출력 간결화 경고.
 - **Rate Limit Guard**: API rate limit 자동 감지 + 대기 시간 안내 + 3회 초과 시 세션 저장 제안.
+- **rtk Tee Recovery**: Bash 툴 비정상 종료 시 rtk가 압축한 전체 출력을 자동으로 복원 경로 안내 (`rtk-tee-recovery.sh` PostToolUse/Bash 훅).
 - **Preemptive Compaction**: PreCompact 훅으로 압축 전 상태 자동 저장 → notepad.md로 복구.
 - **Token Dashboard**: Phase 4에서 에이전트별 토큰 사용량 게이지 바 표시 + rtk 절감 추정.
 
