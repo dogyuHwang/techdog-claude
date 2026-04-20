@@ -67,23 +67,24 @@ get_model() {
     esac
 }
 
-echo "─────────────────────────────────────────────────────────"
-echo "  [TDC] 📊 Token Usage"
+# ─── Build display lines into a buffer ───────────────────────
+DISPLAY=""
+DISPLAY="${DISPLAY}─────────────────────────────────────────────────────────\n"
+DISPLAY="${DISPLAY}  [TDC] 📊 Token Usage\n"
 
 # Session-level actual counts (from Stop event JSON)
 if [ "$SESSION_TOTAL" -gt 0 ]; then
     IN_DISP=$(fmt_k "$SESSION_IN")
     OUT_DISP=$(fmt_k "$SESSION_OUT")
     TOT_DISP=$(fmt_k "$SESSION_TOTAL")
-    echo "  Session:  ${IN_DISP} in + ${OUT_DISP} out  =  ~${TOT_DISP} tokens (actual)"
+    DISPLAY="${DISPLAY}  Session:  ${IN_DISP} in + ${OUT_DISP} out  =  ~${TOT_DISP} tokens (actual)\n"
 fi
 
-# Sub-agent breakdown (estimated from elapsed time)
+# Sub-agent breakdown (estimated from agent-tracker)
 if [ "$GRAND_TOTAL" -gt 0 ]; then
-    echo "  ─────────────────────────────────────────────────────"
-    echo "  Sub-agents (estimated):"
-    GT_DISP=$(fmt_k "$GRAND_TOTAL")
-    printf '%b' "$AGENT_LIST" | while IFS='=' read -r aname aval; do
+    DISPLAY="${DISPLAY}  ─────────────────────────────────────────────────────\n"
+    DISPLAY="${DISPLAY}  Sub-agents (estimated):\n"
+    while IFS='=' read -r aname aval; do
         [[ "$aval" =~ ^[0-9]+$ ]] || continue
         MODEL=$(get_model "$aname")
         FILLED=$(( aval * 16 / MAX_VAL ))
@@ -95,15 +96,23 @@ if [ "$GRAND_TOTAL" -gt 0 ]; then
         PCT=$(( aval * 100 / GRAND_TOTAL ))
         ADISP=$(fmt_k "$aval")
         LABEL=$(printf "%-20s" "${aname}(${MODEL})")
-        echo "  ${LABEL} ${BAR}  ~${ADISP} (${PCT}%)"
-    done
-    echo "  ─────────────────────────────────────────────────────"
+        DISPLAY="${DISPLAY}  ${LABEL} ${BAR}  ~${ADISP} (${PCT}%)\n"
+    done < <(printf '%b' "$AGENT_LIST")
     GT_DISP=$(fmt_k "$GRAND_TOTAL")
-    echo "  Sub-total: ~${GT_DISP} est. | tools used: ${TOOL_COUNT}"
+    DISPLAY="${DISPLAY}  ─────────────────────────────────────────────────────\n"
+    DISPLAY="${DISPLAY}  Sub-total: ~${GT_DISP} est. | tools used: ${TOOL_COUNT}\n"
 elif [ "$TOOL_COUNT" -gt 0 ]; then
-    echo "  tools used: ${TOOL_COUNT}"
+    DISPLAY="${DISPLAY}  tools used: ${TOOL_COUNT}\n"
 fi
 
-echo "─────────────────────────────────────────────────────────"
+DISPLAY="${DISPLAY}─────────────────────────────────────────────────────────"
+
+# ─── Write to pending file for PostToolUse pickup ─────────────
+# Only write when there is meaningful data to show
+if [ "$SESSION_TOTAL" -gt 0 ] || [ "$GRAND_TOTAL" -gt 0 ] || [ "$TOOL_COUNT" -gt 0 ]; then
+    PENDING_FILE="$CONTEXT_DIR/.pending-token-display"
+    mkdir -p "$CONTEXT_DIR"
+    printf '%b\n' "$DISPLAY" > "$PENDING_FILE"
+fi
 
 echo '{"decision": "continue"}'

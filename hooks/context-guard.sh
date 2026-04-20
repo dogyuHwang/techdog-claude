@@ -10,6 +10,18 @@ CONTEXT_DIR="$TDC_DIR/context"
 # Ensure directories exist
 mkdir -p "$SESSION_DIR" "$CONTEXT_DIR"
 
+# --- Pending token display (written by Stop hook, shown here via PostToolUse) ---
+PENDING_DISPLAY="$CONTEXT_DIR/.pending-token-display"
+PENDING_CLAIM="$CONTEXT_DIR/.pending-token-display.$$"
+if mv "$PENDING_DISPLAY" "$PENDING_CLAIM" 2>/dev/null; then
+    # Drop stale file (>600s old = from a previous session)
+    FILE_AGE=$(( $(date +%s) - $(date -r "$PENDING_CLAIM" +%s 2>/dev/null || date +%s) ))
+    if [ "$FILE_AGE" -le 600 ]; then
+        cat "$PENDING_CLAIM"
+    fi
+    rm -f "$PENDING_CLAIM"
+fi
+
 # --- rtk health check (once per session) ---
 RTK_STATUS_FILE="$CONTEXT_DIR/.rtk_status"
 if [ ! -f "$RTK_STATUS_FILE" ]; then
