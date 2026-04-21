@@ -115,4 +115,4 @@ if [ "$SESSION_TOTAL" -gt 0 ] || [ "$GRAND_TOTAL" -gt 0 ] || [ "$TOOL_COUNT" -gt
     printf '%b\n' "$DISPLAY" > "$PENDING_FILE"
 fi
 
-echo '{"decision": "continue"}'
+echo '{}'

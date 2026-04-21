@@ -6,12 +6,12 @@
 RTK_TEE_DIR="$HOME/.local/share/rtk/tee"
 
 # Early exit if rtk tee directory doesn't exist
-[ -d "$RTK_TEE_DIR" ] || { echo '{"decision": "continue"}'; exit 0; }
+[ -d "$RTK_TEE_DIR" ] || { echo '{}'; exit 0; }
 
 # Read hook JSON from stdin
 INPUT=""
 [ ! -t 0 ] && INPUT=$(cat 2>/dev/null)
-[ -z "$INPUT" ] && { echo '{"decision": "continue"}'; exit 0; }
+[ -z "$INPUT" ] && { echo '{}'; exit 0; }
 
 # Extract exit code from tool response
 EXIT_CODE=""
@@ -28,8 +28,8 @@ except: print('')
 fi
 
 # Only proceed on non-zero exit codes
-[[ "$EXIT_CODE" =~ ^[0-9]+$ ]] || { echo '{"decision": "continue"}'; exit 0; }
-[ "$EXIT_CODE" -eq 0 ]         && { echo '{"decision": "continue"}'; exit 0; }
+[[ "$EXIT_CODE" =~ ^[0-9]+$ ]] || { echo '{}'; exit 0; }
+[ "$EXIT_CODE" -eq 0 ]         && { echo '{}'; exit 0; }
 
 # Find tee file created within the last 10 seconds
 NOW=$(date +%s)
@@ -49,4 +49,4 @@ if [ -n "$NEWEST_TEE" ]; then
     echo "[TDC] Read full output: cat '$NEWEST_TEE'"
 fi
 
-echo '{"decision": "continue"}'
+echo '{}'

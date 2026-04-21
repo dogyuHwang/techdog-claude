@@ -27,7 +27,7 @@ elif command -v python3 >/dev/null 2>&1; then
     AGENT_TYPE=$(echo "$INPUT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('agent_type','unknown'))" 2>/dev/null)
     AGENT_ID=$(echo "$INPUT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('agent_id',''))" 2>/dev/null)
 else
-    echo '{"decision": "continue"}'
+    echo '{}'
     exit 0
 fi
 
@@ -239,4 +239,4 @@ DASHEOF
 fi
 
 # Output valid JSON for Claude Code hook protocol
-echo '{"decision": "continue"}'
+echo '{}'
